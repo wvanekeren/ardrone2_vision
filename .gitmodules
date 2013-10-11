@@ -1,0 +1,3 @@
+[submodule "ardrone2_gstreamer"]
+	path = ardrone2_gstreamer
+	url = git@github.com:dewagter/ardrone2_gstreamer.git

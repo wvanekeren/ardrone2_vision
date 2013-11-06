@@ -19,8 +19,7 @@
 
 #include <gst/gst.h>
 
-#include "gstexample.h"
-
+#include "gst_brightspotdetector_plugin.h"
 #include "brightspotdetector.h"
 
 

@@ -17,7 +17,7 @@ D = $(DESTDIR)
 
 gst_plugin := libBrightSpotDetector.so
 
-$(gst_plugin):  gstexample.o brightspotdetector.o cv_brightspot.o socket.o
+$(gst_plugin):  gst_brightspotdetector_plugin.o brightspotdetector.o cv_brightspot.o socket.o
 $(gst_plugin): override CFLAGS += $(GST_CFLAGS) \
 	-D VERSION='"$(version)"' -D DSPDIR='"$(dspdir)"'
 $(gst_plugin): override LIBS += $(GST_LIBS)

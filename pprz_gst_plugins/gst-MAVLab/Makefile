@@ -3,10 +3,12 @@ ifeq ($(PROCESSOR),x86)
 	include Makefile-x86.conf
 	override CFLAGS += -std=c99 -D_GNU_SOURCE -DGST_DISABLE_DEPRECATED 
 	override CFLAGS += -DDSP_API=$(DSP_API) -DSN_API=$(SN_API)
+	override CFLAGS += -I../../gst_plugin_framework
 else
 	include Makefile-ARM.conf
-	override CFLAGS += -std=c99 -D_GNU_SOURCE -DGST_DISABLE_DEPRECATED -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp -ftree-vectorize 
+	override CFLAGS += -std=c99 -D_GNU_SOURCE -DGST_DISABLE_DEPRECATED -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp -ftree-vectorize
 	override CFLAGS += -DDSP_API=$(DSP_API) -DSN_API=$(SN_API)
+	override CFLAGS += -I../../gst_plugin_framework
 endif
 override CFLAGS += -lm -fno-builtin-cos -fno-builtin-sin -fno-builtin-acos -fno-builtin-asin -fno-builtin-atan 
 
@@ -61,7 +63,7 @@ $(bins):
 
 clean:
 	echo $(PROCESSOR)
-	$(QUIET_CLEAN)$(RM) -v $(targets) $(bins) *.o *.d tidsp/*.d tidsp/*.o
+	$(QUIET_CLEAN)$(RM) -v $(targets) $(bins) *.o *.d tidsp/*.d tidsp/*.o ../../gst_plugin_framework/*.o ../../gst_plugin_framework/*.d
 
 dist: base := gst-dsp-$(version)
 dist:

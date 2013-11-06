@@ -2,10 +2,10 @@
 /**
  * SECTION:element-brightspotdetector
  *
- * The brightspotdetector plugin for gstreamer.
+ * The BrightSpotDetector plugin for gstreamer.
  *
  * <refsect2>
- * <title>Example launch line</title>
+ * <title>BrightSpotDetector launch line</title>
  * |[
  * gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate=5/1' ! videoscale ! video/x-raw-yuv, width=640, height=368 ! brightspotdetector ! fakesink
 
@@ -20,7 +20,7 @@
 #include <gst/gst.h>
 
 #include "gst_brightspotdetector_plugin.h"
-#include "brightspotdetector.h"
+#include "brightspotdetector_code.h"
 
 
 
@@ -59,7 +59,7 @@ static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE ("src",
     GST_STATIC_CAPS ("video/x-raw-yuv, format=(fourcc)UYVY"	)
     );
 
-GST_BOILERPLATE (Gstexample, gst_brightspotdetector, GstElement,
+GST_BOILERPLATE (Gstbrightspotdetector, gst_brightspotdetector, GstElement,
     GST_TYPE_ELEMENT);
 
 static void gst_brightspotdetector_set_property (GObject * object, guint prop_id,
@@ -90,9 +90,9 @@ gst_brightspotdetector_base_init (gpointer gclass)
       gst_static_pad_template_get (&sink_factory));
 }
 
-/* initialize the example's class */
+/* initialize the brightspotdetector's class */
 static void
-gst_brightspotdetector_class_init (GstexampleClass * klass)
+gst_brightspotdetector_class_init (GstbrightspotdetectorClass * klass)
 {
   GObjectClass *gobject_class;
   //GstElementClass *gstelement_class;
@@ -113,7 +113,7 @@ gst_brightspotdetector_class_init (GstexampleClass * klass)
 	g_object_class_install_property (gobject_class, PROP_THRESHTUNE,
 	g_param_spec_uint ("threshtune", "threshtune tune", "Changes output of binary image function",0,65535,
 	0, G_PARAM_READWRITE));
-		  
+
 }
 
 /* initialize the new element
@@ -122,8 +122,8 @@ gst_brightspotdetector_class_init (GstexampleClass * klass)
  * initialize instance structure
  */
 static void
-gst_brightspotdetector_init (Gstexample * filter,
-    GstexampleClass * gclass)
+gst_brightspotdetector_init (Gstbrightspotdetector * filter,
+    GstbrightspotdetectorClass * gclass)
 {
 	
   filter->sinkpad = gst_pad_new_from_static_template (&sink_factory, "sink");
@@ -148,18 +148,18 @@ static void
 gst_brightspotdetector_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec)
 {
-	Gstexample *filter = GST_EXAMPLE (object);
+	Gstbrightspotdetector *filter = GST_BRIGHTSPOTDETECTOR (object);
 
   switch (prop_id) {
     case PROP_SILENT:
       filter->silent = g_value_get_boolean (value);
-      break;	  
+      break;
     case PROP_TCP:
       tcpport = g_value_get_uint (value);
-      break;	
+      break;
 	case PROP_THRESHTUNE:
       threshtune = g_value_get_uint (value);
-      break;	  
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -170,7 +170,7 @@ static void
 gst_brightspotdetector_get_property (GObject * object, guint prop_id,
     GValue * value, GParamSpec * pspec)
 {
-  Gstexample *filter = GST_EXAMPLE (object);
+  Gstbrightspotdetector *filter = GST_BRIGHTSPOTDETECTOR (object);
 
   switch (prop_id) {
     case PROP_SILENT:
@@ -194,10 +194,10 @@ gst_brightspotdetector_get_property (GObject * object, guint prop_id,
 static gboolean
 gst_brightspotdetector_set_caps (GstPad * pad, GstCaps * caps)
 {
-  Gstexample *filter;
+  Gstbrightspotdetector *filter;
   GstPad *otherpad;
 
-  filter = GST_EXAMPLE (gst_pad_get_parent (pad));
+  filter = GST_BRIGHTSPOTDETECTOR (gst_pad_get_parent (pad));
   otherpad = (pad == filter->srcpad) ? filter->sinkpad : filter->srcpad;
   gst_object_unref (filter);
 
@@ -222,9 +222,9 @@ gst_brightspotdetector_set_caps (GstPad * pad, GstCaps * caps)
  */
 static GstFlowReturn gst_brightspotdetector_chain (GstPad * pad, GstBuffer * buf)
 {
-	Gstexample *filter;
+	Gstbrightspotdetector *filter;
 
-	filter = GST_EXAMPLE (GST_OBJECT_PARENT (pad));
+	filter = GST_BRIGHTSPOTDETECTOR (GST_OBJECT_PARENT (pad));
 
 	unsigned char * img = GST_BUFFER_DATA(buf);
 
@@ -240,16 +240,14 @@ static GstFlowReturn gst_brightspotdetector_chain (GstPad * pad, GstBuffer * buf
 static gboolean
 brightspotdetector_init (GstPlugin * brightspotdetector)
 {
-  /* debug category for fltering log messages
-   *
-   * exchange the string 'Template example' with your description
+  /* debug category for filtering log messages
    */   
 	 
   GST_DEBUG_CATEGORY_INIT (gst_brightspotdetector_debug, "brightspotdetector",
       0, "The BrightSpotDetector will output the location of the brightest spot");
 
   return gst_element_register (brightspotdetector, "brightspotdetector", GST_RANK_NONE,
-      GST_TYPE_EXAMPLE);
+      GST_TYPE_BRIGHTSPOTDETECTOR);
 }
 
 /* PACKAGE: this is usually set by autotools depending on some _INIT macro
@@ -261,9 +259,7 @@ brightspotdetector_init (GstPlugin * brightspotdetector)
 #define PACKAGE "BrightSpotDetector"
 #endif
 
-/* gstreamer looks for this structure to register examples
- *
- * exchange the string 'Template example' with your example description
+/* gstreamer looks for this structure to register brightspotdetector
  */
 GST_PLUGIN_DEFINE (
     GST_VERSION_MAJOR,
@@ -276,4 +272,3 @@ GST_PLUGIN_DEFINE (
     "BrightSpotDetector",
     "http://gstreamer.net/"
 )
-

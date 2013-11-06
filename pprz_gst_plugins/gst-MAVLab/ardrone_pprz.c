@@ -3,16 +3,11 @@
 #include <stdlib.h>     // calloc, exit, free
 #include <unistd.h>     // usleep
 #include <stdio.h>      // printf
-#include <pthread.h>
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
+#include <pthread.h>    // pthread_create
+#include <string.h>     // memset
 
 
 #include "ardrone_pprz.h"
-#include "video_message_structs_sky.h"
-#include "socket.h"
 
 //////////////////////////////////////////////
 // GST PLUGIN SETTINGS
@@ -22,13 +17,24 @@ int mode;
 gint adjust_factor;
 unsigned int tcpport;
 
+//////////////////////////////////////////////
+// PPRZ COMMUNICATIONS
+
+#include "video_message_structs_sky.h"
+#include "socket.h"
+
+unsigned int socketIsReady;
+struct gst2ppz_message_struct_sky gst2ppz;
+struct ppz2gst_message_struct_sky ppz2gst;
 
 
 
-unsigned char * img_uncertainty;
 
 
 
+
+//////////////////////////////////////////////
+// INIT
 
 
 #include "skysegmentation.h"
@@ -40,12 +46,10 @@ unsigned char * img_uncertainty;
 unsigned char * old_img;
 int old_pitch,old_roll,old_alt;
 
+unsigned char * img_uncertainty;
+
 
 unsigned int counter;
-
-unsigned int socketIsReady;
-struct gst2ppz_message_struct_sky gst2ppz;
-struct ppz2gst_message_struct_sky ppz2gst;
 
 float opt_angle_y_prev;
 float opt_angle_x_prev;
@@ -67,19 +71,21 @@ void my_plugin_init(void)
 	opt_angle_x_prev=0;
   
   
-  	if (tcpport>0) {
+  if (tcpport>0)
+  {
 		//start seperate threat to connect
 		//seperate threat is needed because otherwise big delays can exist in the init or chain function
 		//causing the gst to crash
-	
+
 		pthread_t th1;
 		int th1_r;
-		pthread_create(&th1,NULL,TCP_threat,&th1_r);	
-	} 
+		pthread_create(&th1,NULL,TCP_threat,&th1_r);
+	}
 }
 
 
-void *TCP_threat( void *ptr) {
+void *TCP_threat( void *ptr)
+{
 	g_print("Waiting for connection on port %d\n",tcpport);
 	socketIsReady = initSocket(tcpport);
    	if (!socketIsReady) { 

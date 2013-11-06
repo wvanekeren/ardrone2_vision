@@ -1,13 +1,13 @@
 
 /**
- * SECTION:element-mavlab
+ * SECTION:element-%%%pluginname%%%
  *
- * The MAVLab plugin for gstreamer will contain algorithms to perform analysis on the realtime video on board, to feed to the autopilot
+ * The %%%Pluginname%%% Plugin for GStreamer.
  *
  * <refsect2>
- * <title>Example launch line</title>
+ * <title>%%%Pluginname%%% launch line</title>
  * |[
- * gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate=5/1' ! videoscale ! video/x-raw-yuv, width=640, height=368 ! mavlab ! fakesink
+ * gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate=5/1' ! videoscale ! video/x-raw-yuv, width=640, height=368 ! %%%pluginname%%% ! fakesink
 
  * ]|
  * </refsect2>
@@ -19,13 +19,13 @@
 
 #include <gst/gst.h>
 
-#include "ardrone_pprz.h"
-#include "gstardrone.h"
+#include "gst_%%%pluginname%%%_plugin.h
+#include "%%%pluginname%%%_code.h"
 
 
 
-GST_DEBUG_CATEGORY_STATIC (gst_mavlab_debug);
-#define GST_CAT_DEFAULT gst_mavlab_debug
+GST_DEBUG_CATEGORY_STATIC (gst_%%%pluginname%%%_debug);
+#define GST_CAT_DEFAULT gst_%%%pluginname%%%_debug
 
 /* Filter signals and args */
 enum
@@ -40,8 +40,7 @@ enum
   PROP_0,
   PROP_SILENT,
   PROP_TCP,
-  ADJUST,
-  MODE
+  PROP_YOUR_OWN_VARIABLE
 };
 
 /* the capabilities of the inputs and outputs.
@@ -60,27 +59,27 @@ static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE ("src",
     GST_STATIC_CAPS ("video/x-raw-yuv, format=(fourcc)UYVY"	)
     );
 
-GST_BOILERPLATE (Gstmavlab, gst_mavlab, GstElement,
+GST_BOILERPLATE (Gst%%%pluginname%%%, gst_%%%pluginname%%%, GstElement,
     GST_TYPE_ELEMENT);
 
-static void gst_mavlab_set_property (GObject * object, guint prop_id,
+static void gst_%%%pluginname%%%_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec);
-static void gst_mavlab_get_property (GObject * object, guint prop_id,
+static void gst_%%%pluginname%%%_get_property (GObject * object, guint prop_id,
     GValue * value, GParamSpec * pspec);
 
-static gboolean gst_mavlab_set_caps (GstPad * pad, GstCaps * caps);
-static GstFlowReturn gst_mavlab_chain (GstPad * pad, GstBuffer * buf);
+static gboolean gst_%%%pluginname%%%_set_caps (GstPad * pad, GstCaps * caps);
+static GstFlowReturn gst_%%%pluginname%%%_chain (GstPad * pad, GstBuffer * buf);
 
 /* GObject vmethod implementations */
 
 static void
-gst_mavlab_base_init (gpointer gclass)
+gst_%%%pluginname%%%_base_init (gpointer gclass)
 {
 
   GstElementClass *element_class = GST_ELEMENT_CLASS (gclass);
 
   gst_element_class_set_details_simple(element_class,
-    "mavlab",
+    "%%%pluginname%%%",
     "Passthrough element",
     "Calculates stuff on the video, to be fed to an autopilot",
     "Kevin van Hecke");
@@ -91,17 +90,17 @@ gst_mavlab_base_init (gpointer gclass)
       gst_static_pad_template_get (&sink_factory));
 }
 
-/* initialize the mavlab's class */
+/* initialize the %%%pluginname%%%'s class */
 static void
-gst_mavlab_class_init (GstmavlabClass * klass)
+gst_%%%pluginname%%%_class_init (Gst%%%pluginname%%%Class * klass)
 {
   GObjectClass *gobject_class;
   //GstElementClass *gstelement_class;
 
 	gobject_class = (GObjectClass *) klass;
 
-	gobject_class->set_property = gst_mavlab_set_property;
-	gobject_class->get_property = gst_mavlab_get_property;
+	gobject_class->set_property = gst_%%%pluginname%%%_set_property;
+	gobject_class->get_property = gst_%%%pluginname%%%_get_property;
 
 	g_object_class_install_property (gobject_class, PROP_SILENT,
 	g_param_spec_boolean ("silent", "Silent", "Produce verbose output.",
@@ -111,12 +110,8 @@ gst_mavlab_class_init (GstmavlabClass * klass)
 	g_param_spec_uint ("tcp_port", "TCP port", "Output results over tcp",0,65535,
 	0, G_PARAM_READWRITE));
 
-	g_object_class_install_property (gobject_class, ADJUST,
-	g_param_spec_int ("adjust", "Adjust factor", "Change adjust factor for sky segmentation.",-1000,1000,
-	0, G_PARAM_READWRITE));
-	
-	g_object_class_install_property (gobject_class, MODE,
-	g_param_spec_int ("mode", "Change the mode", "Change the mode to do either only segmentation [0] or the whole bunch [1].",0,10,
+	g_object_class_install_property (gobject_class, PROP_YOUR_OWN_VARIABLE,
+	g_param_spec_uint ("yourownvariable", "you own variable", "Your Own Variable",0,65535,
 	0, G_PARAM_READWRITE));
 }
 
@@ -126,17 +121,17 @@ gst_mavlab_class_init (GstmavlabClass * klass)
  * initialize instance structure
  */
 static void
-gst_mavlab_init (Gstmavlab * filter,
-    GstmavlabClass * gclass)
+gst_%%%pluginname%%%_init (Gst%%%pluginname%%% * filter,
+    Gst%%%pluginname%%%Class * gclass)
 {
 	
   filter->sinkpad = gst_pad_new_from_static_template (&sink_factory, "sink");
   gst_pad_set_setcaps_function (filter->sinkpad,
-                                GST_DEBUG_FUNCPTR(gst_mavlab_set_caps));
+                                GST_DEBUG_FUNCPTR(gst_%%%pluginname%%%_set_caps));
   gst_pad_set_getcaps_function (filter->sinkpad,
                                 GST_DEBUG_FUNCPTR(gst_pad_proxy_getcaps));
   gst_pad_set_chain_function (filter->sinkpad,
-                              GST_DEBUG_FUNCPTR(gst_mavlab_chain));
+                              GST_DEBUG_FUNCPTR(gst_%%%pluginname%%%_chain));
 
   filter->srcpad = gst_pad_new_from_static_template (&src_factory, "src");
   gst_pad_set_getcaps_function (filter->srcpad,
@@ -149,23 +144,20 @@ gst_mavlab_init (Gstmavlab * filter,
 }
 
 static void
-gst_mavlab_set_property (GObject * object, guint prop_id,
+gst_%%%pluginname%%%_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec)
 {
-	Gstmavlab *filter = GST_MAVLAB (object);
+	Gst%%%pluginname%%% *filter = GST_%%%PLUGINNAME%%% (object);
 
   switch (prop_id) {
     case PROP_SILENT:
       filter->silent = g_value_get_boolean (value);
       break;
-    case ADJUST:
-      adjust_factor = g_value_get_int (value);
-      break;	
     case PROP_TCP:
       tcpport = g_value_get_uint (value);
-      break;		  
-	case MODE:
-      mode = g_value_get_int (value);
+      break;
+	case PROP_YOUR_OWN_VARIABLE:
+      yourownvariable = g_value_get_uint (value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -174,23 +166,20 @@ gst_mavlab_set_property (GObject * object, guint prop_id,
 }
 
 static void
-gst_mavlab_get_property (GObject * object, guint prop_id,
+gst_%%%pluginname%%%_get_property (GObject * object, guint prop_id,
     GValue * value, GParamSpec * pspec)
 {
-  Gstmavlab *filter = GST_MAVLAB (object);
+  Gst%%%pluginname%%% *filter = GST_%%%PLUGINNAME%%% (object);
 
   switch (prop_id) {
     case PROP_SILENT:
       g_value_set_boolean (value, filter->silent);
       break;
-	case ADJUST:
-      g_value_set_int (value, adjust_factor);
-      break;
 	case PROP_TCP:
       g_value_set_uint (value, tcpport);
       break;
-	case MODE:
-      g_value_set_int (value, mode);
+	case PROP_YOUR_OWN_VARIABLE:
+      g_value_set_uint (value, yourownvariable);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -202,12 +191,12 @@ gst_mavlab_get_property (GObject * object, guint prop_id,
 
 /* this function handles the link with other elements */
 static gboolean
-gst_mavlab_set_caps (GstPad * pad, GstCaps * caps)
+gst_%%%pluginname%%%_set_caps (GstPad * pad, GstCaps * caps)
 {
-  Gstmavlab *filter;
+  Gst%%%pluginname%%% *filter;
   GstPad *otherpad;
 
-  filter = GST_MAVLAB (gst_pad_get_parent (pad));
+  filter = GST_%%%PLUGINNAME%%% (gst_pad_get_parent (pad));
   otherpad = (pad == filter->srcpad) ? filter->sinkpad : filter->srcpad;
   gst_object_unref (filter);
 
@@ -230,11 +219,11 @@ gst_mavlab_set_caps (GstPad * pad, GstCaps * caps)
 /* chain function
  * this function does the actual processing
  */
-static GstFlowReturn gst_mavlab_chain (GstPad * pad, GstBuffer * buf)
+static GstFlowReturn gst_%%%pluginname%%%_chain (GstPad * pad, GstBuffer * buf)
 {
-	Gstmavlab *filter;
+	Gst%%%pluginname%%% *filter;
 
-	filter = GST_MAVLAB (GST_OBJECT_PARENT (pad));
+	filter = GST_%%%PLUGINNAME%%% (GST_OBJECT_PARENT (pad));
 
 	unsigned char * img = GST_BUFFER_DATA(buf);
 
@@ -248,16 +237,16 @@ static GstFlowReturn gst_mavlab_chain (GstPad * pad, GstBuffer * buf)
  * register the element factories and other features
  */
 static gboolean
-mavlab_init (GstPlugin * mavlab)
+%%%pluginname%%%_init (GstPlugin * %%%pluginname%%%)
 {
   /* debug category for filtering log messages
    */   
 	 
-  GST_DEBUG_CATEGORY_INIT (gst_mavlab_debug, "mavlab",
-      0, "The MAVLab plugin for gstreamer will contain algorithms to perform analysis on the realtime video on board, to feed to the autopilot");
+  GST_DEBUG_CATEGORY_INIT (gst_%%%pluginname%%%_debug, "%%%pluginname%%%",
+      0, "The %%%Pluginname%%% will do something.");
 
-  return gst_element_register (mavlab, "mavlab", GST_RANK_NONE,
-      GST_TYPE_MAVLAB);
+  return gst_element_register (%%%pluginname%%%, "%%%pluginname%%%", GST_RANK_NONE,
+      GST_TYPE_%%%PLUGINNAME%%%);
 }
 
 /* PACKAGE: this is usually set by autotools depending on some _INIT macro
@@ -266,19 +255,19 @@ mavlab_init (GstPlugin * mavlab)
  * compile this code. GST_PLUGIN_DEFINE needs PACKAGE to be defined.
  */
 #ifndef PACKAGE
-#define PACKAGE "MAVLab"
+#define PACKAGE "%%%Pluginname%%%"
 #endif
 
-/* gstreamer looks for this structure to register mavlabs
+/* gstreamer looks for this structure to register %%%pluginname%%%
  */
 GST_PLUGIN_DEFINE (
     GST_VERSION_MAJOR,
     GST_VERSION_MINOR,
-    "mavlab",
-    "The MAVLab plugin for gstreamer will contain algorithms to perform analysis on the realtime video on board, to feed to the autopilot",
-    mavlab_init,
+    "%%%pluginname%%%",
+    "The %%%Pluginname%%% will do something",
+    %%%pluginname%%%_init,
     VERSION,
     "LGPL",
-    "MAVLab",
+    "%%%Pluginname%%%",
     "http://gstreamer.net/"
 )

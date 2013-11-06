@@ -4,7 +4,7 @@
 #include <string.h>     // memset
 #include <gst/gst.h>    // gprint
 
-#include "brightspotdetector.h"
+#include "brightspotdetector_code.h"
 #include "cv_brightspot.h"
 
 ////////////////////////////////////////////////
@@ -38,7 +38,7 @@ void my_plugin_init()
 		//start seperate threat to connect
 		//seperate threat is needed because otherwise big delays can exist in the init or chain function
 		//causing the gst to crash
-	
+
 		pthread_t th1;
 		int th1_r;
 		pthread_create(&th1,NULL,TCP_threat,&th1_r);
@@ -52,9 +52,9 @@ void *TCP_threat( void *ptr)
 	g_print("Waiting for connection on port %d\n",tcpport);
 
 	socketIsReady = initSocket(tcpport);
-  if (!socketIsReady) 
+  if (!socketIsReady)
   {
-		g_print("Error initialising connection\n");	
+		g_print("Error initialising connection\n");
 	}
   else
   {
@@ -62,17 +62,17 @@ void *TCP_threat( void *ptr)
 	}
 
 
-	while(1) 
+	while(1)
   {
 		int res = Read_msg_socket((char *) &ppz2gst,sizeof(ppz2gst));
-		if	(res>0) 
+		if	(res>0)
     {
 			int tmp;
 			tmp = (int)counter - (int)ppz2gst.heading;
 			g_print("Current counter: %d, Received counter: %d, diff: %d\n",counter, ppz2gst.heading, tmp);
 			ppz2gst.heading = 6;
 		}
-    else 
+    else
     {
 			g_print("Nothing received: %d\n",res);
 			usleep(100000);

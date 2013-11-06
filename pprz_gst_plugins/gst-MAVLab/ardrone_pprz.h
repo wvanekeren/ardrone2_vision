@@ -1,5 +1,5 @@
 
-#include <gst/gst.h>
+#include <gst/gst.h>    // gint, gprint
 
 extern gint adjust_factor;
 extern unsigned int imgWidth, imgHeight;

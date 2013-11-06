@@ -15,9 +15,9 @@ all:
 D = $(DESTDIR)
 
 
-gst_plugin := libExample.so 
+gst_plugin := libBrightSpotDetector.so
 
-$(gst_plugin):  gstexample.o socket.o
+$(gst_plugin):  gstexample.o brightspotdetector.o cv_brightspot.o socket.o
 $(gst_plugin): override CFLAGS += $(GST_CFLAGS) \
 	-D VERSION='"$(version)"' -D DSPDIR='"$(dspdir)"'
 $(gst_plugin): override LIBS += $(GST_LIBS)
@@ -40,12 +40,7 @@ QUIET_LINK  = @echo '   LINK       '$@;
 QUIET_CLEAN = @echo '   CLEAN      '$@;
 endif
 
-.PHONY: doc doc-install
-
 %.so: override CFLAGS += -fPIC
-
-install: $(targets) $(bins)
-	install -m 755 -D libExample.so $(D)$(prefix)/lib/gstreamer-0.10/libExample.so
 
 %.o:: %.c
 	$(QUIET_CC)$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<

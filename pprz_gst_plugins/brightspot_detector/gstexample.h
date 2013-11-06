@@ -52,7 +52,7 @@ G_BEGIN_DECLS
 
 /* #defines don't like whitespacey bits */
 #define GST_TYPE_EXAMPLE \
-  (gst_example_get_type())
+  (gst_brightspotdetector_get_type())
 #define GST_EXAMPLE(obj) \
   (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_EXAMPLE,Gstexample))
 #define GST_EXAMPLE_CLASS(klass) \
@@ -79,7 +79,7 @@ struct _GstexampleClass
   GstElementClass parent_class;
 };
 
-GType gst_example_get_type (void);
+GType gst_brightspotdetector_get_type (void);
 
 G_END_DECLS
 

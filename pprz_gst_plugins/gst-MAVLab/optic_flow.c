@@ -1,5 +1,5 @@
 #include <stdlib.h>
-#include "colors.h"
+//#include "colors.h"
 //#include "sky_segmentation.h"
 #include "optic_flow.h"
 

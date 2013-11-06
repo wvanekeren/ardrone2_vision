@@ -19,7 +19,7 @@ D = $(DESTDIR)
 
 gst_plugin := libMAVLab.so 
 
-$(gst_plugin):  gstardrone.o ardrone_pprz.o optic_flow.o colors.o skysegmentation.o gps.o ../../gst_plugin_framework/socket.o
+$(gst_plugin):  gstardrone.o ardrone_pprz.o optic_flow.o trig.o ../../gst_plugin_framework/socket.o
 $(gst_plugin): override CFLAGS += $(GST_CFLAGS) \
 	-D VERSION='"$(version)"' -D DSPDIR='"$(dspdir)"'
 $(gst_plugin): override LIBS += $(GST_LIBS)

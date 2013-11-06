@@ -37,16 +37,12 @@ struct ppz2gst_message_struct_sky ppz2gst;
 // INIT
 
 
-#include "skysegmentation.h"
 #include "optic_flow.h"
-#include "gps.h"
-
+#include "trig.h"
 
   //optical flow
 unsigned char * old_img;
 int old_pitch,old_roll,old_alt;
-
-unsigned char * img_uncertainty;
 
 
 unsigned int counter;
@@ -60,7 +56,6 @@ void *TCP_threat( void *ptr);
 void my_plugin_init(void)
 {
 	counter = 0;
-	img_uncertainty= (unsigned char *) calloc(imgWidth*imgHeight*2,sizeof(unsigned char)); //TODO: find place to put: free(img_uncertainty);
 	old_img = (unsigned char *) calloc(imgWidth*imgHeight*2,sizeof(unsigned char));
 	old_pitch = 0;
 	old_roll = 0;
@@ -117,23 +112,7 @@ void my_plugin_run(unsigned char* img)
 {
 	
 	//if GST_BUFFER_SIZE(buf) <> imgheight*imgwidth*2 -> wrong color space!!!
-	if (mode==0) 
-	{
-		segment_no_yco_AdjustTree(img,img_uncertainty,adjust_factor); 
-	}
-	else if (mode==1)
-	{
-		skyseg_interface_n(img, img_uncertainty, adjust_factor, counter, ppz2gst.pitch/36, ppz2gst.roll/36); 
-
-		if (tcpport>0) { 	//if network was enabled by user
-			if (socketIsReady) { 
-				//gst2ppz.blob_x1 = blobP[0];
-				gst2ppz.counter = counter;
-				Write_msg_socket((char *) &gst2ppz, sizeof(gst2ppz));
-			}
-		}
-	}
-	else if (mode==2)
+	if (mode==2)
 	{	
 		int MAX_POINTS, error;
 		int n_found_points,mark_points;

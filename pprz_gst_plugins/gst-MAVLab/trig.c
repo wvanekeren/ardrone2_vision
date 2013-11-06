@@ -1,19 +1,8 @@
 /* * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * *
- *  gps.c - navigation functions for the SRV-1 / SVS Blackfin controllers
- *    Copyright (C) 2005-2009  Surveyor Corporation
- *
- *  This program is free software; you can redistribute it and/or modify
- *  it under the terms of the GNU General Public License as published by
- *  the Free Software Foundation; either version 2 of the License, or
- *  (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *  GNU General Public License for more details (www.gnu.org/licenses)
+ * Trigonometry
  * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * */
 
-#include "gps.h"
+#include "trig.h"
 
 static int cosine[] = {
 10000, 9998, 9994, 9986, 9976, 9962, 9945, 9925, 9903, 9877, 
@@ -28,7 +17,7 @@ static int cosine[] = {
     0 
 };
 
-int sin(int ix)
+int sin_zelf(int ix)
 {
     while (ix < 0)
         ix = ix + 360;
@@ -41,7 +30,7 @@ int sin(int ix)
     return 0;
 }
 
-int cos(int ix)
+int cos_zelf(int ix)
 {
     while (ix < 0)
         ix = ix + 360;
@@ -70,7 +59,7 @@ int tan_zelf(int ix)
     return 0;
 }
 
-int asin(int y, int hyp)
+int asin_zelf(int y, int hyp)
 {
     int quot, sgn, ix;
     if ((y > hyp) || (y == 0))
@@ -92,7 +81,7 @@ int asin(int y, int hyp)
         return 90-ix;
 }
 
-int acos(int x, int hyp)
+int acos_zelf(int x, int hyp)
 {
     int quot, sgn, ix;
     if (x > hyp) 
@@ -121,7 +110,7 @@ int acos(int x, int hyp)
         return ix;
 }
 
- //atan_zelf(y/x) in degrees
+//atan_zelf(y/x) in degrees
 int atan_zelf(int y, int x)
 {
     int angle, flip, t, xy;
@@ -147,54 +136,3 @@ unsigned int isqrt(unsigned int val) {
     } while (b >>= 1);
     return g;
 }
-
-/* calculates heading between two gps sets of gps coordinates
-   heading angle corresponds to compass points (N = 0-deg) */
-int gps_head(int lat1, int lon1, int lat2, int lon2)
-{
-    int x, y, sy, sx, ll, ang;
-    
-    sx = sy = 0;  // sign bits
-
-    y = lat2 - lat1;
-    if (y < 0) { sy = 1; y = -y; }
-
-    ll = lat1;  
-    if (ll < 0) 
-        ll = -lat1;
-    x = ((lon2 - lon1) * cos(ll / 1000000)) / 1000;
-    if (x < 0) { sx = 1; x = -x; }
-    
-    ang = atan_zelf(y, x);
-    if ((sx==0) && (sy==0))
-        ang = 90 - ang;
-    if ((sx==0) && (sy==1))
-        ang = 90 + ang;
-    if ((sx==1) && (sy==1))
-        ang = 270 - ang;
-    if ((sx==1) && (sy==0))
-        ang = 270 + ang;
-    return ang;
-}
-
-/* calculates distance between two gps coordinates in meters */
-int gps_dist(int lat1, int lon1, int lat2, int lon2)
-{
-    int x, y, ll;
-    
-    ll = lat1;  
-    if (ll < 0) 
-        ll = -lat1;
-    y = lat2 - lat1;
-    if (y < 0) y = -y;
-    x = ((lon2 - lon1) * cos(ll / 1000000)) / 1000;
-    if (x < 0) x = -x;
-    if ((x > 10000) || (y > 10000)) {
-        x = x / 10000;
-        y = y / 10000;
-        return isqrt(x*x + y*y) * 1113;   
-    } else {
-        return (isqrt(x*x + y*y) * 1113) / 10000;   
-    }
-}
-

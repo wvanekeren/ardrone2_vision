@@ -1,7 +1,7 @@
 
 ifeq ($(PROCESSOR),x86)
 	include ../../gst_plugin_framework/Makefile-x86.conf
-	override CFLAGS += -std=c99 -D_GNU_SOURCE -DGST_DISABLE_DEPRECATED 
+	override CFLAGS += -std=c99 -D_GNU_SOURCE -DGST_DISABLE_DEPRECATED
 	override CFLAGS += -DDSP_API=$(DSP_API) -DSN_API=$(SN_API)
 	override CFLAGS += -I../../gst_plugin_framework
 else

@@ -2,7 +2,7 @@
 /**
  * SECTION:element-brightspotdetector
  *
- * The BrightSpotDetector plugin for gstreamer.
+ * The BrightSpotDetector Plugin for GStreamer.
  *
  * <refsect2>
  * <title>BrightSpotDetector launch line</title>
@@ -113,7 +113,6 @@ gst_brightspotdetector_class_init (GstbrightspotdetectorClass * klass)
 	g_object_class_install_property (gobject_class, PROP_THRESHTUNE,
 	g_param_spec_uint ("threshtune", "threshtune tune", "Changes output of binary image function",0,65535,
 	0, G_PARAM_READWRITE));
-
 }
 
 /* initialize the new element

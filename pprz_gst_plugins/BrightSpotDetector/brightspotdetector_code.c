@@ -90,15 +90,15 @@ void my_plugin_run(unsigned char* frame)
   memset(blobP, 0, sizeof(blobP[0]) * 8);
 	unsigned int max_idx, max_idy;
 
-  // Actual Payload
+	// Actual Payload
 	brightspotDetector(frame,blobP,&max_idx,&max_idy);
-  //g_print("Max_idx: %d Max_idy: %d Counter: %d\n",max_idx,max_idy,counter);
+	//g_print("Max_idx: %d Max_idy: %d Counter: %d\n",max_idx,max_idy,counter);
 
 
 	if (tcpport>0)
-  { 	//if network was enabled by user
+	{ 	//if network was enabled by user
 		if (socketIsReady)
-    {
+ 		{
 			gst2ppz.blob_x1 = blobP[0];
 			gst2ppz.blob_y1 = blobP[1];
 			gst2ppz.blob_x2 = blobP[2];

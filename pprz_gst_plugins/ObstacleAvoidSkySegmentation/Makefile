@@ -19,7 +19,7 @@ D = $(DESTDIR)
 
 gst_plugin := libObstacleAvoidSkySegmentation.so
 
-$(gst_plugin):  gst_obstacleavoidskysegmentation_plugin.o obstacleavoidskysegmentation_code.o ../../gst_plugin_framework/socket.o
+$(gst_plugin):  gst_obstacleavoidskysegmentation_plugin.o obstacleavoidskysegmentation_code.o skysegmentation.o trig.o ../../gst_plugin_framework/socket.o
 $(gst_plugin): override CFLAGS += $(GST_CFLAGS) \
 	-D VERSION='"$(version)"' -D DSPDIR='"$(dspdir)"'
 $(gst_plugin): override LIBS += $(GST_LIBS)

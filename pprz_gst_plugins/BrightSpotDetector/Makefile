@@ -8,7 +8,7 @@ else
 	include ../../gst_plugin_framework/Makefile-ARM.conf
 	override CFLAGS += -std=c99 -D_GNU_SOURCE -DGST_DISABLE_DEPRECATED -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp -ftree-vectorize
 	override CFLAGS += -DDSP_API=$(DSP_API) -DSN_API=$(SN_API)
-	override CFLAGS += -I../../gst_plugin_framework
+	override CFLAGS += -I../../gst_plugin_framework -I./
 endif
 
 

@@ -1,6 +1,4 @@
 #include <stdlib.h>
-//#include "colors.h"
-//#include "sky_segmentation.h"
 #include "optic_flow.h"
 
 #define int_index(x,y) (y * IMG_WIDTH + x)

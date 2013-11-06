@@ -33,4 +33,8 @@ os.makedirs(dirname)
 copy_and_convert('./template/gst_plugin_template.h', dirname + 'gst_' + name.lower() + '_plugin.h')
 copy_and_convert('./template/gst_plugin_template.c', dirname + 'gst_' + name.lower() + '_plugin.c')
 copy_and_convert('./template/plugin_code.h', dirname + name.lower() + '_code.h')
+copy_and_convert('./template/plugin_code.c', dirname + name.lower() + '_code.c')
+copy_and_convert('./template/Makefile', dirname + 'Makefile')
+
+
 

@@ -19,7 +19,7 @@
 
 #include <gst/gst.h>
 
-#include "gst_%%%pluginname%%%_plugin.h
+#include "gst_%%%pluginname%%%_plugin.h"
 #include "%%%pluginname%%%_code.h"
 
 

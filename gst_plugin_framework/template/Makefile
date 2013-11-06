@@ -1,7 +1,7 @@
 
 ifeq ($(PROCESSOR),x86)
 	include ../../gst_plugin_framework/Makefile-x86.conf
-	override CFLAGS += -std=c99 -D_GNU_SOURCE -DGST_DISABLE_DEPRECATED 
+	override CFLAGS += -std=c99 -D_GNU_SOURCE -DGST_DISABLE_DEPRECATED
 	override CFLAGS += -DDSP_API=$(DSP_API) -DSN_API=$(SN_API)
 	override CFLAGS += -I../../gst_plugin_framework
 else
@@ -10,16 +10,16 @@ else
 	override CFLAGS += -DDSP_API=$(DSP_API) -DSN_API=$(SN_API)
 	override CFLAGS += -I../../gst_plugin_framework
 endif
-override CFLAGS += -lm -fno-builtin-cos -fno-builtin-sin -fno-builtin-acos -fno-builtin-asin -fno-builtin-atan 
+
 
 all:
 
 D = $(DESTDIR)
 
 
-gst_plugin := libMAVLab.so 
+gst_plugin := lib%%%Pluginname%%%.so
 
-$(gst_plugin):  gstardrone.o ardrone_pprz.o optic_flow.o colors.o skysegmentation.o gps.o ../../gst_plugin_framework/socket.o
+$(gst_plugin):  gst_%%%pluginname%%%_plugin.o %%%pluginname%%%_code.o ../../gst_plugin_framework/socket.o
 $(gst_plugin): override CFLAGS += $(GST_CFLAGS) \
 	-D VERSION='"$(version)"' -D DSPDIR='"$(dspdir)"'
 $(gst_plugin): override LIBS += $(GST_LIBS)
@@ -42,12 +42,7 @@ QUIET_LINK  = @echo '   LINK       '$@;
 QUIET_CLEAN = @echo '   CLEAN      '$@;
 endif
 
-.PHONY: doc doc-install
-
 %.so: override CFLAGS += -fPIC
-
-install: $(targets) $(bins)
-	install -m 755 -D libMAVLab.so $(D)$(prefix)/lib/gstreamer-0.10/libMAVLab.so
 
 %.o:: %.c
 	$(QUIET_CC)$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<

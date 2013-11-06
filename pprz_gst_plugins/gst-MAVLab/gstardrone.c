@@ -2,10 +2,10 @@
 /**
  * SECTION:element-mavlab
  *
- * The MAVLab plugin for gstreamer will contain algorithms to perform analysis on the realtime video on board, to feed to the autopilot
+ * The MAVLab Plugin for GStreamer will contain algorithms to perform analysis on the realtime video on board, to feed to the autopilot
  *
  * <refsect2>
- * <title>Example launch line</title>
+ * <title>MAVLab launch line</title>
  * |[
  * gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate=5/1' ! videoscale ! video/x-raw-yuv, width=640, height=368 ! mavlab ! fakesink
 
@@ -160,10 +160,10 @@ gst_mavlab_set_property (GObject * object, guint prop_id,
       break;
     case ADJUST:
       adjust_factor = g_value_get_int (value);
-      break;	
+      break;
     case PROP_TCP:
       tcpport = g_value_get_uint (value);
-      break;		  
+      break;
 	case MODE:
       mode = g_value_get_int (value);
       break;
@@ -254,7 +254,7 @@ mavlab_init (GstPlugin * mavlab)
    */   
 	 
   GST_DEBUG_CATEGORY_INIT (gst_mavlab_debug, "mavlab",
-      0, "The MAVLab plugin for gstreamer will contain algorithms to perform analysis on the realtime video on board, to feed to the autopilot");
+      0, "The MAVLab Plugin for GStreamer will contain algorithms to perform analysis on the realtime video on board, to feed to the autopilot");
 
   return gst_element_register (mavlab, "mavlab", GST_RANK_NONE,
       GST_TYPE_MAVLAB);
@@ -269,13 +269,13 @@ mavlab_init (GstPlugin * mavlab)
 #define PACKAGE "MAVLab"
 #endif
 
-/* gstreamer looks for this structure to register mavlabs
+/* gstreamer looks for this structure to register mavlab
  */
 GST_PLUGIN_DEFINE (
     GST_VERSION_MAJOR,
     GST_VERSION_MINOR,
     "mavlab",
-    "The MAVLab plugin for gstreamer will contain algorithms to perform analysis on the realtime video on board, to feed to the autopilot",
+    "The MAVLab Plugin for GStreamer will contain algorithms to perform analysis on the realtime video on board, to feed to the autopilot",
     mavlab_init,
     VERSION,
     "LGPL",

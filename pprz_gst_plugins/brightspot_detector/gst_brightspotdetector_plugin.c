@@ -1,13 +1,13 @@
 
 /**
- * SECTION:element-example
+ * SECTION:element-brightspotdetector
  *
- * The Example plugin for gstreamer will show how to make a plugin. It will output the maximum brightness of the image.
+ * The brightspotdetector plugin for gstreamer.
  *
  * <refsect2>
  * <title>Example launch line</title>
  * |[
- * gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate=5/1' ! videoscale ! video/x-raw-yuv, width=640, height=368 ! example ! fakesink
+ * gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate=5/1' ! videoscale ! video/x-raw-yuv, width=640, height=368 ! brightspotdetector ! fakesink
 
  * ]|
  * </refsect2>
@@ -34,6 +34,7 @@ enum
   LAST_SIGNAL
 };
 
+//adjustable parameters
 enum
 {
   PROP_0,
@@ -96,23 +97,22 @@ gst_brightspotdetector_class_init (GstexampleClass * klass)
   GObjectClass *gobject_class;
   //GstElementClass *gstelement_class;
 
-  gobject_class = (GObjectClass *) klass;
- // gstelement_class = (GstElementClass *) klass;
+	gobject_class = (GObjectClass *) klass;
 
-  gobject_class->set_property = gst_brightspotdetector_set_property;
-  gobject_class->get_property = gst_brightspotdetector_get_property;
+	gobject_class->set_property = gst_brightspotdetector_set_property;
+	gobject_class->get_property = gst_brightspotdetector_get_property;
 
-  g_object_class_install_property (gobject_class, PROP_SILENT,
-      g_param_spec_boolean ("silent", "Silent", "Produce verbose output.",
-          FALSE, G_PARAM_READWRITE));
+	g_object_class_install_property (gobject_class, PROP_SILENT,
+	g_param_spec_boolean ("silent", "Silent", "Produce verbose output.",
+	FALSE, G_PARAM_READWRITE));
 		  
-  g_object_class_install_property (gobject_class, PROP_TCP,
-      g_param_spec_uint ("tcp_port", "TCP port", "Output results over tcp",0,65535,
-          0, G_PARAM_READWRITE));	
+	g_object_class_install_property (gobject_class, PROP_TCP,
+	g_param_spec_uint ("tcp_port", "TCP port", "Output results over tcp",0,65535,
+	0, G_PARAM_READWRITE));
 
-  g_object_class_install_property (gobject_class, PROP_THRESHTUNE,
-      g_param_spec_uint ("threshtune", "threshtune tune", "Changes output of binary image function",0,65535,
-          0, G_PARAM_READWRITE));		  
+	g_object_class_install_property (gobject_class, PROP_THRESHTUNE,
+	g_param_spec_uint ("threshtune", "threshtune tune", "Changes output of binary image function",0,65535,
+	0, G_PARAM_READWRITE));
 		  
 }
 
@@ -148,7 +148,7 @@ static void
 gst_brightspotdetector_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec)
 {
-  Gstexample *filter = GST_EXAMPLE (object);
+	Gstexample *filter = GST_EXAMPLE (object);
 
   switch (prop_id) {
     case PROP_SILENT:
@@ -157,7 +157,7 @@ gst_brightspotdetector_set_property (GObject * object, guint prop_id,
     case PROP_TCP:
       tcpport = g_value_get_uint (value);
       break;	
-    case PROP_THRESHTUNE:
+	case PROP_THRESHTUNE:
       threshtune = g_value_get_uint (value);
       break;	  
     default:
@@ -181,7 +181,7 @@ gst_brightspotdetector_get_property (GObject * object, guint prop_id,
       break;
 	case PROP_THRESHTUNE:
       g_value_set_uint (value, threshtune);
-      break;	  
+      break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
       break;
@@ -201,7 +201,6 @@ gst_brightspotdetector_set_caps (GstPad * pad, GstCaps * caps)
   otherpad = (pad == filter->srcpad) ? filter->sinkpad : filter->srcpad;
   gst_object_unref (filter);
 
-    
   //make the image size known
    const GstStructure *str;
 	str = gst_caps_get_structure (caps, 0);
@@ -212,9 +211,9 @@ gst_brightspotdetector_set_caps (GstPad * pad, GstCaps * caps)
 	imgHeight = (unsigned int)tmp;
 	g_print ("The video size is %dx%d\n", imgWidth, imgHeight);
 
-  my_plugin_init();
+	my_plugin_init();
 
-  return gst_pad_set_caps (otherpad, caps);
+	return gst_pad_set_caps (otherpad, caps);
 }
 
 
@@ -227,16 +226,12 @@ static GstFlowReturn gst_brightspotdetector_chain (GstPad * pad, GstBuffer * buf
 
 	filter = GST_EXAMPLE (GST_OBJECT_PARENT (pad));
 
-	unsigned char * img = GST_BUFFER_DATA(buf);  
+	unsigned char * img = GST_BUFFER_DATA(buf);
 
-  my_plugin_run(img);	
+	my_plugin_run(img);
 	  
   return gst_pad_push (filter->srcpad, buf);
 }
-
-
-
-
 
 /* entry point to initialize the plug-in
  * initialize the plug-in itself

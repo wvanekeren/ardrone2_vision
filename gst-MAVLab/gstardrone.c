@@ -29,7 +29,7 @@
 
 #include <gst/gst.h>
 #include "gstardrone.h"
-#include "guido.h"
+#include "skysegmentation.h"
 #include "optic_flow.h"
 #include "gps.h"
 

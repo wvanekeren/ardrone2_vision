@@ -1,4 +1,4 @@
-#include "guido.h"
+#include "skysegmentation.h"
 #include "colors.h"
 //#include <math.h>
 #include <stdlib.h>     /* abs */

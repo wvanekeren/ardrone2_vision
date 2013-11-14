@@ -27,8 +27,8 @@ void my_plugin_init(void)
 void my_plugin_run(unsigned char *frame)
 {
   int mode = 1;
-  int pitch = 0; // ppz2gst.pitch/36
-  int roll = 0;  // ppz2gst.roll/36
+  int pitch = ppz2gst.pitch/36;
+  int roll = ppz2gst.roll/36;
 
   if (mode==0)
   {

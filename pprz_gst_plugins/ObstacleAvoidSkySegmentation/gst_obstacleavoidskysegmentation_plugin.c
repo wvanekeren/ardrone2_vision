@@ -40,7 +40,8 @@ enum
   PROP_0,
   PROP_SILENT,
   PROP_TCP,
-  PROP_YOUR_OWN_VARIABLE
+  PROP_ADJUST_FACTOR,
+  PROP_VERBOSE
 };
 
 /* the capabilities of the inputs and outputs.
@@ -110,8 +111,12 @@ gst_obstacleavoidskysegmentation_class_init (GstobstacleavoidskysegmentationClas
 	g_param_spec_uint ("tcp_port", "TCP port", "Output results over tcp",0,65535,
 	0, G_PARAM_READWRITE));
 
-	g_object_class_install_property (gobject_class, PROP_YOUR_OWN_VARIABLE,
-	g_param_spec_uint ("adjustfactor", "adjustfactor", "Find more or less ground",0,20,
+	g_object_class_install_property (gobject_class, PROP_ADJUST_FACTOR,
+	g_param_spec_uint ("adjust_factor", "adjust factor", "Find more or less ground",0,20,
+	0, G_PARAM_READWRITE));
+
+	g_object_class_install_property (gobject_class, PROP_VERBOSE,
+	g_param_spec_uint ("verbose", "verbose", "Say More Or Less",0,10,
 	0, G_PARAM_READWRITE));
 }
 
@@ -154,10 +159,13 @@ gst_obstacleavoidskysegmentation_set_property (GObject * object, guint prop_id,
       filter->silent = g_value_get_boolean (value);
       break;
     case PROP_TCP:
-      tcpport = g_value_get_uint (value);
+      tcp_port = g_value_get_uint (value);
       break;
-	case PROP_YOUR_OWN_VARIABLE:
-      adjustfactor = g_value_get_uint (value);
+	case PROP_ADJUST_FACTOR:
+      adjust_factor = g_value_get_uint (value);
+      break;
+	case PROP_VERBOSE:
+      verbose = g_value_get_uint (value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -176,10 +184,13 @@ gst_obstacleavoidskysegmentation_get_property (GObject * object, guint prop_id,
       g_value_set_boolean (value, filter->silent);
       break;
 	case PROP_TCP:
-      g_value_set_uint (value, tcpport);
+      g_value_set_uint (value, tcp_port);
       break;
-	case PROP_YOUR_OWN_VARIABLE:
-      g_value_set_uint (value, adjustfactor);
+	case PROP_ADJUST_FACTOR:
+      g_value_set_uint (value, adjust_factor);
+      break;
+	case PROP_VERBOSE:
+      g_value_set_uint (value, verbose);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);

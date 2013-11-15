@@ -17,14 +17,11 @@ struct ppz2gst_message_struct ppz2gst;
 void *TCP_thread( void *ptr);
 void paparazzi_message_server_start(void);
 void paparazzi_message_send(void);
-unsigned int counter;
 
 void paparazzi_message_server_start(void)
 {
-	counter =0;
-
   //initialise socket:
-	if (tcpport>0)
+	if (tcp_port>0)
   {
 		//start seperate threat to connect
 		//seperate threat is needed because otherwise big delays can exist in the init or chain function
@@ -40,9 +37,9 @@ unsigned int socketIsReady;
 
 void *TCP_thread( void *ptr)
 {
-	g_print("Waiting for connection on port %d\n",tcpport);
+	g_print("Waiting for connection on port %d\n",tcp_port);
 
-	socketIsReady = initSocket(tcpport);
+	socketIsReady = initSocket(tcp_port);
   if (!socketIsReady)
   {
 		g_print("Error initialising connection\n");
@@ -58,10 +55,7 @@ void *TCP_thread( void *ptr)
 		int res = Read_msg_socket((char *) &ppz2gst,sizeof(ppz2gst));
 		if	(res>0)
     {
-			int tmp;
-			tmp = (int)counter; // TODO: fix - (int)ppz2gst.heading;
-			// TODO FIXME g_print("Current counter: %d, Received counter: %d, diff: %d\n",counter, ppz2gst.heading, tmp);
-			//ppz2gst.heading = 6;
+      // Message is automatically available to plugin
 		}
     else
     {
@@ -74,14 +68,13 @@ void *TCP_thread( void *ptr)
 
 void paparazzi_message_send()
 {
-	if (tcpport>0)
+	if (tcp_port>0)
 	{ 	//if network was enabled by user
 		if (socketIsReady)
  		{
 			Write_msg_socket((char *) &gst2ppz, sizeof(gst2ppz));
 		}
 	}
-  counter++;
 }
 
 

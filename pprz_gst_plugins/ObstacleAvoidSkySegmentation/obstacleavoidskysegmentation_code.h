@@ -2,8 +2,9 @@
 
 // Settable by pluging
 extern unsigned int imgWidth, imgHeight;
-extern unsigned int tcpport;
-extern int adjustfactor;
+extern unsigned int tcp_port;
+extern unsigned int adjust_factor;
+extern unsigned int verbose;
 
 // Called by plugin
 void my_plugin_init(void);

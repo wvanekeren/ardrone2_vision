@@ -1077,7 +1077,7 @@ void getObstacles2Way(unsigned int* obstacles, unsigned int n_bins, unsigned cha
 	// 1) determine the horizon line on the basis of pitch and roll
 	RESOLUTION = 1000;
 	horizonToLineParameters(pitch_pixels, roll_angle, &a, &b);
-	printf("Roll: %d, Slope: %d\n",roll_angle,a);
+	//printf("Roll: %d, Slope: %d\n",roll_angle,a);
 
 	// 2) determine the central point projected on the horizon line:
 	x1 = -halfWidth;

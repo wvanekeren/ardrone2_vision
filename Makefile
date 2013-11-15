@@ -14,3 +14,9 @@ clean:
 	sb2 make -C ./pprz_gst_plugins/gst-MAVLab clean
 	sb2 make -C ./pprz_gst_plugins/BrightSpotDetector clean
 	sb2 make -C ./pprz_gst_plugins/ObstacleAvoidSkySegmentation clean
+
+install:
+	make -C ./ardrone2_gstreamer install
+
+drone:
+	make -C ./ardrone2_gstreamer drone

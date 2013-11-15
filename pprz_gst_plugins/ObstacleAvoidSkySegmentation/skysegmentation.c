@@ -1236,13 +1236,10 @@ static inline uint8_t scale_to_range(int x, int min, int max, int range)
 	return (uint8_t) x;
 }
 
-void skyseg_interface_n(unsigned char *frame_buf, unsigned char *frame_buf2, char adjust_factor, unsigned int counter, int pitch, int roll) {
-//	case 'n': // with adjustable tree:
-		
+void get_obstacle_bins_above_horizon(unsigned char *frame_buf, unsigned char *frame_buf2, char adjust_factor, unsigned int n_bins, unsigned int* obstacle_bins, unsigned int* uncertainty_bins, int pitch, int roll)
+{
 		int MAX_BIN_VALUE = MAX_I2C_BYTE;
-		unsigned int obstacles[N_BINS];
-		unsigned int uncertainty[N_BINS];
-		unsigned int bin, max_bin, bin_total; 
+		unsigned int max_bin, bin_total;
 		
 		if(adjust_factor < 3)
 		{
@@ -1264,28 +1261,14 @@ void skyseg_interface_n(unsigned char *frame_buf, unsigned char *frame_buf2, cha
 		}
 
 		
-		unsigned int print_frequency = 5;
+    // Segment Pixels into ground and sky
+    segment_no_yco_AdjustTree(frame_buf, frame_buf2, adjust_factor);
+
+    // Make obstacle bins
+    getObstacles2Way(obstacle_bins, n_bins, (unsigned char *)frame_buf, &max_bin, &bin_total, MAX_BIN_VALUE, pitch_angle_to_pitch_pixel(pitch), roll);
+
+    // Get uncertainty per obstacle
+    getUncertainty(uncertainty_bins, n_bins, (unsigned char *)frame_buf2);
 		
-		segment_no_yco_AdjustTree((unsigned char *)frame_buf, (unsigned char *)frame_buf2, adjust_factor);
-	    // determine the amount of obstacle per orientation segment
-		getObstacles2Way(obstacles, N_BINS, (unsigned char *)frame_buf, &max_bin, &bin_total, MAX_BIN_VALUE, pitch_angle_to_pitch_pixel(pitch), roll);
-		//send_obstacles_to_autopilot(max_bin, bin_total, obstacles, N_BINS); //TODO: change
-		if(counter++ % print_frequency == 0)
-		{
-				printf("*od*"); // protocol start for obstacle info
-				for(bin = 0; bin < N_BINS; bin++)
-				{
-				    printf("%d,", obstacles[bin]);
-				}
-		    	printf("u");
-		    	// determine the amount of uncertainty in the segmentation per orientation segment
-		    	getUncertainty(uncertainty, N_BINS, (unsigned char *)frame_buf2);
-		    	for(bin = 0; bin < N_BINS; bin++)
-		    	{
-		    	    printf("%d,", uncertainty[bin]);
-		    	}
-		    	printf("s\n"); // protocol end
-		}
-		
-	}
+}
 	

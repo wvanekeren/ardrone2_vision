@@ -111,7 +111,7 @@ gst_obstacleavoidskysegmentation_class_init (GstobstacleavoidskysegmentationClas
 	0, G_PARAM_READWRITE));
 
 	g_object_class_install_property (gobject_class, PROP_YOUR_OWN_VARIABLE,
-	g_param_spec_uint ("adjustfactor", "adjustfactor", "Find more or less ground",-20,20,
+	g_param_spec_uint ("adjustfactor", "adjustfactor", "Find more or less ground",0,20,
 	0, G_PARAM_READWRITE));
 }
 
@@ -157,7 +157,7 @@ gst_obstacleavoidskysegmentation_set_property (GObject * object, guint prop_id,
       tcpport = g_value_get_uint (value);
       break;
 	case PROP_YOUR_OWN_VARIABLE:
-      adjustfactor = g_value_get_int (value);
+      adjustfactor = g_value_get_uint (value);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
@@ -179,7 +179,7 @@ gst_obstacleavoidskysegmentation_get_property (GObject * object, guint prop_id,
       g_value_set_uint (value, tcpport);
       break;
 	case PROP_YOUR_OWN_VARIABLE:
-      g_value_set_int (value, adjustfactor);
+      g_value_set_uint (value, adjustfactor);
       break;
     default:
       G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);

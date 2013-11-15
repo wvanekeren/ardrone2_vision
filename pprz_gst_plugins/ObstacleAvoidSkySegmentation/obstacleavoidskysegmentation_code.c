@@ -1,4 +1,5 @@
 
+#include <stdio.h>
 #include <stdlib.h>
 
 #include "obstacleavoidskysegmentation_code.h"
@@ -26,24 +27,25 @@ void my_plugin_init(void)
 
 void my_plugin_run(unsigned char *frame)
 {
-  //int mode = 1;
-  //int pitch = 0; //ppz2gst.pitch/36;
-  //int roll = 0; //ppz2gst.roll/36;
+  int pitch = 0; //ppz2gst.pitch/36;
+  int roll = 0; //ppz2gst.roll/36;
 
-  //if (mode==0)
-  {
-    segment_no_yco_AdjustTree(frame,img_uncertainty,adjustfactor);
-  }
-	//else if (mode==1)
-	{
-    // Run actual Image Analysis
-  //  skyseg_interface_n(frame, img_uncertainty, adjust_factor, counter, pitch, roll);
+  // Run actual Image Analysis
+  get_obstacle_bins_above_horizon(frame, img_uncertainty, adjustfactor, N_BINS, gst2ppz.obstacle_bins, gst2ppz.uncertainty_bins, pitch, roll);
 
-    // Store the results
-    // gst2ppz.blob_x1 = blobP[0];
 
+				printf("*od*"); // protocol start for obstacle info
+				for(int bin = 0; bin < N_BINS; bin++)
+				{
+				    printf("%d,", gst2ppz.obstacle_bins[bin]);
+				}
+//		    	printf("u");
+//		    	for(bin = 0; bin < n_bin; bin++)
+//		    	{
+//		    	    printf("%d,", uncertainty[bin]);
+//		    	}
+		    	printf("s\n"); // protocol end
     // Send to paparazzi
   //  paparazzi_message_send();
-	}
 }
 

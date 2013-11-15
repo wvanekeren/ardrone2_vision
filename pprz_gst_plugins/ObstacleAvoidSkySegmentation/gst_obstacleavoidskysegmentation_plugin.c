@@ -7,8 +7,10 @@
  * <refsect2>
  * <title>ObstacleAvoidSkySegmentation launch line</title>
  * |[
- * gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate=5/1' ! videoscale ! video/x-raw-yuv, width=640, height=368 ! obstacleavoidskysegmentation ! fakesink
-
+ * gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate
+=15/1' ! videoscale ! video/x-raw-yuv, width=160, height=120 ! obstacleavoidskys
+egmentation adjust_factor=5 verbose=2 tcp_port=2000 ! dspmp4venc ! rtpmp4vpay co
+nfig-interval=2 ! udpsink host=192.168.1.255 port=5000
  * ]|
  * </refsect2>
  */

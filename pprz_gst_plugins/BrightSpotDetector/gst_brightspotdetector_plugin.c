@@ -154,7 +154,7 @@ gst_brightspotdetector_set_property (GObject * object, guint prop_id,
       filter->silent = g_value_get_boolean (value);
       break;
     case PROP_TCP:
-      tcpport = g_value_get_uint (value);
+      tcp_port = g_value_get_uint (value);
       break;
 	case PROP_THRESHTUNE:
       threshtune = g_value_get_uint (value);
@@ -176,7 +176,7 @@ gst_brightspotdetector_get_property (GObject * object, guint prop_id,
       g_value_set_boolean (value, filter->silent);
       break;
 	case PROP_TCP:
-      g_value_set_uint (value, tcpport);
+      g_value_set_uint (value, tcp_port);
       break;
 	case PROP_THRESHTUNE:
       g_value_set_uint (value, threshtune);

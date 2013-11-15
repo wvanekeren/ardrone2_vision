@@ -11,7 +11,7 @@
 ////////////////////////////////////////////////
 // Plugin inputs
 unsigned int imgWidth, imgHeight;
-unsigned int tcpport;
+unsigned int tcp_port;
 unsigned char threshtune;
 
 
@@ -42,7 +42,7 @@ void my_plugin_run(unsigned char* frame)
 	gst2ppz.blob_y3 = blobP[5];
 	gst2ppz.blob_x4 = blobP[6];
 	gst2ppz.blob_y4 = blobP[7];
-	gst2ppz.counter = counter;
+	gst2ppz.counter++;
 
   // Send
   paparazzi_message_send();

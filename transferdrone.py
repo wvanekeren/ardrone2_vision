@@ -2,6 +2,7 @@
 
 import sys
 import telnetlib
+import ftplib
 
 HOST = "192.168.1.1"
 user = raw_input("Enter your remote account: ")

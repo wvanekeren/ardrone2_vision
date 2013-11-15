@@ -27,6 +27,10 @@ $(gst_plugin): override LIBS += $(GST_LIBS)
 targets += $(gst_plugin)
 
 
+upload:
+	sb2 make -C ./ all && ../../ardrone2_gstreamer/ardrone2.py upload_gst_module $(gst_plugin)
+
+
 doc: $(gst_plugin)
 	$(MAKE) -C doc
 

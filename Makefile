@@ -20,3 +20,6 @@ install:
 
 drone:
 	make -C ./ardrone2_gstreamer drone
+
+cleanspaces:
+	find . -name '*.[ch]' -exec sed -i {} -e 's/[ \t]*$$//' \;

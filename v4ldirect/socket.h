@@ -8,10 +8,10 @@
 
 
 /*  Function declarations  */
-	int initSocket(void) ;
-	ssize_t Readline( void *vptr, size_t maxlen);
-	ssize_t Writeline( struct img_struct* img, size_t maxlen);
-	int closeSocket(void);
+int initSocket(void) ;
+ssize_t Readline( void *vptr, size_t maxlen);
+ssize_t Writeline( struct img_struct* img, size_t maxlen);
+int closeSocket(void);
 
 #endif  /*  SOCKET_H  */
 

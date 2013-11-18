@@ -52,15 +52,15 @@ G_BEGIN_DECLS
 
 /* #defines don't like whitespacey bits */
 #define GST_TYPE_MAVLAB \
-  (gst_mavlab_get_type())
+    (gst_mavlab_get_type())
 #define GST_MAVLAB(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_MAVLAB,Gstmavlab))
+    (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_MAVLAB,Gstmavlab))
 #define GST_MAVLAB_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_MAVLAB,GstmavlabClass))
+    (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_MAVLAB,GstmavlabClass))
 #define GST_IS_MAVLAB(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_MAVLAB))
+    (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_MAVLAB))
 #define GST_IS_MAVLAB_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_MAVLAB))
+    (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_MAVLAB))
 
 typedef struct _Gstmavlab      Gstmavlab;
 typedef struct _GstmavlabClass GstmavlabClass;

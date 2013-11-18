@@ -54,13 +54,13 @@ static GstStaticPadTemplate sink_factory = GST_STATIC_PAD_TEMPLATE ("sink",
     GST_PAD_SINK,
     GST_PAD_ALWAYS,
     GST_STATIC_CAPS ("video/x-raw-yuv, format=(fourcc)UYVY"	)
-    );
+);
 
 static GstStaticPadTemplate src_factory = GST_STATIC_PAD_TEMPLATE ("src",
     GST_PAD_SRC,
     GST_PAD_ALWAYS,
     GST_STATIC_CAPS ("video/x-raw-yuv, format=(fourcc)UYVY"	)
-    );
+);
 
 GST_BOILERPLATE (Gstobstacleavoidskysegmentation, gst_obstacleavoidskysegmentation, GstElement,
     GST_TYPE_ELEMENT);
@@ -82,10 +82,10 @@ gst_obstacleavoidskysegmentation_base_init (gpointer gclass)
   GstElementClass *element_class = GST_ELEMENT_CLASS (gclass);
 
   gst_element_class_set_details_simple(element_class,
-    "obstacleavoidskysegmentation",
-    "Passthrough element",
-    "Calculates stuff on the video, to be fed to an autopilot",
-    "Kevin van Hecke");
+      "obstacleavoidskysegmentation",
+      "Passthrough element",
+      "Calculates stuff on the video, to be fed to an autopilot",
+      "Kevin van Hecke");
 
   gst_element_class_add_pad_template (element_class,
       gst_static_pad_template_get (&src_factory));
@@ -100,26 +100,26 @@ gst_obstacleavoidskysegmentation_class_init (GstobstacleavoidskysegmentationClas
   GObjectClass *gobject_class;
   //GstElementClass *gstelement_class;
 
-	gobject_class = (GObjectClass *) klass;
+  gobject_class = (GObjectClass *) klass;
 
-	gobject_class->set_property = gst_obstacleavoidskysegmentation_set_property;
-	gobject_class->get_property = gst_obstacleavoidskysegmentation_get_property;
+  gobject_class->set_property = gst_obstacleavoidskysegmentation_set_property;
+  gobject_class->get_property = gst_obstacleavoidskysegmentation_get_property;
 
-	g_object_class_install_property (gobject_class, PROP_SILENT,
-	g_param_spec_boolean ("silent", "Silent", "Produce verbose output.",
-	FALSE, G_PARAM_READWRITE));
-		  
-	g_object_class_install_property (gobject_class, PROP_TCP,
-	g_param_spec_uint ("tcp_port", "TCP port", "Output results over tcp",0,65535,
-	0, G_PARAM_READWRITE));
+  g_object_class_install_property (gobject_class, PROP_SILENT,
+      g_param_spec_boolean ("silent", "Silent", "Produce verbose output.",
+          FALSE, G_PARAM_READWRITE));
 
-	g_object_class_install_property (gobject_class, PROP_ADJUST_FACTOR,
-	g_param_spec_uint ("adjust_factor", "adjust factor", "Find more or less ground",0,20,
-	0, G_PARAM_READWRITE));
+  g_object_class_install_property (gobject_class, PROP_TCP,
+      g_param_spec_uint ("tcp_port", "TCP port", "Output results over tcp",0,65535,
+          0, G_PARAM_READWRITE));
 
-	g_object_class_install_property (gobject_class, PROP_VERBOSE,
-	g_param_spec_uint ("verbose", "verbose", "Say More Or Less",0,10,
-	0, G_PARAM_READWRITE));
+  g_object_class_install_property (gobject_class, PROP_ADJUST_FACTOR,
+      g_param_spec_uint ("adjust_factor", "adjust factor", "Find more or less ground",0,20,
+          0, G_PARAM_READWRITE));
+
+  g_object_class_install_property (gobject_class, PROP_VERBOSE,
+      g_param_spec_uint ("verbose", "verbose", "Say More Or Less",0,10,
+          0, G_PARAM_READWRITE));
 }
 
 /* initialize the new element
@@ -131,47 +131,47 @@ static void
 gst_obstacleavoidskysegmentation_init (Gstobstacleavoidskysegmentation * filter,
     GstobstacleavoidskysegmentationClass * gclass)
 {
-	
+
   filter->sinkpad = gst_pad_new_from_static_template (&sink_factory, "sink");
   gst_pad_set_setcaps_function (filter->sinkpad,
-                                GST_DEBUG_FUNCPTR(gst_obstacleavoidskysegmentation_set_caps));
+      GST_DEBUG_FUNCPTR(gst_obstacleavoidskysegmentation_set_caps));
   gst_pad_set_getcaps_function (filter->sinkpad,
-                                GST_DEBUG_FUNCPTR(gst_pad_proxy_getcaps));
+      GST_DEBUG_FUNCPTR(gst_pad_proxy_getcaps));
   gst_pad_set_chain_function (filter->sinkpad,
-                              GST_DEBUG_FUNCPTR(gst_obstacleavoidskysegmentation_chain));
+      GST_DEBUG_FUNCPTR(gst_obstacleavoidskysegmentation_chain));
 
   filter->srcpad = gst_pad_new_from_static_template (&src_factory, "src");
   gst_pad_set_getcaps_function (filter->srcpad,
-                                GST_DEBUG_FUNCPTR(gst_pad_proxy_getcaps));
+      GST_DEBUG_FUNCPTR(gst_pad_proxy_getcaps));
 
   gst_element_add_pad (GST_ELEMENT (filter), filter->sinkpad);
   gst_element_add_pad (GST_ELEMENT (filter), filter->srcpad);
   filter->silent = FALSE;
-    
+
 }
 
 static void
 gst_obstacleavoidskysegmentation_set_property (GObject * object, guint prop_id,
     const GValue * value, GParamSpec * pspec)
 {
-	Gstobstacleavoidskysegmentation *filter = GST_OBSTACLEAVOIDSKYSEGMENTATION (object);
+  Gstobstacleavoidskysegmentation *filter = GST_OBSTACLEAVOIDSKYSEGMENTATION (object);
 
   switch (prop_id) {
-    case PROP_SILENT:
-      filter->silent = g_value_get_boolean (value);
-      break;
-    case PROP_TCP:
-      tcp_port = g_value_get_uint (value);
-      break;
-	case PROP_ADJUST_FACTOR:
-      adjust_factor = g_value_get_uint (value);
-      break;
-	case PROP_VERBOSE:
-      verbose = g_value_get_uint (value);
-      break;
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-      break;
+  case PROP_SILENT:
+    filter->silent = g_value_get_boolean (value);
+    break;
+  case PROP_TCP:
+    tcp_port = g_value_get_uint (value);
+    break;
+  case PROP_ADJUST_FACTOR:
+    adjust_factor = g_value_get_uint (value);
+    break;
+  case PROP_VERBOSE:
+    verbose = g_value_get_uint (value);
+    break;
+  default:
+    G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+    break;
   }
 }
 
@@ -182,21 +182,21 @@ gst_obstacleavoidskysegmentation_get_property (GObject * object, guint prop_id,
   Gstobstacleavoidskysegmentation *filter = GST_OBSTACLEAVOIDSKYSEGMENTATION (object);
 
   switch (prop_id) {
-    case PROP_SILENT:
-      g_value_set_boolean (value, filter->silent);
-      break;
-	case PROP_TCP:
-      g_value_set_uint (value, tcp_port);
-      break;
-	case PROP_ADJUST_FACTOR:
-      g_value_set_uint (value, adjust_factor);
-      break;
-	case PROP_VERBOSE:
-      g_value_set_uint (value, verbose);
-      break;
-    default:
-      G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
-      break;
+  case PROP_SILENT:
+    g_value_set_boolean (value, filter->silent);
+    break;
+  case PROP_TCP:
+    g_value_set_uint (value, tcp_port);
+    break;
+  case PROP_ADJUST_FACTOR:
+    g_value_set_uint (value, adjust_factor);
+    break;
+  case PROP_VERBOSE:
+    g_value_set_uint (value, verbose);
+    break;
+  default:
+    G_OBJECT_WARN_INVALID_PROPERTY_ID (object, prop_id, pspec);
+    break;
   }
 }
 
@@ -214,18 +214,18 @@ gst_obstacleavoidskysegmentation_set_caps (GstPad * pad, GstCaps * caps)
   gst_object_unref (filter);
 
   //make the image size known
-   const GstStructure *str;
-	str = gst_caps_get_structure (caps, 0);
-	gint tmp;
-	gst_structure_get_int (str, "width", &tmp);
-	imgWidth = (unsigned int)tmp;  
-	gst_structure_get_int (str, "height", &tmp);
-	imgHeight = (unsigned int)tmp;
-	g_print ("The video size is %dx%d\n", imgWidth, imgHeight);
+  const GstStructure *str;
+  str = gst_caps_get_structure (caps, 0);
+  gint tmp;
+  gst_structure_get_int (str, "width", &tmp);
+  imgWidth = (unsigned int)tmp;
+  gst_structure_get_int (str, "height", &tmp);
+  imgHeight = (unsigned int)tmp;
+  g_print ("The video size is %dx%d\n", imgWidth, imgHeight);
 
-	my_plugin_init();
+  my_plugin_init();
 
-	return gst_pad_set_caps (otherpad, caps);
+  return gst_pad_set_caps (otherpad, caps);
 }
 
 
@@ -234,14 +234,14 @@ gst_obstacleavoidskysegmentation_set_caps (GstPad * pad, GstCaps * caps)
  */
 static GstFlowReturn gst_obstacleavoidskysegmentation_chain (GstPad * pad, GstBuffer * buf)
 {
-	Gstobstacleavoidskysegmentation *filter;
+  Gstobstacleavoidskysegmentation *filter;
 
-	filter = GST_OBSTACLEAVOIDSKYSEGMENTATION (GST_OBJECT_PARENT (pad));
+  filter = GST_OBSTACLEAVOIDSKYSEGMENTATION (GST_OBJECT_PARENT (pad));
 
-	unsigned char * img = GST_BUFFER_DATA(buf);
+  unsigned char * img = GST_BUFFER_DATA(buf);
 
-	my_plugin_run(img);
-	  
+  my_plugin_run(img);
+
   return gst_pad_push (filter->srcpad, buf);
 }
 
@@ -254,7 +254,7 @@ obstacleavoidskysegmentation_init (GstPlugin * obstacleavoidskysegmentation)
 {
   /* debug category for filtering log messages
    */   
-	 
+
   GST_DEBUG_CATEGORY_INIT (gst_obstacleavoidskysegmentation_debug, "obstacleavoidskysegmentation",
       0, "The ObstacleAvoidSkySegmentation will do something.");
 

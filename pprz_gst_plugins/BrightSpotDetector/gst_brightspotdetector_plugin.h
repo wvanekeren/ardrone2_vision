@@ -52,15 +52,15 @@ G_BEGIN_DECLS
 
 /* #defines don't like whitespacey bits */
 #define GST_TYPE_BRIGHTSPOTDETECTOR \
-  (gst_brightspotdetector_get_type())
+    (gst_brightspotdetector_get_type())
 #define GST_BRIGHTSPOTDETECTOR(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_BRIGHTSPOTDETECTOR,Gstbrightspotdetector))
+    (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_BRIGHTSPOTDETECTOR,Gstbrightspotdetector))
 #define GST_BRIGHTSPOTDETECTOR_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_BRIGHTSPOTDETECTOR,GstbrightspotdetectorClass))
+    (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_BRIGHTSPOTDETECTOR,GstbrightspotdetectorClass))
 #define GST_IS_BRIGHTSPOTDETECTOR(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_BRIGHTSPOTDETECTOR))
+    (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_BRIGHTSPOTDETECTOR))
 #define GST_IS_BRIGHTSPOTDETECTOR_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_BRIGHTSPOTDETECTOR))
+    (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_BRIGHTSPOTDETECTOR))
 
 typedef struct _Gstbrightspotdetector      Gstbrightspotdetector;
 typedef struct _GstbrightspotdetectorClass GstbrightspotdetectorClass;

@@ -52,15 +52,15 @@ G_BEGIN_DECLS
 
 /* #defines don't like whitespacey bits */
 #define GST_TYPE_%%%PLUGINNAME%%% \
-  (gst_%%%pluginname%%%_get_type())
+    (gst_%%%pluginname%%%_get_type())
 #define GST_%%%PLUGINNAME%%%(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_%%%PLUGINNAME%%%,Gst%%%pluginname%%%))
+    (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_%%%PLUGINNAME%%%,Gst%%%pluginname%%%))
 #define GST_%%%PLUGINNAME%%%_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_%%%PLUGINNAME%%%,Gst%%%pluginname%%%Class))
+    (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_%%%PLUGINNAME%%%,Gst%%%pluginname%%%Class))
 #define GST_IS_%%%PLUGINNAME%%%(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_%%%PLUGINNAME%%%))
+    (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_%%%PLUGINNAME%%%))
 #define GST_IS_%%%PLUGINNAME%%%_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_%%%PLUGINNAME%%%))
+    (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_%%%PLUGINNAME%%%))
 
 typedef struct _Gst%%%pluginname%%%      Gst%%%pluginname%%%;
 typedef struct _Gst%%%pluginname%%%Class Gst%%%pluginname%%%Class;

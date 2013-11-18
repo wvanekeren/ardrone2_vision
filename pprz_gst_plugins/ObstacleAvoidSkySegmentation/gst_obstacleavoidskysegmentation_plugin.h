@@ -52,15 +52,15 @@ G_BEGIN_DECLS
 
 /* #defines don't like whitespacey bits */
 #define GST_TYPE_OBSTACLEAVOIDSKYSEGMENTATION \
-  (gst_obstacleavoidskysegmentation_get_type())
+    (gst_obstacleavoidskysegmentation_get_type())
 #define GST_OBSTACLEAVOIDSKYSEGMENTATION(obj) \
-  (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_OBSTACLEAVOIDSKYSEGMENTATION,Gstobstacleavoidskysegmentation))
+    (G_TYPE_CHECK_INSTANCE_CAST((obj),GST_TYPE_OBSTACLEAVOIDSKYSEGMENTATION,Gstobstacleavoidskysegmentation))
 #define GST_OBSTACLEAVOIDSKYSEGMENTATION_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_OBSTACLEAVOIDSKYSEGMENTATION,GstobstacleavoidskysegmentationClass))
+    (G_TYPE_CHECK_CLASS_CAST((klass),GST_TYPE_OBSTACLEAVOIDSKYSEGMENTATION,GstobstacleavoidskysegmentationClass))
 #define GST_IS_OBSTACLEAVOIDSKYSEGMENTATION(obj) \
-  (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_OBSTACLEAVOIDSKYSEGMENTATION))
+    (G_TYPE_CHECK_INSTANCE_TYPE((obj),GST_TYPE_OBSTACLEAVOIDSKYSEGMENTATION))
 #define GST_IS_OBSTACLEAVOIDSKYSEGMENTATION_CLASS(klass) \
-  (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_OBSTACLEAVOIDSKYSEGMENTATION))
+    (G_TYPE_CHECK_CLASS_TYPE((klass),GST_TYPE_OBSTACLEAVOIDSKYSEGMENTATION))
 
 typedef struct _Gstobstacleavoidskysegmentation      Gstobstacleavoidskysegmentation;
 typedef struct _GstobstacleavoidskysegmentationClass GstobstacleavoidskysegmentationClass;

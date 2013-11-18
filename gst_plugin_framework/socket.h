@@ -7,12 +7,12 @@
 
 
 /*  Function declarations  */
-	int initSocket(unsigned int port) ;
-	ssize_t Readline_socket(char * data, size_t maxlen);
-	ssize_t Writeline_socket(char * text, size_t n);
-	int Read_msg_socket(char * data, unsigned int size);
-	ssize_t Write_msg_socket(char * data, unsigned int size);
-	int closeSocket(void);
+int initSocket(unsigned int port);
+ssize_t Readline_socket(char * data, size_t maxlen);
+ssize_t Writeline_socket(char * text, size_t n);
+int Read_msg_socket(char * data, unsigned int size);
+ssize_t Write_msg_socket(char * data, unsigned int size);
+int closeSocket(void);
 
 #endif  /*  SOCKET_H  */
 

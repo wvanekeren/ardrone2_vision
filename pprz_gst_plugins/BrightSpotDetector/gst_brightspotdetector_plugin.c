@@ -240,7 +240,7 @@ static gboolean
 brightspotdetector_init (GstPlugin * brightspotdetector)
 {
   /* debug category for filtering log messages
-   */   
+   */
 
   GST_DEBUG_CATEGORY_INIT (gst_brightspotdetector_debug, "brightspotdetector",
       0, "The BrightSpotDetector will output the location of the brightest spot");

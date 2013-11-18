@@ -51,7 +51,7 @@ static inline int pitch_angle_to_pitch_pixel(int pitch);
 // INLINE FUNCTIONS:
 // *****************
 
-static inline void groundPixel(unsigned char *frame_buf, unsigned int ip) 
+static inline void groundPixel(unsigned char *frame_buf, unsigned int ip)
 {
   frame_buf[ip] = 0x00;
   frame_buf[ip+1] = 0x00;
@@ -59,7 +59,7 @@ static inline void groundPixel(unsigned char *frame_buf, unsigned int ip)
   frame_buf[ip+3] = 0x00;
 }
 
-static inline void redPixel(unsigned char *frame_buf, unsigned int ip) 
+static inline void redPixel(unsigned char *frame_buf, unsigned int ip)
 {
   frame_buf[ip] = 0x00;
   frame_buf[ip+1] = 0x00;
@@ -87,9 +87,9 @@ static inline void blackDot(unsigned char *frame_buf, int x, int y)
   }
 
 
-} 
+}
 
-static inline void setUncertainty(unsigned char *frame_buf, unsigned int ip, unsigned int uncertainty) 
+static inline void setUncertainty(unsigned char *frame_buf, unsigned int ip, unsigned int uncertainty)
 {
   // if(uncertainty > 255) uncertainty = 255;
   frame_buf[ip] = 127;
@@ -104,7 +104,7 @@ static inline int isGroundPixel(unsigned char *frame_buf, unsigned int ip)
   else return 0;
 }
 
-static inline void linePixel(unsigned char *frame_buf, unsigned int ip) 
+static inline void linePixel(unsigned char *frame_buf, unsigned int ip)
 {
   frame_buf[ip] = 0;
   frame_buf[ip+1] = 255;
@@ -339,7 +339,7 @@ extern int getNoblePixel(unsigned char *frame_buf, int x, int y)
 
 
 // This function gives the maximum of a subsampled version of the image
-unsigned int getMaximumY(unsigned char *frame_buf) 
+unsigned int getMaximumY(unsigned char *frame_buf)
 {
   unsigned int ix, y, max_y;
   unsigned int color_channels = 4;

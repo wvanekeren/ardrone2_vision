@@ -15,7 +15,7 @@ static int cosine[] =
     5000, 4848, 4695, 4540, 4384, 4226, 4067, 3907, 3746, 3584,
     3420, 3256, 3090, 2924, 2756, 2588, 2419, 2250, 2079, 1908,
     1736, 1564, 1392, 1219, 1045,  872,  698,  523,  349,  175,
-    0 
+    0
 };
 
 int sin_zelf(int ix)
@@ -125,7 +125,7 @@ int atan_zelf(int y, int x)
   angle = (360 * xy) / (6283 + ((((1764 * xy)/ 1000) * xy) / 1000));
   if (flip) angle = 90 - angle;
   return angle;
-} 
+}
 
 unsigned int isqrt(unsigned int val) {
   unsigned int temp, g=0, b = 0x8000, bshft = 15;

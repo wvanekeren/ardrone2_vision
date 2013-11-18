@@ -18,7 +18,7 @@ unsigned int minArea = 400;
 
 
 
-void brightspotDetector(unsigned char *frame_buf, int blob[], unsigned int * max_idx,unsigned int * max_idy) 
+void brightspotDetector(unsigned char *frame_buf, int blob[], unsigned int * max_idx,unsigned int * max_idy)
 {
   unsigned char thresh;
   unsigned int * OneDHist =(unsigned int *) calloc(256,sizeof(unsigned int));
@@ -88,7 +88,7 @@ void get1DHist(unsigned char *frame_buf, unsigned int * OneDHist) {
     OneDHist[frame_buf[ix+3]]++;
   }
 
-} 
+}
 
 unsigned char getThreshold(unsigned int * OneDHist) {
 
@@ -174,7 +174,7 @@ unsigned int getMedian(unsigned int * hist,  unsigned int size) {
 }
 
 /*
-void getxy(unsigned int max_y_ix, unsigned int * max_idx, unsigned int * max_idy) {	
+void getxy(unsigned int max_y_ix, unsigned int * max_idx, unsigned int * max_idy) {
 	max_y_ix/=2;
  *max_idy = (max_y_ix / imgWidth);
  *max_idx = (max_y_ix) - *max_idy*imgWidth;

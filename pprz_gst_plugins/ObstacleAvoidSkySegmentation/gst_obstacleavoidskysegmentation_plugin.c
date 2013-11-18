@@ -253,7 +253,7 @@ static gboolean
 obstacleavoidskysegmentation_init (GstPlugin * obstacleavoidskysegmentation)
 {
   /* debug category for filtering log messages
-   */   
+   */
 
   GST_DEBUG_CATEGORY_INIT (gst_obstacleavoidskysegmentation_debug, "obstacleavoidskysegmentation",
       0, "The ObstacleAvoidSkySegmentation will do something.");

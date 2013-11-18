@@ -251,7 +251,7 @@ static gboolean
 mavlab_init (GstPlugin * mavlab)
 {
   /* debug category for filtering log messages
-   */   
+   */
 
   GST_DEBUG_CATEGORY_INIT (gst_mavlab_debug, "mavlab",
       0, "The MAVLab Plugin for GStreamer will contain algorithms to perform analysis on the realtime video on board, to feed to the autopilot");

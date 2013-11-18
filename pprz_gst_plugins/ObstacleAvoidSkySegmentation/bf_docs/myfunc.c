@@ -8,9 +8,9 @@
 void myfunc() {
     unsigned char ch;
 	unsigned char message_from_autopilot[12];
-    unsigned int obstacles[N_BINS]; 
+    unsigned int obstacles[N_BINS];
     unsigned int uncertainty[N_BINS];
-    unsigned int bin, counter, max_count, print_frequency, max_bin, bin_total;   
+    unsigned int bin, counter, max_count, print_frequency, max_bin, bin_total;
 	// PWM:
     int OFF_SET = 0;
     int MAX_SIGNAL = 100;
@@ -33,7 +33,7 @@ void myfunc() {
 	case 'b':	// determine the horizon in the image
 
 		adjust_factor = 0;
-		ch = getch(); // getchar(&ch) was NOT WORKING!		
+		ch = getch(); // getchar(&ch) was NOT WORKING!
 		//printf("%c=", ch);
 		adjust_factor = atoi(&ch);
 		if(adjust_factor < 3)
@@ -61,16 +61,16 @@ void myfunc() {
 		{
 			grab_frame(); // always grab a frame
 
-			if (getchar(&ch)) 
+			if (getchar(&ch))
 			{
 				// if user input:
-				switch (ch) 
+				switch (ch)
 			    {
 					case 'm': // return to the main menu
 				    	printf("Back to menu!\n\r");
 					    return;
 				    break;
-					
+
 					case 'I': // segment the entire image and show the horizon line:
 
 						segment_no_yco((unsigned char *)FRAME_BUF, (unsigned char *)FRAME_BUF2);
@@ -78,11 +78,11 @@ void myfunc() {
 						if(err < INACCURATE)
 							motor_command2(pitch+OFF_SET, roll+OFF_SET, delay);
 						else
-							motor_command2(MAX_SIGNAL/2, MAX_SIGNAL/2,delay);								
+							motor_command2(MAX_SIGNAL/2, MAX_SIGNAL/2,delay);
 
 
 						send_frame_nr(1);
-							
+
 						//printf("e=%d,p=%d,r=%d\n\r", err, pitch, roll);
 					break;
 				}
@@ -117,16 +117,16 @@ void myfunc() {
 			grab_frame(); // always grab a frame
 			segmentBWboard((unsigned char *)FRAME_BUF, (unsigned char *)FRAME_BUF2);
 
-			if (getchar(&ch)) 
+			if (getchar(&ch))
 			{
 				// if user input:
-				switch (ch) 
+				switch (ch)
 			    {
 					case 'm': // return to the main menu
 				    	printf("Back to menu!\n\r");
 					    return;
 				    break;
-					
+
 					case 'I': // segment the entire image and show the horizon line:
 
 						err = perceptronPitchRoll((unsigned char *)FRAME_BUF, &pitch, &roll, MAX_SIGNAL);
@@ -135,7 +135,7 @@ void myfunc() {
 						else
 							motor_command2(MAX_SIGNAL/2, MAX_SIGNAL/2,delay);
 						send_frame_nr(1);
-							
+
 						//printf("e=%d,p=%d,r=%d\n\r", err, pitch, roll);
 					break;
 				}
@@ -178,7 +178,7 @@ void myfunc() {
 
 	break;
 	case 'a':
-		/*	   
+		/*
 		 // track the target
 	    grab_frame();
 	    int coords[2];
@@ -236,9 +236,9 @@ void myfunc() {
 		}*/
 
 
-		if (getchar(&ch)) 
+		if (getchar(&ch))
 		{
-            	    switch (ch) 
+            	    switch (ch)
 		    {
                 	case 'I':
                     	    send_frame();
@@ -282,10 +282,10 @@ void myfunc() {
 */
 		//putThumbnailInFrame((unsigned char *) FRAME_BUF, (unsigned char *) FRAME_BUF2, &size_in_bytes, &width, &height, 4);
 		//printf("width = %d, height = %d\n\r", width, height);
-		//error = findCorners((unsigned char *) FRAME_BUF2, MAX_POINTS, x, y, suppression_distance_squared, &n_found_points, mark_points, width, height);		
+		//error = findCorners((unsigned char *) FRAME_BUF2, MAX_POINTS, x, y, suppression_distance_squared, &n_found_points, mark_points, width, height);
 		//send_frame_nr_size(2, size_in_bytes, width, height);
-/*		error = findCorners((unsigned char *) FRAME_BUF, MAX_POINTS, x, y, suppression_distance_squared, &n_found_points, mark_points, width, height);	
-		send_frame_nr(1);	
+/*		error = findCorners((unsigned char *) FRAME_BUF, MAX_POINTS, x, y, suppression_distance_squared, &n_found_points, mark_points, width, height);
+		send_frame_nr(1);
 		break;
 */
 /*	case 'f': // optic flow
@@ -297,12 +297,12 @@ void myfunc() {
 		width = imgWidth;
 		height = imgHeight;
 		size_in_bytes = width*height*2;
-		
+
 		// like this, the frames are relatively close to each other:
 		grab_frame();
 		copy_image((unsigned char *) FRAME_BUF,(unsigned char *) FRAME_BUF2, (unsigned int)width, (unsigned int) height);
 
-		error = findCorners((unsigned char *) FRAME_BUF2, MAX_POINTS, x, y, suppression_distance_squared, &n_found_points, mark_points, width, height);		
+		error = findCorners((unsigned char *) FRAME_BUF2, MAX_POINTS, x, y, suppression_distance_squared, &n_found_points, mark_points, width, height);
 		grab_frame(); // grab a new frame and store it in FRAME_BUF
 		//printf("n found points: %d\n\r", n_found_points);
 
@@ -310,13 +310,13 @@ void myfunc() {
 		{
 			error = opticFlowLK((unsigned char *) FRAME_BUF, (unsigned char *) FRAME_BUF2, x, y, n_found_points, width, height, new_x, new_y, status, half_window_size, max_iterations);
 
-			
+
 			if(error == 0)
 			{
 				showFlow((unsigned char *) FRAME_BUF, x, y, status, n_found_points, new_x, new_y, width, height);
 				send_frame_nr(1);
 			}
-			
+
 		}
 		break;
 */
@@ -365,10 +365,10 @@ void myfunc() {
 		//send_frame_nr(1);
 		send_thumbnail();
 		break;
-	
+
 	case 'u': // segment with adjustable tree:
 		adjust_factor = 0;
-		ch = getch(); // getchar(&ch) was NOT WORKING!		
+		ch = getch(); // getchar(&ch) was NOT WORKING!
 		//printf("%c=", ch);
 		adjust_factor = atoi(&ch);
 		if(adjust_factor < 3)
@@ -434,7 +434,7 @@ void myfunc() {
 		}
 		printf("s\n"); // protocol end
 		motor_command2(max_bin, bin_total, delay);
-		
+
 		//sendToAutoPilot(obstacles, uncertainty, N_BINS);
 		break;
 	case 'O': // do a loop of max_count segmentations and always send the results
@@ -446,7 +446,7 @@ void myfunc() {
 		    // segmentSkyUncertainty((unsigned char *)FRAME_BUF, (unsigned char *)FRAME_BUF2);
 			// segment_no_yco((unsigned char *)FRAME_BUF, (unsigned char *)FRAME_BUF2);
 			segmentBWboard((unsigned char *)FRAME_BUF, (unsigned char *)FRAME_BUF2);
-			
+
 	    	// determine the amount of obstacle per orientation segment
 	    	getObstacles(obstacles, N_BINS, (unsigned char *)FRAME_BUF, &max_bin, &bin_total, MAX_SIGNAL);
 			motor_command2(max_bin, bin_total, delay);
@@ -473,7 +473,7 @@ void myfunc() {
 	case 'p': // use the sky segmentation only for determining the obstacles and uncertainty
 
 		adjust_factor = 0;
-		ch = getch(); // getchar(&ch) was NOT WORKING!		
+		ch = getch(); // getchar(&ch) was NOT WORKING!
 		//printf("%c=", ch);
 		adjust_factor = atoi(&ch);
 		if(adjust_factor < 3)
@@ -516,12 +516,12 @@ void myfunc() {
 		}
 		printf("s\n"); // protocol end
 		motor_command2(max_bin, bin_total, delay);
-		
+
 		//sendToAutoPilot(obstacles, uncertainty, N_BINS);
 		break;
 	case 'P': // do a loop of max_count segmentations and always send the results
 		adjust_factor = 0;
-		ch = getch(); // getchar(&ch) was NOT WORKING!		
+		ch = getch(); // getchar(&ch) was NOT WORKING!
 		//printf("%c=", ch);
 		adjust_factor = atoi(&ch);
 		if(adjust_factor < 3)
@@ -573,7 +573,7 @@ void myfunc() {
 			//printf("-%d-", counter);
 		}
 		break;
-		
+
     }
     return;
 }

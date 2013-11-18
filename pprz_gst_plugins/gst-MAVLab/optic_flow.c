@@ -23,7 +23,7 @@ static inline void bluePixel(unsigned char *frame_buf, unsigned int ip)
   frame_buf[ip+3] = 0xff;
 }
 
-static inline void redPixel(unsigned char *frame_buf, unsigned int ip) 
+static inline void redPixel(unsigned char *frame_buf, unsigned int ip)
 {
   frame_buf[ip] = 0x00;
   frame_buf[ip+1] = 0xff;
@@ -31,7 +31,7 @@ static inline void redPixel(unsigned char *frame_buf, unsigned int ip)
   frame_buf[ip+3] = 0xff;
 }
 
-static inline void greenPixel(unsigned char *frame_buf, unsigned int ip) 
+static inline void greenPixel(unsigned char *frame_buf, unsigned int ip)
 {
   frame_buf[ip] = 0x00;
   frame_buf[ip+1] = 0xff;
@@ -274,7 +274,7 @@ int findLocalMaxima(int* Harris, int max_val, int MAX_POINTS, int* p_x, int* p_y
 }
 
 // This function gives the maximum of a subsampled version of the image
-int getMaximum(int * Im) 
+int getMaximum(int * Im)
 {
   int x, y, val, max_val;
   unsigned int ix;
@@ -293,7 +293,7 @@ int getMaximum(int * Im)
 }
 
 // This function gives the maximum of a subsampled version of the image
-int getMinimum(int * Im) 
+int getMinimum(int * Im)
 {
   int x, y, val, min_val;
   unsigned int ix;
@@ -998,7 +998,7 @@ void getGradientPatch(int* Patch, int* DX, int* DY, int half_window_size)
 			else if(printed == 1 && DX[ix2] < 0)
 			{
 				printf("DX = %d, DY = %d\n\r", DX[ix2], DY[ix2]);
-				printed++;				
+				printed++;
 			}*/
 
 
@@ -1028,7 +1028,7 @@ int getSumPatch(int* Patch, int size)
       //}
       /*else
 			{
-				if(sum > threshold) 
+				if(sum > threshold)
 				{
 					sum = threshold;
 				}

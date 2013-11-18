@@ -238,7 +238,7 @@ static gboolean
 %%%pluginname%%%_init (GstPlugin * %%%pluginname%%%)
 {
   /* debug category for filtering log messages
-   */   
+   */
 
   GST_DEBUG_CATEGORY_INIT (gst_%%%pluginname%%%_debug, "%%%pluginname%%%",
       0, "The %%%Pluginname%%% will do something.");

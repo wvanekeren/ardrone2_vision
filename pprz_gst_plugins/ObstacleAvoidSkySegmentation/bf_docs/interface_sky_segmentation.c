@@ -107,8 +107,8 @@ static inline void send_horizon_to_autopilot(vision_state_struct *x)
 static inline void send_obstacles_to_autopilot(int max_bin, int bin_total, unsigned int* obstacles, int n_bins)
 {
 	// send relevant variables to autopilot via ADC channels:
-	motor_command2(scale_to_range(max_bin,0,MAX_I2C_BYTE,99), scale_to_range(bin_total,0,MAX_I2C_BYTE, 99),0);		
-	
+	motor_command2(scale_to_range(max_bin,0,MAX_I2C_BYTE,99), scale_to_range(bin_total,0,MAX_I2C_BYTE, 99),0);
+
 	// send all obstacle variables via UART:
 	sendToAutoPilot(obstacles, n_bins);
 }
@@ -123,12 +123,12 @@ static inline void get_state_from_autopilot(paparazzi_state_struct* x)
 	x->roll = unscale_from_range(autopilot_message[4], MAX_I2C_BYTE, -MAX_ROLL_ANGLE, MAX_ROLL_ANGLE);
 }
 
-void interface_sky_segmentation(char ch1, char ch2) 
+void interface_sky_segmentation(char ch1, char ch2)
 {
 
 	/* COMMANDS
 	*
-	* ^: needs extra input, either for determining the numbers of samples, or 
+	* ^: needs extra input, either for determining the numbers of samples, or
 	*    the adjustment factor.
 	*
 	* Produce Sky Segmented image
@@ -166,10 +166,10 @@ void interface_sky_segmentation(char ch1, char ch2)
 	int adjust_factor;
 
 	unsigned char ch;
-	unsigned int obstacles[N_BINS]; 
+	unsigned int obstacles[N_BINS];
 	unsigned int uncertainty[N_BINS];
 
-	unsigned int bin, counter, max_count, print_frequency, max_bin, bin_total;   
+	unsigned int bin, counter, max_count, print_frequency, max_bin, bin_total;
 	int sample_index;
 	int n_train_samples, n_test_samples;
 
@@ -180,7 +180,7 @@ void interface_sky_segmentation(char ch1, char ch2)
 
 	/******************
 
-	 SKY SEGMENTATION	
+	 SKY SEGMENTATION
 
 	******************/
 
@@ -201,11 +201,11 @@ void interface_sky_segmentation(char ch1, char ch2)
 			  // lower numbers result in fewer sky-pixels
 			  // higher numbers result in more sky-pixels
 			  // In our experiments, c4 is often used.
-		
+
 		adjust_factor = 0;
 		if(ch2 == 0)
 			ch2 = getch();
-		
+
 		adjust_factor = atoi(&ch2);
 		if(adjust_factor < 3)
 		{
@@ -233,9 +233,9 @@ void interface_sky_segmentation(char ch1, char ch2)
 
 	/********************************************
 
-	 PITCH & ROLL ESTIMATION BY HORIZON DETECTION	
+	 PITCH & ROLL ESTIMATION BY HORIZON DETECTION
 
-	********************************************/	
+	********************************************/
 
 	// Single horizon estimation for pre-flight testing:
 
@@ -268,7 +268,7 @@ void interface_sky_segmentation(char ch1, char ch2)
 			  // lower numbers result in fewer sky-pixels
 			  // higher numbers result in more sky-pixels
 			  // In our experiments, c4 is often used.
-		
+
 		adjust_factor = 0;
 		if(ch2 == 0)
 			ch2 = getch();
@@ -299,7 +299,7 @@ void interface_sky_segmentation(char ch1, char ch2)
 		send_horizon_to_autopilot(&vision_state);
 
 		send_frame_nr(1);
-		break;	
+		break;
 
 	// segment and determine horizon continuously for in flight:
 
@@ -310,12 +310,12 @@ void interface_sky_segmentation(char ch1, char ch2)
 
 			grab_frame(); // always grab a frame
 			// always segment the entire image
-			segmentBWboard((unsigned char *)FRAME_BUF, (unsigned char *)FRAME_BUF2); 
+			segmentBWboard((unsigned char *)FRAME_BUF, (unsigned char *)FRAME_BUF2);
 
-			if (getchar(&ch)) 
+			if (getchar(&ch))
 			{
 				// if user input:
-				switch (ch) 
+				switch (ch)
 			    {
 					case 'm': // return to the main menu
 				    	printf("Back to menu!\n\r");
@@ -391,16 +391,16 @@ void interface_sky_segmentation(char ch1, char ch2)
 		{
 			grab_frame(); // always grab a frame
 
-			if (getchar(&ch)) 
+			if (getchar(&ch))
 			{
 				// if user input:
-				switch (ch) 
+				switch (ch)
 			    {
 					case 'm': // return to the main menu
 				    	printf("Back to menu!\n\r");
 					    return;
 				    break;
-					
+
 					case 'I': // segment the entire image and show the horizon line:
 
 						segment_no_yco((unsigned char *)FRAME_BUF, (unsigned char *)FRAME_BUF2);
@@ -414,7 +414,7 @@ void interface_sky_segmentation(char ch1, char ch2)
 			}
 			else
 			{
-				vision_state.error = perceptronPitchRollEfficient((unsigned char *)FRAME_BUF, &(vision_state.pitch_pixel), &(vision_state.roll_angle), 
+				vision_state.error = perceptronPitchRollEfficient((unsigned char *)FRAME_BUF, &(vision_state.pitch_pixel), &(vision_state.roll_angle),
 					n_train_samples, n_test_samples, ACCURACY_RANGE);
 /*
 				segment_no_yco_AdjustTree((unsigned char *)FRAME_BUF, (unsigned char *)FRAME_BUF2, adjust_factor);
@@ -440,7 +440,7 @@ void interface_sky_segmentation(char ch1, char ch2)
 	break;
 
 
-	// segment and determine horizon continuously for determining the execution frequency:	
+	// segment and determine horizon continuously for determining the execution frequency:
 	// the test consists of running this script for a few minutes and noting the last iteration
 	// number.
 
@@ -492,7 +492,7 @@ void interface_sky_segmentation(char ch1, char ch2)
 			if(it % 10 == 0) printf("*%d*", it);
 			else printf(".");
 
-			vision_state.error = perceptronPitchRollEfficient((unsigned char *)FRAME_BUF, &(vision_state.pitch_pixel), &(vision_state.roll_angle), 
+			vision_state.error = perceptronPitchRollEfficient((unsigned char *)FRAME_BUF, &(vision_state.pitch_pixel), &(vision_state.roll_angle),
 				n_train_samples, n_test_samples, ACCURACY_RANGE);
 			send_horizon_to_autopilot(&vision_state);
 		}
@@ -500,19 +500,19 @@ void interface_sky_segmentation(char ch1, char ch2)
 
 	/**********************************************
 
-	SKY SEGMENTATION APPROACH TO OBSTACLE AVOIDANCE	
+	SKY SEGMENTATION APPROACH TO OBSTACLE AVOIDANCE
 
-	***********************************************/	
+	***********************************************/
 
 	// single-frame for pre-flight testing:
 
 	case 'j': // segmentation on the basis of minimal and maximal illumination
 		grab_frame();
 		get_state_from_autopilot(&state);
-		segmentBWboard((unsigned char *)FRAME_BUF, (unsigned char *)FRAME_BUF2);		
+		segmentBWboard((unsigned char *)FRAME_BUF, (unsigned char *)FRAME_BUF2);
 		// determine the amount of obstacle per orientation segment
 		//getObstacles(obstacles, N_BINS, (unsigned char *)FRAME_BUF, &max_bin, &bin_total, MAX_BIN_VALUE);
-		
+
 		getObstacles2Way(obstacles, N_BINS, (unsigned char *)FRAME_BUF, &max_bin, &bin_total, MAX_BIN_VALUE, pitch_angle_to_pitch_pixel(state.pitch), state.roll);
 
 		/*printf("*od*"); // protocol start for obstacle info
@@ -534,7 +534,7 @@ void interface_sky_segmentation(char ch1, char ch2)
 		//int a,b;
 		//horizonToLineParameters(pitch_angle_to_pitch_pixel(state.pitch), state.roll, &a, &b);
 		// 1000 is the resolution of the tan-function
-		//drawLine((unsigned char *)FRAME_BUF, a, b, 1000); 
+		//drawLine((unsigned char *)FRAME_BUF, a, b, 1000);
 		send_frame(1);
 
 		break;
@@ -566,7 +566,7 @@ void interface_sky_segmentation(char ch1, char ch2)
 
 		adjust_factor = 0;
 		if(ch2 == 0)
-			ch2 = getch(); // getchar(&ch) was NOT WORKING!		
+			ch2 = getch(); // getchar(&ch) was NOT WORKING!
 		adjust_factor = atoi(&ch2);
 		if(adjust_factor < 3)
 		{
@@ -620,7 +620,7 @@ void interface_sky_segmentation(char ch1, char ch2)
 		    grab_frame();
 			get_state_from_autopilot(&state);
 			segmentBWboard((unsigned char *)FRAME_BUF, (unsigned char *)FRAME_BUF2);
-			
+
 	    	// determine the amount of obstacle per orientation segment
 	    	getObstacles(obstacles, N_BINS, (unsigned char *)FRAME_BUF, &max_bin, &bin_total, MAX_BIN_VALUE);
 		send_obstacles_to_autopilot(max_bin, bin_total, obstacles, N_BINS);
@@ -646,7 +646,7 @@ void interface_sky_segmentation(char ch1, char ch2)
 
 		adjust_factor = 0;
 		if(ch2 == 0)
-			ch2 = getch(); // getchar(&ch) was NOT WORKING!		
+			ch2 = getch(); // getchar(&ch) was NOT WORKING!
 		//printf("%c=", ch);
 		adjust_factor = atoi(&ch2);
 		if(adjust_factor < 3)
@@ -712,12 +712,12 @@ void interface_sky_segmentation(char ch1, char ch2)
     return; // return to main menu
 }
 
-void interface_sky_segmentation(char ch1, char ch2) 
+void interface_sky_segmentation(char ch1, char ch2)
 {
 
 	/* COMMANDS
 	*
-	* ^: needs extra input, either for determining the numbers of samples, or 
+	* ^: needs extra input, either for determining the numbers of samples, or
 	*    the adjustment factor.
 	*
 	* Produce Sky Segmented image
@@ -755,10 +755,10 @@ void interface_sky_segmentation(char ch1, char ch2)
 	int adjust_factor;
 
 	unsigned char ch;
-	unsigned int obstacles[N_BINS]; 
+	unsigned int obstacles[N_BINS];
 	unsigned int uncertainty[N_BINS];
 
-	unsigned int bin, counter, max_count, print_frequency, max_bin, bin_total;   
+	unsigned int bin, counter, max_count, print_frequency, max_bin, bin_total;
 	int sample_index;
 	int n_train_samples, n_test_samples;
 
@@ -769,7 +769,7 @@ void interface_sky_segmentation(char ch1, char ch2)
 
 	/******************
 
-	 SKY SEGMENTATION	
+	 SKY SEGMENTATION
 
 	******************/
 
@@ -790,11 +790,11 @@ void interface_sky_segmentation(char ch1, char ch2)
 			  // lower numbers result in fewer sky-pixels
 			  // higher numbers result in more sky-pixels
 			  // In our experiments, c4 is often used.
-		
+
 		adjust_factor = 0;
 		if(ch2 == 0)
 			ch2 = getch();
-		
+
 		adjust_factor = atoi(&ch2);
 		if(adjust_factor < 3)
 		{
@@ -822,9 +822,9 @@ void interface_sky_segmentation(char ch1, char ch2)
 
 	/********************************************
 
-	 PITCH & ROLL ESTIMATION BY HORIZON DETECTION	
+	 PITCH & ROLL ESTIMATION BY HORIZON DETECTION
 
-	********************************************/	
+	********************************************/
 
 	// Single horizon estimation for pre-flight testing:
 
@@ -857,7 +857,7 @@ void interface_sky_segmentation(char ch1, char ch2)
 			  // lower numbers result in fewer sky-pixels
 			  // higher numbers result in more sky-pixels
 			  // In our experiments, c4 is often used.
-		
+
 		adjust_factor = 0;
 		if(ch2 == 0)
 			ch2 = getch();
@@ -888,7 +888,7 @@ void interface_sky_segmentation(char ch1, char ch2)
 		send_horizon_to_autopilot(&vision_state);
 
 		send_frame_nr(1);
-		break;	
+		break;
 
 	// segment and determine horizon continuously for in flight:
 
@@ -899,12 +899,12 @@ void interface_sky_segmentation(char ch1, char ch2)
 
 			grab_frame(); // always grab a frame
 			// always segment the entire image
-			segmentBWboard((unsigned char *)FRAME_BUF, (unsigned char *)FRAME_BUF2); 
+			segmentBWboard((unsigned char *)FRAME_BUF, (unsigned char *)FRAME_BUF2);
 
-			if (getchar(&ch)) 
+			if (getchar(&ch))
 			{
 				// if user input:
-				switch (ch) 
+				switch (ch)
 			    {
 					case 'm': // return to the main menu
 				    	printf("Back to menu!\n\r");
@@ -980,16 +980,16 @@ void interface_sky_segmentation(char ch1, char ch2)
 		{
 			grab_frame(); // always grab a frame
 
-			if (getchar(&ch)) 
+			if (getchar(&ch))
 			{
 				// if user input:
-				switch (ch) 
+				switch (ch)
 			    {
 					case 'm': // return to the main menu
 				    	printf("Back to menu!\n\r");
 					    return;
 				    break;
-					
+
 					case 'I': // segment the entire image and show the horizon line:
 
 						segment_no_yco((unsigned char *)FRAME_BUF, (unsigned char *)FRAME_BUF2);
@@ -1003,7 +1003,7 @@ void interface_sky_segmentation(char ch1, char ch2)
 			}
 			else
 			{
-				vision_state.error = perceptronPitchRollEfficient((unsigned char *)FRAME_BUF, &(vision_state.pitch_pixel), &(vision_state.roll_angle), 
+				vision_state.error = perceptronPitchRollEfficient((unsigned char *)FRAME_BUF, &(vision_state.pitch_pixel), &(vision_state.roll_angle),
 					n_train_samples, n_test_samples, ACCURACY_RANGE);
 /*
 				segment_no_yco_AdjustTree((unsigned char *)FRAME_BUF, (unsigned char *)FRAME_BUF2, adjust_factor);
@@ -1029,7 +1029,7 @@ void interface_sky_segmentation(char ch1, char ch2)
 	break;
 
 
-	// segment and determine horizon continuously for determining the execution frequency:	
+	// segment and determine horizon continuously for determining the execution frequency:
 	// the test consists of running this script for a few minutes and noting the last iteration
 	// number.
 
@@ -1081,7 +1081,7 @@ void interface_sky_segmentation(char ch1, char ch2)
 			if(it % 10 == 0) printf("*%d*", it);
 			else printf(".");
 
-			vision_state.error = perceptronPitchRollEfficient((unsigned char *)FRAME_BUF, &(vision_state.pitch_pixel), &(vision_state.roll_angle), 
+			vision_state.error = perceptronPitchRollEfficient((unsigned char *)FRAME_BUF, &(vision_state.pitch_pixel), &(vision_state.roll_angle),
 				n_train_samples, n_test_samples, ACCURACY_RANGE);
 			send_horizon_to_autopilot(&vision_state);
 		}
@@ -1089,19 +1089,19 @@ void interface_sky_segmentation(char ch1, char ch2)
 
 	/**********************************************
 
-	SKY SEGMENTATION APPROACH TO OBSTACLE AVOIDANCE	
+	SKY SEGMENTATION APPROACH TO OBSTACLE AVOIDANCE
 
-	***********************************************/	
+	***********************************************/
 
 	// single-frame for pre-flight testing:
 
 	case 'j': // segmentation on the basis of minimal and maximal illumination
 		grab_frame();
 		get_state_from_autopilot(&state);
-		segmentBWboard((unsigned char *)FRAME_BUF, (unsigned char *)FRAME_BUF2);		
+		segmentBWboard((unsigned char *)FRAME_BUF, (unsigned char *)FRAME_BUF2);
 		// determine the amount of obstacle per orientation segment
 		//getObstacles(obstacles, N_BINS, (unsigned char *)FRAME_BUF, &max_bin, &bin_total, MAX_BIN_VALUE);
-		
+
 		getObstacles2Way(obstacles, N_BINS, (unsigned char *)FRAME_BUF, &max_bin, &bin_total, MAX_BIN_VALUE, pitch_angle_to_pitch_pixel(state.pitch), state.roll);
 
 		/*printf("*od*"); // protocol start for obstacle info
@@ -1123,7 +1123,7 @@ void interface_sky_segmentation(char ch1, char ch2)
 		//int a,b;
 		//horizonToLineParameters(pitch_angle_to_pitch_pixel(state.pitch), state.roll, &a, &b);
 		// 1000 is the resolution of the tan-function
-		//drawLine((unsigned char *)FRAME_BUF, a, b, 1000); 
+		//drawLine((unsigned char *)FRAME_BUF, a, b, 1000);
 		send_frame(1);
 
 		break;
@@ -1155,7 +1155,7 @@ void interface_sky_segmentation(char ch1, char ch2)
 
 		adjust_factor = 0;
 		if(ch2 == 0)
-			ch2 = getch(); // getchar(&ch) was NOT WORKING!		
+			ch2 = getch(); // getchar(&ch) was NOT WORKING!
 		adjust_factor = atoi(&ch2);
 		if(adjust_factor < 3)
 		{
@@ -1209,7 +1209,7 @@ void interface_sky_segmentation(char ch1, char ch2)
 		    grab_frame();
 			get_state_from_autopilot(&state);
 			segmentBWboard((unsigned char *)FRAME_BUF, (unsigned char *)FRAME_BUF2);
-			
+
 	    	// determine the amount of obstacle per orientation segment
 	    	getObstacles(obstacles, N_BINS, (unsigned char *)FRAME_BUF, &max_bin, &bin_total, MAX_BIN_VALUE);
 		send_obstacles_to_autopilot(max_bin, bin_total, obstacles, N_BINS);
@@ -1235,7 +1235,7 @@ void interface_sky_segmentation(char ch1, char ch2)
 
 		adjust_factor = 0;
 		if(ch2 == 0)
-			ch2 = getch(); // getchar(&ch) was NOT WORKING!		
+			ch2 = getch(); // getchar(&ch) was NOT WORKING!
 		//printf("%c=", ch);
 		adjust_factor = atoi(&ch2);
 		if(adjust_factor < 3)

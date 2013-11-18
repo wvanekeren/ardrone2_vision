@@ -1,5 +1,5 @@
 #include "srv.h"
-#include "sky_segmentation.h" 
+#include "sky_segmentation.h"
 #include "print.h"
 #include "gps.h"
 
@@ -11,7 +11,7 @@
 // INLINE FUNCTIONS:
 // *****************
 
-inline void groundPixel(unsigned char *frame_buf, unsigned int ip) 
+inline void groundPixel(unsigned char *frame_buf, unsigned int ip)
 {
 	frame_buf[ip] = 0x00;
 	frame_buf[ip+1] = 0x00;
@@ -19,7 +19,7 @@ inline void groundPixel(unsigned char *frame_buf, unsigned int ip)
 	frame_buf[ip+3] = 0x00;
 }
 
-inline void redPixel(unsigned char *frame_buf, unsigned int ip) 
+inline void redPixel(unsigned char *frame_buf, unsigned int ip)
 {
 	frame_buf[ip] = 0x00;
 	frame_buf[ip+1] = 0x00;
@@ -41,15 +41,15 @@ inline void blackDot(unsigned char *frame_buf, int x, int y)
 				frame_buf[ip] = 0x7f;
 				frame_buf[ip+1] = 0x00;
 				frame_buf[ip+2] = 0x7f;
-				frame_buf[ip+3] = 0x00;	
+				frame_buf[ip+3] = 0x00;
 			}
 		}
 	}
 
-	
-} 
 
-inline void setUncertainty(unsigned char *frame_buf, unsigned int ip, unsigned int uncertainty) 
+}
+
+inline void setUncertainty(unsigned char *frame_buf, unsigned int ip, unsigned int uncertainty)
 {
 	// if(uncertainty > 255) uncertainty = 255;
 	frame_buf[ip] = 127;
@@ -64,7 +64,7 @@ inline int isGroundPixel(unsigned char *frame_buf, unsigned int ip)
 	else return 0;
 }
 
-inline void linePixel(unsigned char *frame_buf, unsigned int ip) 
+inline void linePixel(unsigned char *frame_buf, unsigned int ip)
 {
 	frame_buf[ip] = 0;
 	frame_buf[ip+1] = 255;
@@ -96,7 +96,7 @@ extern int perceptronPitchRoll(unsigned char *frame_buf, int *pitch_pixel, int *
 	int verbose, verbose_average;
 	int X_BORDER, Y_BORDER;
 	int resolution = 10;
-	
+
 	X_BORDER = 10;
 	Y_BORDER = 10;
 
@@ -112,7 +112,7 @@ extern int perceptronPitchRoll(unsigned char *frame_buf, int *pitch_pixel, int *
 	// weight averaging leads to more robust results
 	average_weights[0] = 0;
 	average_weights[1] = 0;
-	average_weights[2] = 0;	
+	average_weights[2] = 0;
 	update_rate = 10;
 	n_updates = 0;
 	div_res = 10;
@@ -129,7 +129,7 @@ extern int perceptronPitchRoll(unsigned char *frame_buf, int *pitch_pixel, int *
 
 	verbose = 0;
 	verbose_average = 0;
-	
+
 	for(sample = 0; sample < n_train_samples; sample++)
 	{
 		if(sample > 10)
@@ -145,7 +145,7 @@ extern int perceptronPitchRoll(unsigned char *frame_buf, int *pitch_pixel, int *
 		ix = image_index(x,y);
 		target = isGroundPixel(frame_buf, ix);
 		target = (target > 0) ? 1 : -1;
-		
+
 		// compare the perceptron's output with the target
 		output = weights[0] * x + weights[1] * y + weights[2];
 		output = (output>0) ? 1 : -1; // sign function
@@ -165,7 +165,7 @@ extern int perceptronPitchRoll(unsigned char *frame_buf, int *pitch_pixel, int *
 				weights[2] += costs[0] * gamma[2] * (target - output);
 				if(verbose)
 				{
-					printf("dw1,dw2,dw3 = %d,%d,%d\n\r", 
+					printf("dw1,dw2,dw3 = %d,%d,%d\n\r",
 						costs[0] * gamma[0] * (target - output) * x,
 						costs[0] * gamma[1] * (target - output) * y,
 						costs[0] * gamma[2] * (target - output));
@@ -175,10 +175,10 @@ extern int perceptronPitchRoll(unsigned char *frame_buf, int *pitch_pixel, int *
 			{
 				weights[0] += costs[1] * gamma[0] * (target - output) * x;
 				weights[1] += costs[1] * gamma[1] * (target - output) * y;
-				weights[2] += costs[1] * gamma[2] * (target - output);				
+				weights[2] += costs[1] * gamma[2] * (target - output);
 				if(verbose)
 				{
-					printf("dw1,dw2,dw3 = %d,%d,%d\n\r", 
+					printf("dw1,dw2,dw3 = %d,%d,%d\n\r",
 						costs[1] * gamma[0] * (target - output) * x,
 						costs[1] * gamma[1] * (target - output) * y,
 						costs[1] * gamma[2] * (target - output));
@@ -201,7 +201,7 @@ extern int perceptronPitchRoll(unsigned char *frame_buf, int *pitch_pixel, int *
 	}
 
 	if(verbose_average) printf("\n\r");
-	
+
 	for(i = 0; i < 3; i++)
 	{
 		if(verbose_average) printf("weights[%d] = %d, ", i, weights[i]);
@@ -209,8 +209,8 @@ extern int perceptronPitchRoll(unsigned char *frame_buf, int *pitch_pixel, int *
 		if(verbose_average) printf("weights[%d] = %d, ", i, weights[i]);
 	}
 
-	if(verbose_average) printf("\n\r");	
-	
+	if(verbose_average) printf("\n\r");
+
 	// determine the number of errors with this decision boundary
 	err = 0;
 	for(sample = 0; sample < n_test_samples; sample++)
@@ -221,14 +221,14 @@ extern int perceptronPitchRoll(unsigned char *frame_buf, int *pitch_pixel, int *
 		ix = image_index(x,y);
 		target = isGroundPixel(frame_buf, ix);
 		target = (target > 0) ? 1 : -1;
-		
+
 		// compare the perceptron's output with the target
 		output = weights[0] * x + weights[1] * y + weights[2];
 		output = (output>0) ? 1 : -1; // sign function
 		if(target != output)
 		{
 			err++;
-		}	
+		}
 	}
 	err = (err * error_range) / n_test_samples;
 
@@ -247,9 +247,9 @@ extern int perceptronPitchRoll(unsigned char *frame_buf, int *pitch_pixel, int *
 	(*pitch_pixel) = b - imgHeight / 2; // b linearly in [0, error_range]
 
 	(*roll_angle) = atan2_fp_1deg(weights[1], -weights[0]) - 90;
-	//printf("pitch = %d, roll = %d\n\r", (*pitch), (*roll));	
+	//printf("pitch = %d, roll = %d\n\r", (*pitch), (*roll));
 	// bring roll to [-LIMIT_ANGLE, LIMIT_ANGLE]
-	
+
 	drawRectangle(frame_buf, X_BORDER, imgWidth-1- X_BORDER, imgHeight-1- Y_BORDER, Y_BORDER);
 	drawLine(frame_buf, -resolution*weights[0] / weights[1], -resolution*weights[2] / weights[1], resolution);
 	return err;
@@ -272,7 +272,7 @@ extern int perceptronPitchRollEfficient(unsigned char *frame_buf, int *pitch_pix
 	int verbose, update_rate, n_updates, i, div_factor;
 	int X_BORDER, Y_BORDER;
 	int resolution = 10;
-	
+
 	X_BORDER = 10;
 	Y_BORDER = 10;
 
@@ -297,13 +297,13 @@ extern int perceptronPitchRollEfficient(unsigned char *frame_buf, int *pitch_pix
 	// weight averaging leads to more robust results
 	average_weights[0] = 0;
 	average_weights[1] = 0;
-	average_weights[2] = 0;	
+	average_weights[2] = 0;
 	update_rate = 10;
 	n_updates = 0;
 	div_factor = (n_train_samples / update_rate);
 
 	verbose = 0;
-	
+
 	// if using a tree that employs the maximum illumination:
 	maxY = getMaximumY(frame_buf);
 
@@ -323,7 +323,7 @@ extern int perceptronPitchRollEfficient(unsigned char *frame_buf, int *pitch_pix
 
 		// classify only pixels that are evaluated in the horizon process:
 		target = segment_no_yco_PerPixel(frame_buf, x, y, maxY, &uncertainty);
-		
+
 		// compare the perceptron's output with the target
 		output = weights[0] * x + weights[1] * y + weights[2];
 		output = (output>0) ? 1 : -1; // sign function
@@ -343,7 +343,7 @@ extern int perceptronPitchRollEfficient(unsigned char *frame_buf, int *pitch_pix
 				weights[2] += costs[0] * gamma[2] * (target - output);
 				if(verbose)
 				{
-					printf("dw1,dw2,dw3 = %d,%d,%d\n\r", 
+					printf("dw1,dw2,dw3 = %d,%d,%d\n\r",
 						costs[0] * gamma[0] * (target - output) * x,
 						costs[0] * gamma[1] * (target - output) * y,
 						costs[0] * gamma[2] * (target - output));
@@ -353,10 +353,10 @@ extern int perceptronPitchRollEfficient(unsigned char *frame_buf, int *pitch_pix
 			{
 				weights[0] += costs[1] * gamma[0] * (target - output) * x;
 				weights[1] += costs[1] * gamma[1] * (target - output) * y;
-				weights[2] += costs[1] * gamma[2] * (target - output);				
+				weights[2] += costs[1] * gamma[2] * (target - output);
 				if(verbose)
 				{
-					printf("dw1,dw2,dw3 = %d,%d,%d\n\r", 
+					printf("dw1,dw2,dw3 = %d,%d,%d\n\r",
 						costs[1] * gamma[0] * (target - output) * x,
 						costs[1] * gamma[1] * (target - output) * y,
 						costs[1] * gamma[2] * (target - output));
@@ -365,7 +365,7 @@ extern int perceptronPitchRollEfficient(unsigned char *frame_buf, int *pitch_pix
 			if(verbose)
 				printf("Post: w1,w2,w3 = %d,%d,%d\n\r", weights[0], weights[1], weights[2]);
 		}
-		
+
 		if(sample % update_rate == 0)
 		{
 			for(i = 0; i < 3; i++)
@@ -375,12 +375,12 @@ extern int perceptronPitchRollEfficient(unsigned char *frame_buf, int *pitch_pix
 			n_updates++;
 		}
 	}
-	
+
 	for(i = 0; i < 3; i++)
 	{
 		weights[i] = average_weights[i];
 	}
-	
+
 	// determine the number of errors with this decision boundary
 	err = 0;
 	for(sample = 0; sample < n_test_samples; sample++)
@@ -391,14 +391,14 @@ extern int perceptronPitchRollEfficient(unsigned char *frame_buf, int *pitch_pix
 		ix = image_index(x,y);
 
 		target = segment_no_yco_PerPixel(frame_buf, x, y, maxY, &uncertainty);
-		
+
 		// compare the perceptron's output with the target
 		output = weights[0] * x + weights[1] * y + weights[2];
 		output = (output>0) ? 1 : -1; // sign function
 		if(target != output)
 		{
 			err++;
-		}	
+		}
 	}
 	err = (err * error_range) / n_test_samples;
 
@@ -415,7 +415,7 @@ extern int perceptronPitchRollEfficient(unsigned char *frame_buf, int *pitch_pix
 	b = b + (((int)imgWidth / 2) * a) / resolution;
 	(*pitch_pixel) = b - imgHeight / 2;
 	(*roll_angle) = atan2_fp_1deg(weights[1], -weights[0]) - 90;
-	
+
 	return err;
 }
 
@@ -449,7 +449,7 @@ extern void drawRectangle(unsigned char *frame_buf, int x_left, int x_right, int
 	int x, y, temp;
 	unsigned int ix;
 
-	if(x_right < x_left) 
+	if(x_right < x_left)
 	{
 		temp = x_left;
 		x_left = x_right;
@@ -491,10 +491,10 @@ extern int getPatchTexture(unsigned char *frame_buf, int x, int y, int patch_siz
 	texture = 0;
 	// correct coordinates of center pixel if necessary:
 	x = (x < half_patch_size) ? half_patch_size : x;
-	x = (x >= imgWidth - half_patch_size) ? imgWidth - half_patch_size - 1 : x;	
+	x = (x >= imgWidth - half_patch_size) ? imgWidth - half_patch_size - 1 : x;
 	y = (y < half_patch_size) ? half_patch_size : y;
 	y = (y >= imgWidth - half_patch_size) ? imgWidth - half_patch_size - 1 : y;
-	
+
 	ix = image_index(x,y);
 	center_pixel = (int)((((unsigned int)frame_buf[ix+1] + (unsigned int)frame_buf[ix+3])) >> 1);
 	for(dx = -half_patch_size; dx <= half_patch_size; dx++)
@@ -520,15 +520,15 @@ extern int get_FD_YCV(unsigned char *frame_buf, int x, int y)
 	unsigned int Y, Cb, Cr, ix;
 	int FD_YCV;
 
-	ix = image_index(x, y);	
+	ix = image_index(x, y);
 	Y = (((unsigned int)frame_buf[ix+1] + (unsigned int)frame_buf[ix+3])) >> 1;
 	Cb = (unsigned int)frame_buf[ix];
 	Cr = (unsigned int)frame_buf[ix+2];
-	
-	// In the blackfin, values range from [0, 255] while the formula is based on 
+
+	// In the blackfin, values range from [0, 255] while the formula is based on
 	// values in the range [0,1]. Therefore we divide by 255 after the color channels.
 	// This leaves the factor 100 with which all coefficients were multiplied.
-	FD_YCV = (860 * (int)Y - 501 * (int) Cr + 2550 * (int) Cb) / 255 - 1545;  
+	FD_YCV = (860 * (int)Y - 501 * (int) Cr + 2550 * (int) Cb) / 255 - 1545;
 	return FD_YCV;
 }
 
@@ -537,14 +537,14 @@ extern int get_FD_CV(unsigned char *frame_buf, int x, int y)
 	unsigned int Cb, Cr, ix;
 	int FD_CV;
 
-	ix = image_index(x, y);	
+	ix = image_index(x, y);
 	Cb = (unsigned int)frame_buf[ix];
 	Cr = (unsigned int)frame_buf[ix+2];
-	
-	// In the blackfin, values range from [0, 255] while the formula is based on 
+
+	// In the blackfin, values range from [0, 255] while the formula is based on
 	// values in the range [0,1]. Therefore we divide by 255 after the channels.
 	// This leaves the factor 100 with which all coefficients were multiplied.
-	FD_CV = (1975 * (int) Cb - 446 * (int) Cr) / 255 - 818;  
+	FD_CV = (1975 * (int) Cb - 446 * (int) Cr) / 255 - 818;
 	return FD_CV;
 }
 
@@ -558,10 +558,10 @@ extern int getPatchMean(unsigned char *frame_buf, int x, int y, int patch_size)
 	mean = 0;
 	// correct coordinates of center pixel if necessary:
 	x = (x < half_patch_size) ? half_patch_size : x;
-	x = (x >= imgWidth - half_patch_size) ? imgWidth - half_patch_size - 1 : x;	
+	x = (x >= imgWidth - half_patch_size) ? imgWidth - half_patch_size - 1 : x;
 	y = (y < half_patch_size) ? half_patch_size : y;
 	y = (y >= imgWidth - half_patch_size) ? imgWidth - half_patch_size - 1 : y;
-	
+
 	for(dx = -half_patch_size; dx <= half_patch_size; dx++)
 	{
 		for(dy = -half_patch_size; dy <= half_patch_size; dy++)
@@ -592,7 +592,7 @@ extern int getHarrisPixel(unsigned char *frame_buf, int x, int y)
 	smooth[0] = 1;// in MATLAB-language: [1,2,1;2,4,2;1,2,1]
 
 	int smooth_factor = 1400; // this factor was chosen to keep Harris within bounds
-	
+
 	// determine the 3 x 3 patch around x,y:
 	if(x <= 0) min_x = 0;
 	else if(x >= imgWidth - 1) min_x = imgWidth - 2;
@@ -600,7 +600,7 @@ extern int getHarrisPixel(unsigned char *frame_buf, int x, int y)
 	if(y <= 0) min_y = 0;
 	else if(y >= imgHeight - 1) min_y = imgHeight - 2;
 	else min_y = y - 1;
-	
+
 	// use the patch to determine dx2, dxy, and dy2
 	it = 0;
 	dx2 = 0;
@@ -645,7 +645,7 @@ extern int getNoblePixel(unsigned char *frame_buf, int x, int y)
 	smooth[0] = 2;
 	smooth[0] = 1;// in MATLAB-language: [1,2,1;2,4,2;1,2,1]
 	int smooth_factor = 1400; // this factor was chosen to keep Harris within bounds
-	
+
 	// determine the 3 x 3 patch around x,y:
 	if(x <= 0) min_x = 0;
 	else if(x >= imgWidth - 1) min_x = imgWidth - 2;
@@ -653,7 +653,7 @@ extern int getNoblePixel(unsigned char *frame_buf, int x, int y)
 	if(y <= 0) min_y = 0;
 	else if(y >= imgHeight - 1) min_y = imgHeight - 2;
 	else min_y = y - 1;
-	
+
 	// use the patch to determine dx2, dxy, and dy2
 	it = 0;
 	dx2 = 0;
@@ -697,7 +697,7 @@ extern int getNoblePixel(unsigned char *frame_buf, int x, int y)
 			Noble = 0;
 		}
 	}
-	
+
 	return Noble;
 }
 
@@ -705,14 +705,14 @@ extern int getNoblePixel(unsigned char *frame_buf, int x, int y)
 
 
 // This function gives the maximum of a subsampled version of the image
-unsigned int getMaximumY(unsigned char *frame_buf) 
+unsigned int getMaximumY(unsigned char *frame_buf)
 {
 	unsigned int ix, y, max_y;
 	unsigned int color_channels = 4;
 	unsigned int step = 5 * color_channels;
 	max_y = 0;
 	for (ix=0; ix<(imgWidth*imgHeight*2); ix+= step)
-	{ 
+	{
 		// we can speed things up by just looking at the first channel:
         y = (((unsigned int)frame_buf[ix+1] + (unsigned int)frame_buf[ix+3])) >> 1;
 		if(y > max_y) max_y = y;
@@ -727,7 +727,7 @@ extern unsigned int getMinimumY(unsigned char *frame_buf)
 	unsigned int step = 5 * color_channels;
 	min_y = 255;
 	for (ix=0; ix<(imgWidth*imgHeight*2); ix+= step)
-	{ 
+	{
 		// we can speed things up by just looking at the first channel:
         y = (((unsigned int)frame_buf[ix+1] + (unsigned int)frame_buf[ix+3])) >> 1;
 		if(y < min_y) min_y = y;
@@ -748,8 +748,8 @@ extern void getGradientImage(unsigned char *frame_buf, unsigned char *frame_buf2
 		{
 			ix = image_index(x,y);
 			getGradientPixel(frame_buf, x, y, &dx, &dy);
-			
-			// gradient has to be stored in unsigned format. We prefer to cut the values off at -127 / +127 than to reduce the resolution 
+
+			// gradient has to be stored in unsigned format. We prefer to cut the values off at -127 / +127 than to reduce the resolution
 			dx = dx + 127;
 			dx = (dx < 0) ? 0 : dx;
 			dx = (dx > 255) ? 255 : dx;
@@ -784,7 +784,7 @@ extern void getGradientPixel(unsigned char *frame_buf, int x, int y, int* dx, in
 			ix = image_index(xx,yy);
 			Y1 = (((unsigned int)frame_buf[ix+1] + (unsigned int)frame_buf[ix+3])) >> 1;
 		}
-	
+
 		if(x < imgWidth - 1)
 		{
 			xx = x+1; yy = y;
@@ -797,9 +797,9 @@ extern void getGradientPixel(unsigned char *frame_buf, int x, int y, int* dx, in
 			ix = image_index(xx,yy);
 			Y2 = (((unsigned int)frame_buf[ix+1] + (unsigned int)frame_buf[ix+3])) >> 1;
 		}
-		
+
 		(*dx) = ((int)Y2) - ((int)Y1);
-		
+
 		if(y > 0)
 		{
 			xx = x; yy = y - 1;
@@ -812,7 +812,7 @@ extern void getGradientPixel(unsigned char *frame_buf, int x, int y, int* dx, in
 			ix = image_index(xx,yy);
 			Y1 = (((unsigned int)frame_buf[ix+1] + (unsigned int)frame_buf[ix+3])) >> 1;
 		}
-	
+
 		if(y < imgHeight - 1)
 		{
 			xx = x; yy = y + 1;
@@ -825,7 +825,7 @@ extern void getGradientPixel(unsigned char *frame_buf, int x, int y, int* dx, in
 			ix = image_index(xx,yy);
 			Y2 = (((unsigned int)frame_buf[ix+1] + (unsigned int)frame_buf[ix+3])) >> 1;
 		}
-		
+
 		(*dy) = ((int)Y2) - ((int)Y1);
 	}
 }
@@ -847,8 +847,8 @@ extern int getGradient(unsigned char *frame_buf, int x, int y)
 		// coordinate not within image
 		return 0;
 	}
-	
-	
+
+
 }
 
 
@@ -893,7 +893,7 @@ void getObstacles2Way(unsigned int* obstacles, unsigned int n_bins, unsigned cha
 	y1 = (b + a * x1) / RESOLUTION;
 	x2 = halfWidth;
 	y2 = (b + a * x2) / RESOLUTION;
-		
+
 
 	if(a == 0) a = 1;
 	a2 = (RESOLUTION / a) * RESOLUTION; // slope orthogonal to a
@@ -901,7 +901,7 @@ void getObstacles2Way(unsigned int* obstacles, unsigned int n_bins, unsigned cha
 	x12 = (100*(b2 - b)) / (a + a2); // RESOLUTION factor disappears
 	x12 /= 100;
 	y12 = (a * x12 + b) / RESOLUTION;
-	
+
 	// only further process the image if the horizon line is entirely visible
 	if(y1 >= 0 && y1 < imgHeight && y2 >= 0 && y2 < imgHeight)
 	{
@@ -912,7 +912,7 @@ void getObstacles2Way(unsigned int* obstacles, unsigned int n_bins, unsigned cha
 
 		// 4) run over the image from left to right in lines parallel to the horizon line
 		x_start = x12 - (n_bins / 2) * step_x;
-		
+
 		for(i = 0; i > -halfHeight; i--)
 		{
 			for(x = x_start; x < halfWidth; x++)
@@ -924,7 +924,7 @@ void getObstacles2Way(unsigned int* obstacles, unsigned int n_bins, unsigned cha
 				// transform to image coordinates:
 				xx = x + halfWidth;
 				yy = y;
-				
+
 				if(xx >= 0 && xx < imgWidth && yy >= 0 && yy < imgHeight)
 				{
 					ix = image_index(xx,yy);
@@ -933,7 +933,7 @@ void getObstacles2Way(unsigned int* obstacles, unsigned int n_bins, unsigned cha
 						// make pixel red
 						redPixel(frame_buf, ix);
 						// add pixel to obstacle bin:
-						obstacles[bin]++;						
+						obstacles[bin]++;
 					}
 				}
 			}
@@ -963,7 +963,7 @@ void getObstacles2Way(unsigned int* obstacles, unsigned int n_bins, unsigned cha
 			}
 			(*obstacle_total) += obstacles[bin];
 	    }
-		(*obstacle_total) /= n_bins;	
+		(*obstacle_total) /= n_bins;
 
 	}
 	else
@@ -993,7 +993,7 @@ void getObstacles(unsigned int* obstacles, unsigned int n_bins, unsigned char *f
 	total_pixels = imgWidth * HALF_HEIGHT;
     GRND = 0x00;
     // frame_buf contains the segmented image. All non-zero elements are sky.
-    // This function assumes no pitch and roll. 
+    // This function assumes no pitch and roll.
     for(x = 0; x < imgWidth; x++)
     {
 		for(y = 0; y < HALF_HEIGHT; y++)
@@ -1002,8 +1002,8 @@ void getObstacles(unsigned int* obstacles, unsigned int n_bins, unsigned char *f
 		    if(frame_buf[ix] == GRND) // Of course, the original image could also use black pixels - of which probably few in the sky
 		    {
 				bin = x / bin_size;
-				if(bin >= n_bins) 
-				{	
+				if(bin >= n_bins)
+				{
 					bin = n_bins-1;
 				}
 				obstacles[bin]++;
@@ -1046,14 +1046,14 @@ void getUncertainty(unsigned int* uncertainty, unsigned int n_bins, unsigned cha
     HALF_HEIGHT = imgHeight / 2;
     // frame_buf contains the uncertainties in the range [0,50] with 50 maximally uncertain.
     // (if higher, the other class should be chosen).
-    // This function assumes no pitch and roll. 
+    // This function assumes no pitch and roll.
     last_bin = 0;
 
     for(x = 0; x < imgWidth; x++)
     {
 	bin = x / bin_size;
 	if(bin >= n_bins) bin = n_bins - 1;
-	if(bin > last_bin) 
+	if(bin > last_bin)
 	{
 	    // the final value in uncertainty[bin] is an average per pixel in the bin
 	    uncertainty[bin-1] /= bin_size;
@@ -1073,9 +1073,9 @@ void getUncertainty(unsigned int* uncertainty, unsigned int n_bins, unsigned cha
 }
 
 
-/***************************** 
+/*****************************
 
-	TREES for segmentation: 
+	TREES for segmentation:
 
 ******************************/
 
@@ -1085,7 +1085,7 @@ void segmentBWboard(unsigned char *frame_buf, unsigned char *frame_buf2)
 	// the second buffer (image) stores the uncertainties between 0 and 100.
 	int x, y, threshold, value;
 	unsigned int ix, Y, U, V, maxY, minY;
-	
+
 	// the maximal illuminance is used in almost all sub-branches, so it is better to calculate it immediately once:
 	maxY = getMaximumY(frame_buf);
 	minY = getMinimumY(frame_buf);
@@ -1121,16 +1121,16 @@ void segmentSkyUncertainty2(unsigned char *frame_buf, unsigned char *frame_buf2)
 	// the second buffer (image) stores the uncertainties between 0 and 100.
 	int x, y, threshold, value;
 	unsigned int ix, Y, U, V, maxY;
-	
+
 	// the maximal illuminance is used in almost all sub-branches, so it is better to calculate it immediately once:
 	maxY = getMaximumY(frame_buf);
-	
+
 	for(x = 0; x < imgWidth; x++)
 	{
 		for(y = 0; y < imgHeight; y++) // we could divide imgHeight by 2 to speed things up
 		{
 			ix = image_index(x,y);
-			
+
 			threshold = (imgHeight * 41) / 100;
 			if(y <= threshold) // high in the image
 			{
@@ -1138,14 +1138,14 @@ void segmentSkyUncertainty2(unsigned char *frame_buf, unsigned char *frame_buf2)
 				if(value <= 4) // little gradient
 				{
 					U = (unsigned int)frame_buf[ix];
-					
+
 					if(U <= 137)
 					{
 						Y = (((unsigned int)frame_buf[ix+1] + (unsigned int)frame_buf[ix+3])) >> 1;
 						if(Y <= (maxY * 30) / 100) // not very bright: was 59, now 30
 						{
 							V = (unsigned int)frame_buf[ix + 2];
-							
+
 							if(V <= 143) // check this one: are the colors right?
 							{
 								threshold = (imgHeight * 29) / 100;
@@ -1272,7 +1272,7 @@ void segmentSkyUncertainty2(unsigned char *frame_buf, unsigned char *frame_buf2)
 							setUncertainty(frame_buf2, ix, 20);
 						}
 					}
-					
+
 				}
 			}
 			else
@@ -1772,8 +1772,8 @@ int segmentSkyPixelNoYCO(unsigned char *frame_buf, int x, int y, unsigned int ma
 	// use a pre-defined tree to segment the image:
 	int gradient;
 	unsigned int ix, Y, Cb, Cr;
-	
-	
+
+
 			ix = image_index(x,y);
 
 			Cr = (unsigned int)frame_buf[ix+2];
@@ -2499,16 +2499,16 @@ void segmentSkyUncertainty(unsigned char *frame_buf, unsigned char *frame_buf2)
 	// the second buffer (image) stores the uncertainties between 0 and 100.
 	int x, y, threshold, value;
 	unsigned int ix, Y, U, V, maxY;
-	
+
 	// the maximal illuminance is used in almost all sub-branches, so it is better to calculate it immediately once:
 	maxY = getMaximumY(frame_buf);
-	
+
 	for(x = 0; x < imgWidth; x++)
 	{
 		for(y = 0; y < imgHeight; y++) // we could divide imgHeight by 2 to speed things up
 		{
 			ix = image_index(x,y);
-			
+
 			threshold = (imgHeight * 41) / 100;
 			if(y <= threshold) // high in the image
 			{
@@ -2516,14 +2516,14 @@ void segmentSkyUncertainty(unsigned char *frame_buf, unsigned char *frame_buf2)
 				if(value <= 3) // little gradient
 				{
 					U = (unsigned int)frame_buf[ix];
-					
+
 					if(U <= 137)
 					{
 						Y = (((unsigned int)frame_buf[ix+1] + (unsigned int)frame_buf[ix+3])) >> 1;
 						if(Y <= (maxY * 59) / 100) // not very bright
 						{
 							V = (unsigned int)frame_buf[ix + 2];
-							
+
 							if(V <= 143) // check this one: are the colors right?
 							{
 								threshold = (imgHeight * 29) / 100;
@@ -2650,7 +2650,7 @@ void segmentSkyUncertainty(unsigned char *frame_buf, unsigned char *frame_buf2)
 							setUncertainty(frame_buf2, ix, 20);
 						}
 					}
-					
+
 				}
 			}
 			else
@@ -2722,16 +2722,16 @@ void segmentSky(unsigned char *frame_buf)
 	// we may give a second image to store the uncertainties in the future:
 	int x, y, threshold, value;
 	unsigned int ix, Y, U, V, maxY;
-	
+
 	// the maximal illuminance is used in almost all sub-branches, so it is better to calculate it immediately once:
 	maxY = getMaximumY(frame_buf);
-	
+
 	for(x = 0; x < imgWidth; x++)
 	{
 		for(y = 0; y < imgHeight; y++) // we could divide imgHeight by 2 to speed things up
 		{
 			ix = image_index(x,y);
-			
+
 			threshold = (imgHeight * 41) / 100;
 			if(y <= threshold) // high in the image
 			{
@@ -2739,14 +2739,14 @@ void segmentSky(unsigned char *frame_buf)
 				if(value <= 3) // little gradient
 				{
 					U = (unsigned int)frame_buf[ix];
-					
+
 					if(U <= 137)
 					{
 						Y = (((unsigned int)frame_buf[ix+1] + (unsigned int)frame_buf[ix+3])) >> 1;
 						if(Y <= (maxY * 59) / 100) // not very bright
 						{
 							V = (unsigned int)frame_buf[ix + 2];
-							
+
 							if(V <= 143) // check this one: are the colors right?
 							{
 								threshold = (imgHeight * 29) / 100;
@@ -2859,7 +2859,7 @@ void segmentSky(unsigned char *frame_buf)
 							// 79.5%
 						}
 					}
-					
+
 				}
 			}
 			else

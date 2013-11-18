@@ -3,7 +3,7 @@
  * Copyright (C) 2005 Thomas Vander Stichele <thomas@apestaart.org>
  * Copyright (C) 2005 Ronald S. Bultje <rbultje@ronald.bitfreak.net>
  * Copyright (C) 2013 houjebek <<user@hostname.org>>
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a
  * copy of this software and associated documentation files (the "Software"),
  * to deal in the Software without restriction, including without limitation
@@ -74,7 +74,7 @@ struct _Gstmavlab
   gboolean silent;
 };
 
-struct _GstmavlabClass 
+struct _GstmavlabClass
 {
   GstElementClass parent_class;
 };

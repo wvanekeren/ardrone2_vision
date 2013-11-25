@@ -1,0 +1,34 @@
+<!DOCTYPE module SYSTEM "module.dtd">
+
+<module name="ObstacleAvoidSkySegmentation">
+  <doc>
+    <description>Video ARDone 2</description>
+  </doc>
+
+  <header>
+    <file name="video.h"/>
+  </header>
+
+  <init fun="video_init()"/>
+
+  <periodic fun="video_receive()" freq="200" start="video_start()" stop="video_stop()" autorun="FALSE"/>
+  <makefile>
+    <define name="ARDRONE_VIDEO_PORT" value="2002" />
+    <define name="USE_ARDRONE_VIDEO" />
+<!--    <file name="video.c"/>
+    <file name="video_ardrone2.c"/>
+-->
+      <raw>
+
+$(TARGET).srcs += /home/mavlab/paparazzi/sw/ext/ardrone2_vision/modules/ObstacleAvoidSkySegmentation/video.c
+$(TARGET).srcs += /home/mavlab/paparazzi/sw/ext/ardrone2_vision/modules/ObstacleAvoidSkySegmentation/video_ardrone2.c
+$(TARGET).CFLAGS += -I/home/mavlab/paparazzi/sw/ext/ardrone2_vision/modules
+
+all:
+	echo "Compiling libObstacleAvoidSkySegmentation.so plugin"
+	make -C ../ext/ardrone2_vision/pprz_gst_plugins/ObstacleAvoidSkySegmentation upload
+
+    </raw>
+  </makefile>
+</module>
+

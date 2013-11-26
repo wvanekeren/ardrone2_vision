@@ -20,13 +20,13 @@
 -->
       <raw>
 
-$(TARGET).srcs += /home/mavlab/paparazzi/sw/ext/ardrone2_vision/modules/ObstacleAvoidSkySegmentation/video.c
-$(TARGET).srcs += /home/mavlab/paparazzi/sw/ext/ardrone2_vision/modules/ObstacleAvoidSkySegmentation/video_ardrone2.c
-$(TARGET).CFLAGS += -I/home/mavlab/paparazzi/sw/ext/ardrone2_vision/modules
+$(TARGET).srcs += $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/modules/ObstacleAvoidSkySegmentation/video.c
+$(TARGET).srcs += $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/modules/ObstacleAvoidSkySegmentation/video_ardrone2.c
+$(TARGET).CFLAGS += -I$(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/modules
 
 all:
 	echo "Compiling libObstacleAvoidSkySegmentation.so plugin"
-	make -C ../ext/ardrone2_vision/pprz_gst_plugins/ObstacleAvoidSkySegmentation upload
+	make -C $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/pprz_gst_plugins/ObstacleAvoidSkySegmentation upload
 
     </raw>
   </makefile>

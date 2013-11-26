@@ -44,17 +44,5 @@ extern struct VideoARDrone video_impl;
 
 
 
-#include <unistd.h>             /*  for ssize_t data type  */
-
-#define LISTENQ        (1024)   /*  Backlog for listen()   */
-#define PORT	       (2002)
-
-
-/*  private function declarations  */
-	int initSocket(void) ;
-	int Read_msg_socket(char * data, unsigned int size);
-	ssize_t Write_msg_socket(char * data, unsigned int size);
-	int closeSocket(void);
-
 
 #endif /* VIDEO_ARDRONE2_H */

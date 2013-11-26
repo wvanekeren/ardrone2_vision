@@ -20,7 +20,7 @@
  */
 
 /**
- * @file subsystems/video.c
+ * @file video.c
  * Video processor access function
  */
 
@@ -28,18 +28,4 @@
 #include "video.h"
 
 struct Video video;
-/*
 
-void video_init(void)
-{
-
-}
-
-void video_start(void){}
-void video_stop(void){}
-
-
-void video_receive(void)
-{
-}
-*/

@@ -15,13 +15,14 @@
   <makefile>
     <define name="ARDRONE_VIDEO_PORT" value="2002" />
     <define name="USE_ARDRONE_VIDEO" />
-<!--    <file name="video.c"/>
-    <file name="video_ardrone2.c"/>
--->
+<!--    <file name="video.c"/>  -->
       <raw>
 
-$(TARGET).srcs += $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/modules/ObstacleAvoidSkySegmentation/video.c
-$(TARGET).srcs += $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/modules/ObstacleAvoidSkySegmentation/video_ardrone2.c
+VISION_FOLDER = $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/modules/ObstacleAvoidSkySegmentation
+          
+$(TARGET).srcs += $(VISION_FOLDER)/video.c
+$(TARGET).srcs += $(VISION_FOLDER)/video_ardrone2.c
+$(TARGET).srcs += $(VISION_FOLDER)/tcp_socket.c
 $(TARGET).CFLAGS += -I$(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/modules
 
 all:

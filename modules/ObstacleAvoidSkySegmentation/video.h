@@ -20,8 +20,8 @@
  */
 
 /**
- * @file subsystems/video.h
- * Attitude and Heading Reference System interface.
+ * @file video.h
+ * Video processor access function
  */
 
 #ifndef VIDEO_H

@@ -15,11 +15,13 @@
 #define PORT         (2002)
 
 
-/*  private function declarations  */
+// Open - Close
 int initSocket(void) ;
+int closeSocket(void);
+
+// Read - Write
 int Read_msg_socket(char * data, unsigned int size);
 ssize_t Write_msg_socket(char * data, unsigned int size);
-int closeSocket(void);
 
 
 #endif /* TCP_SOCKET_H_ */

@@ -29,7 +29,7 @@ void my_plugin_init(void)
   gst2ppz.counter = 0;
 
   // Start Socket Thread
-  paparazzi_message_server_start();
+  //paparazzi_message_server_start();
 }
 
 void my_plugin_run(unsigned char *frame)
@@ -47,7 +47,7 @@ void my_plugin_run(unsigned char *frame)
   // Send to paparazzi
   gst2ppz.ID = 0x0001;
   gst2ppz.counter++;
-  paparazzi_message_send();
+  //paparazzi_message_send();
 
   // Verbose
   if (verbose > 0)

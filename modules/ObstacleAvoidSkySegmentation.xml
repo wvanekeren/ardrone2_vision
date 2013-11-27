@@ -31,7 +31,7 @@ all:
 	sb2 make -C $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/pprz_gst_plugins/ObstacleAvoidSkySegmentation all
 	
 upload_extra:
-	echo "===========================================UPLOAD=========================================="
+	@echo "====================================VISION UPLOAD======================================"
 	make -C $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/pprz_gst_plugins/ObstacleAvoidSkySegmentation upload
 
     </raw>

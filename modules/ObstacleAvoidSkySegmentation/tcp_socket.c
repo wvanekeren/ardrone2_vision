@@ -27,19 +27,26 @@
 
 
 /*  Global variables  */
-int       list_s;                /*  listening socket          */
+int       list_s = 0;            /*  listening socket          */
 struct    sockaddr_in servaddr;  /*  socket address structure  */
 char     *endptr;                /*  for strtol()              */
 
 
 int closeSocket(void) {
-  return close(list_s);
+  if (list_s == 0) return 0;
+  close(list_s);
+  list_s = 0;
+  return list_s;
 }
 
 int initSocket() {
+  if (list_s > 0)
+    return 0;
+
   //  Create the listening socket
   if ( (list_s = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
     fprintf(stderr, "tcp server: Error creating listening socket.\n");
+    list_s = 0;
     return -1;
   }
 
@@ -53,12 +60,14 @@ int initSocket() {
   servaddr.sin_port        = htons(PORT);
   if(inet_pton(AF_INET, ipa, &servaddr.sin_addr)<=0)
   {
+    closeSocket();
     printf("Inet_pton error occured.\n");
     return -1;
   }
 
   if( connect(list_s, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
   {
+    closeSocket();
     printf("Error : PPRZ<->GST Connect Failed?\n");
     return -1;
   }
@@ -70,6 +79,14 @@ int initSocket() {
 
 int Read_msg_socket(char * data, unsigned int size) {
   int n;
+
+  // Try once
+  if (list_s <= 0)
+    initSocket();
+
+  // If once is not good, then abort
+  if (list_s <= 0) return -3;
+
   n = read(list_s, data, size);
   return n;
 }
@@ -79,6 +96,9 @@ int Read_msg_socket(char * data, unsigned int size) {
 
 ssize_t Write_msg_socket(char * data, unsigned int size) {
   ssize_t     nwritten;
+
+  if (list_s <= 0) return -3;
+
   nwritten = write(list_s, data, size);
   return nwritten;
 }

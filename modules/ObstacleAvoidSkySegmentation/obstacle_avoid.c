@@ -55,8 +55,18 @@ struct ppz2gst_message_struct ppz2gst;
 void video_init(void) {
 }
 
-void video_receive(void) {
+#define VISION_DATA_SIZE 20
 
+uint8_t vision_data[VISION_DATA_SIZE] = { 10, 30, 20, 40,
+            30, 50, 40, 60,
+            50, 70, 60, 80,
+            50, 70, 60, 80,
+            50, 70, 60, 80,
+};
+
+
+void video_receive(void) {
+/*
   //read the data from the video tcp socket
   if (Read_msg_socket((char *) &gst2ppz,sizeof(gst2ppz))>=0) {
     video_impl.counter = gst2ppz.counter;
@@ -76,34 +86,41 @@ void video_receive(void) {
   ppz2gst.roll = att->phi;
   ppz2gst.pitch = att->theta;
   Write_msg_socket((char *) &ppz2gst,sizeof(ppz2gst));
-}
+*/
 
 
-#include <pthread.h>    // pthread_create
+  static uint8_t nr = 0;
+  vision_data[nr] ++;
+  nr ++;
+  if (nr >= VISION_DATA_SIZE)
+    nr = 0;
 
-void *TCP_thread( void *ptr);
+  RunOnceEvery(10,DOWNLINK_SEND_PAYLOAD(DefaultChannel, DefaultDevice, VISION_DATA_SIZE, vision_data));
 
-void *TCP_thread( void *ptr)
-{
-  // Start GST plugiun
-  system("gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate=15/1' ! videoscale ! video/x-raw-yuv, width=160, height=120 ! obstacleavoidskysegmentation adjust_factor=5 verbose=2 tcp_port=2000 ! dspmp4venc ! rtpmp4vpay config-interval=2 ! udpsink host=192.168.1.255 port=5000 > /dev/null 2>&1");
 }
 
 
 void video_start(void)
 {
-  pthread_t th1;
-  int th1_r;
-  pthread_create(&th1,NULL,TCP_thread,&th1_r);
+  // Start GST plugiun
+  // Normal video 320
+  //system("/opt/arm/gst/bin/gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate=15/1' ! videoscale ! video/x-raw-yuv, width=320, height=240 !dspmp4venc ! rtpmp4vpay config-interval=2 ! udpsink host=192.168.1.255 port=5000 &");
+
+  // Sky Segment 160
+  system("/opt/arm/gst/bin/gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate=15/1' ! videoscale ! video/x-raw-yuv, width=160, height=120 ! obstacleavoidskysegmentation adjust_factor=5 verbose=0 tcp_port=2000  ! dspmp4venc ! rtpmp4vpay config-interval=2 ! udpsink host=192.168.1.255 port=5000 &");
+
+  // Sky Segment 160 DSP 320
+  //system("/opt/arm/gst/bin/gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate=15/1' ! videoscale ! video/x-raw-yuv, width=160, height=120 ! obstacleavoidskysegmentation adjust_factor=5 verbose=0 tcp_port=2000 ! videoscale ! video/x-raw-yuv, width=320, height=240  ! dspmp4venc ! rtpmp4vpay config-interval=2 ! udpsink host=192.168.1.255 port=5000 &");
 
   // Start TCP Server
-  printf( "Opening gst<->pprz socket %d", initSocket());
+  //initSocket();
+  //printf( "Opening gst<->pprz socket %d", initSocket());
 }
 
 void video_stop(void)
 {
   // Stop TCP Server
-  printf( "Closing gst<->pprz socket %d", closeSocket());
+  //printf( "Closing gst<->pprz socket %d", closeSocket());
 
   // Stop GST-Plugin
   system("kill -9 `pidof gst-launch-0.10` &");

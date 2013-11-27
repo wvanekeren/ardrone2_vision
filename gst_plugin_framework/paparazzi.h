@@ -43,6 +43,7 @@ void *TCP_thread( void *ptr)
   if (!socketIsReady)
   {
 		g_print("Error initialising connection\n");
+		return 0;
 	}
   else
   {

@@ -22,7 +22,7 @@ VISION_FOLDER = $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/modules/ObstacleAvoidSk
           
 $(TARGET).srcs += $(VISION_FOLDER)/video.c
 $(TARGET).srcs += $(VISION_FOLDER)/obstacle_avoid.c
-$(TARGET).srcs += $(VISION_FOLDER)/tcp_socket.c
+$(TARGET).srcs += $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/gst_plugin_framework/socket.c
 $(TARGET).CFLAGS += -I$(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/modules
 $(TARGET).LDFLAGS += -pthread
 

@@ -21,7 +21,7 @@
 
 
 #include "obstacle_avoid.h"
-#include "tcp_socket.h"
+#include "../../gst_plugin_framework/socket.h"
 
 #include <stdio.h>
 
@@ -55,48 +55,29 @@ struct ppz2gst_message_struct ppz2gst;
 void video_init(void) {
 }
 
-#define VISION_DATA_SIZE 20
 
-uint8_t vision_data[VISION_DATA_SIZE] = { 10, 30, 20, 40,
-            30, 50, 40, 60,
-            50, 70, 60, 80,
-            50, 70, 60, 80,
-            50, 70, 60, 80,
-};
-
+struct UdpSocket *sock;
 
 void video_receive(void) {
-/*
-  //read the data from the video tcp socket
-  if (Read_msg_socket((char *) &gst2ppz,sizeof(gst2ppz))>=0) {
-    video_impl.counter = gst2ppz.counter;
-
-    //received new optical flow output:
-    //int roll = gst2ppz.optic_flow_x;
-    //int pitch = gst2ppz.optic_flow_y;
-
-    //printf("Optic flow: %d, %d\n", roll,pitch);
-
-    //DOWNLINK_SEND_VIDEO_TELEMETRY( DefaultChannel, DefaultDevice, &gst2ppz.blob_x1, &gst2ppz.blob_y1,&gst2ppz.blob_x2, &gst2ppz.blob_y2,&gst2ppz.blob_x3, &gst2ppz.blob_y3,&gst2ppz.blob_x4, &gst2ppz.blob_y4);
-  }
-
+  // Uplink
   struct Int32Eulers* att = stateGetNedToBodyEulers_i();
   ppz2gst.counter++;
   ppz2gst.ID = 0x0003;
   ppz2gst.roll = att->phi;
   ppz2gst.pitch = att->theta;
-  Write_msg_socket((char *) &ppz2gst,sizeof(ppz2gst));
-*/
+  //RunOnceEvery(1,
+      udp_write(sock, (char *) &ppz2gst, sizeof(ppz2gst));//);
 
 
   static uint8_t nr = 0;
-  vision_data[nr] ++;
+  gst2ppz.obstacle_bins[nr] ++;
   nr ++;
-  if (nr >= VISION_DATA_SIZE)
+  if (nr >= N_BINS)
     nr = 0;
 
-  RunOnceEvery(10,DOWNLINK_SEND_PAYLOAD(DefaultChannel, DefaultDevice, VISION_DATA_SIZE, vision_data));
-
+  // Downlink
+  udp_read(sock, (unsigned char *) &gst2ppz, sizeof(gst2ppz));
+  RunOnceEvery(10,DOWNLINK_SEND_PAYLOAD(DefaultChannel, DefaultDevice, N_BINS, gst2ppz.obstacle_bins));
 }
 
 
@@ -104,17 +85,18 @@ void video_start(void)
 {
   // Start GST plugiun
   // Normal video 320
-  //system("/opt/arm/gst/bin/gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate=15/1' ! videoscale ! video/x-raw-yuv, width=320, height=240 !dspmp4venc ! rtpmp4vpay config-interval=2 ! udpsink host=192.168.1.255 port=5000 &");
+  // system("/opt/arm/gst/bin/gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate=15/1' ! videoscale ! video/x-raw-yuv, width=320, height=240 !dspmp4venc ! rtpmp4vpay config-interval=2 ! udpsink host=192.168.1.255 port=5000 &");
 
   // Sky Segment 160
-  system("/opt/arm/gst/bin/gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate=15/1' ! videoscale ! video/x-raw-yuv, width=160, height=120 ! obstacleavoidskysegmentation adjust_factor=5 verbose=0 tcp_port=2000  ! dspmp4venc ! rtpmp4vpay config-interval=2 ! udpsink host=192.168.1.255 port=5000 &");
+  //system("/opt/arm/gst/bin/gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate=15/1' ! videoscale ! video/x-raw-yuv, width=160, height=120 ! obstacleavoidskysegmentation adjust_factor=5 verbose=0 tcp_port=2000  ! dspmp4venc ! rtpmp4vpay config-interval=2 ! udpsink host=192.168.1.255 port=5000 &");
 
   // Sky Segment 160 DSP 320
-  //system("/opt/arm/gst/bin/gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate=15/1' ! videoscale ! video/x-raw-yuv, width=160, height=120 ! obstacleavoidskysegmentation adjust_factor=5 verbose=0 tcp_port=2000 ! videoscale ! video/x-raw-yuv, width=320, height=240  ! dspmp4venc ! rtpmp4vpay config-interval=2 ! udpsink host=192.168.1.255 port=5000 &");
+  system("/opt/arm/gst/bin/gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate=15/1' ! videoscale ! video/x-raw-yuv, width=160, height=120 ! obstacleavoidskysegmentation adjust_factor=5 verbose=0 tcp_port=2000 ! videoscale ! video/x-raw-yuv, width=320, height=240  ! dspmp4venc ! rtpmp4vpay config-interval=2 ! udpsink host=192.168.1.255 port=5000 &");
 
   // Start TCP Server
   //initSocket();
   //printf( "Opening gst<->pprz socket %d", initSocket());
+  sock = udp_socket("192.168.1.1", 2001, 2000, FMS_UNICAST);
 }
 
 void video_stop(void)
@@ -125,5 +107,6 @@ void video_stop(void)
   // Stop GST-Plugin
   system("kill -9 `pidof gst-launch-0.10` &");
 }
+
 
 

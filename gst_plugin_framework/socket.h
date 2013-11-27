@@ -1,18 +1,25 @@
 #ifndef SOCKET_H
 #define SOCKET_H
 
-#include <unistd.h>             /*  for ssize_t data type  */
 
-#define LISTENQ        (1024)   /*  Backlog for listen()   */
+#include <sys/socket.h>
+#include <arpa/inet.h>
+
+#define FMS_UNICAST 0
+#define FMS_BROADCAST 1
+
+struct UdpSocket {
+  int socket_in;
+  int socket_out;
+  struct sockaddr_in addr_in;
+  struct sockaddr_in addr_out;
+};
 
 
-/*  Function declarations  */
-int initSocket(unsigned int port);
-ssize_t Readline_socket(char * data, size_t maxlen);
-ssize_t Writeline_socket(char * text, size_t n);
-int Read_msg_socket(char * data, unsigned int size);
-ssize_t Write_msg_socket(char * data, unsigned int size);
-int closeSocket(void);
+extern struct UdpSocket* udp_socket(const char* str_ip_out, const int port_out, const int port_in, const int broadcast);
+extern int udp_write(struct UdpSocket* me, char* buf, int len);
+extern int udp_read(struct UdpSocket* me, unsigned char* buf, int len);
+
 
 #endif  /*  SOCKET_H  */
 

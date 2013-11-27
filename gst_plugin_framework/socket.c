@@ -1,158 +1,102 @@
 #include "socket.h"
-#include <sys/socket.h>       /*  socket definitions        */
-#include <sys/types.h>        /*  socket types              */
-#include <arpa/inet.h>        /*  inet (3) funtions         */
-#include <unistd.h>           /*  misc. UNIX functions      */
-#include <errno.h>
-#include <string.h> 		/* memset */
 
+#include <netdb.h>
+#include <netinet/in.h>
 #include <stdlib.h>
+#include <errno.h>
 #include <stdio.h>
-#include <gst/gst.h>
 
 
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <sys/ioctl.h>
+#include <stdlib.h>
+#include <string.h>
+#include <strings.h>
+#include <unistd.h>
+#include <netdb.h>
+#include <errno.h>
+#include <netinet/in.h>
 
-/*  Global constants  */
+# define ADDR_SIZE_TYPE socklen_t
+# define SOCKET_ERROR -1
+# define IO_SOCKET ioctl
 
-#define MAX_LINE           (1000)
+struct UdpSocket* udp_socket(const char* str_ip_out, const int port_out, const int port_in, const int broadcast)
+{
 
-/*  Global variables  */
+  struct UdpSocket* me = malloc(sizeof(struct UdpSocket));
 
-int       conn_s;                /*  connection socket         */
-struct    sockaddr_in servaddr;  /*  socket address structure  */
-char     *endptr;                /*  for strtol()              */
+  int so_reuseaddr = 1;
+  struct protoent * pte = getprotobyname("UDP");
+  me->socket_out = socket( PF_INET, SOCK_DGRAM, pte->p_proto);
+  setsockopt(me->socket_out, SOL_SOCKET, SO_REUSEADDR,
+             &so_reuseaddr, sizeof(so_reuseaddr));
 
+  /* only set broadcast option if explicitly enabled */
+  if (broadcast)
+    setsockopt(me->socket_out, SOL_SOCKET, SO_BROADCAST,
+               &broadcast, sizeof(broadcast));
 
-int closeSocket(void) {
-  return close(conn_s);
+  me->addr_out.sin_family = PF_INET;
+  me->addr_out.sin_port = htons(port_out);
+  me->addr_out.sin_addr.s_addr = inet_addr(str_ip_out);
+
+  me->socket_in = socket( PF_INET, SOCK_DGRAM, pte->p_proto);
+  setsockopt(me->socket_in, SOL_SOCKET, SO_REUSEADDR,
+             &so_reuseaddr, sizeof(so_reuseaddr));
+
+  me->addr_in.sin_family = PF_INET;
+  me->addr_in.sin_port = htons(port_in);
+  me->addr_in.sin_addr.s_addr = htonl(INADDR_ANY);
+
+  bind(me->socket_in, (struct sockaddr *)&me->addr_in, sizeof(me->addr_in));
+
+  return me;
 }
 
-int initSocket(unsigned int tcpport) {
-  int       list_s;                /*  listening socket          */
-  /*  Create the listening socket  */
-  if ( (list_s = socket(AF_INET, SOCK_STREAM, 0)) < 0 ) {
-    fprintf(stderr, "tcp server: Error creating listening socket.\n");
-    return 0;
-  }
+#include <stdio.h>
 
-
-  /*  Set all bytes in socket address structure to
-        zero, and fill in the relevant data members   */
-
-  memset(&servaddr, 0, sizeof(servaddr));
-  servaddr.sin_family      = AF_INET;
-  servaddr.sin_addr.s_addr = htonl(INADDR_ANY);
-  servaddr.sin_port        = htons(tcpport);
-
-  /*  Bind our socket addresss to the
-	listening socket, and call listen()  */
-
-  if ( bind(list_s, (struct sockaddr *) &servaddr, sizeof(servaddr)) < 0 ) {
-    fprintf(stderr, "tcp server: Error calling bind()\n");
-    exit(EXIT_FAILURE);
-  }
-
-  if ( listen(list_s, LISTENQ) < 0 ) {
-    fprintf(stderr, "tcp server: Error calling listen()\n");
-    exit(EXIT_FAILURE);
-  }
-
-
-
-  /*  Wait for a connection, then accept() it  */
-  if ( (conn_s = accept(list_s, NULL, NULL) ) < 0 ) {
-    fprintf(stderr, "tcp server: Error calling function accept()\n");
-    return 0;
-  }
-  return 1;
+int udp_write(struct UdpSocket* me, char* buf, int len) {
+  sendto(me->socket_out, buf, len, MSG_DONTWAIT,
+                                (struct sockaddr*)&me->addr_out, sizeof(me->addr_out));
+  //printf("sendto ret=%d\n",ret);
+  return len;
 }
 
-/*  Read a line from a socket  */
+unsigned long MIN(unsigned long a, unsigned long b);
+unsigned long MIN(unsigned long a, unsigned long b)
+{
+  if (a<b) return a;
+  return b;
+}
 
-ssize_t Readline_socket(char * data, size_t maxlen) {
-  size_t n, rc;
-  char   *inbuffer, c;
+int udp_read(struct UdpSocket* me, unsigned char* buf, int len)
+{
+  unsigned long toread = 0;
+  int btr = 1;  // set to >0 in order to start the reading loop
+  int newbytes = 0;
 
-  inbuffer = data ;
+  int status;
 
-  for ( n = 1; n <= maxlen; n++ ) {
-
-    if ( (rc = read(conn_s, &c, 1)) == 1 ) {
-      inbuffer[n] = c;
+  // if socket is connected
+  for (;btr>0;)
+  {
+    // Check Status
+    status = IO_SOCKET(me->socket_in, FIONREAD, &toread);
+    if(status == SOCKET_ERROR) {
+      printf("problem receiving from socket\n");
+      break;
     }
-    else if ( rc == 0 ) {
-      if ( n == 1 )
-        return 0;
-      else
-        break;
-    }
-    else {
-      if ( errno == EINTR )
-        continue;
-      return -1;
-    }
+
+    //printf("UDP has %d bytes\n", toread);
+    if (toread <= 0)
+      break;
+
+    // If status: ok and new data: read it
+    btr = MIN(toread,(unsigned long)len);
+    recvfrom(me->socket_in, buf, btr,  0, (struct sockaddr*)&me->addr_in, (socklen_t *) sizeof(me->addr_in) );
+    newbytes += btr;
   }
-
-  //*inbuffer = 0;
-  return n;
+  return newbytes;
 }
-
-
-/*  Write a line to a socket  */
-
-ssize_t Writeline_socket(char * text, size_t n) {
-  size_t      nleft;
-  ssize_t     nwritten;
-  nleft  = n;
-
-  while ( nleft > 0 ) {
-    if ( (nwritten = write(conn_s, text, nleft)) <= 0 ) {
-      if ( errno == EINTR )
-        nwritten = 0;
-      else
-        return -1;
-    }
-    nleft  -= nwritten;
-    text += nwritten;
-  }
-
-  return n;
-
-}
-
-/*  Read a line from a socket  */
-
-int Read_msg_socket(char * data, unsigned int size) {
-  int n;
-  n = read(conn_s, data, size);
-  return n;
-
-}
-
-
-/*  Write a line to a socket  */
-
-ssize_t Write_msg_socket(char * data, unsigned int size) {
-  size_t      nleft;
-  ssize_t     nwritten = 0;
-  nleft  = size;
-
-  while ( nleft > 0 ) {
-    if ( (nwritten = write(conn_s, data, nleft)) <= 0 ) {
-      if ( errno == EINTR )
-        nwritten = 0;
-      else
-        return -1;
-    }
-    nleft  -= nwritten;
-    data += nwritten;
-  }
-
-  return nwritten;
-
-}
-
-
-
-
-

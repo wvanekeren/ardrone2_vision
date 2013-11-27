@@ -29,17 +29,14 @@ void my_plugin_init(void)
   gst2ppz.counter = 0;
 
   // Start Socket Thread
-  //paparazzi_message_server_start();
+  paparazzi_message_server_start();
 }
 
 void my_plugin_run(unsigned char *frame)
 {
-  int pitch = ppz2gst.pitch/36;
-  int roll = ppz2gst.roll/36;
-
-  ppz2gst.roll+=12;
-  if (ppz2gst.roll>30*36)
-    ppz2gst.roll = -30*36;
+  // 12 bit FRAC in Radians -> Degrees
+  int pitch = ppz2gst.pitch / 71.488686161687739470794373877294;
+  int roll = ppz2gst.roll / 71.488686161687739470794373877294;
 
   // Run actual Image Analysis
   get_obstacle_bins_above_horizon(frame, img_uncertainty, adjust_factor, N_BINS, gst2ppz.obstacle_bins, gst2ppz.uncertainty_bins, pitch, roll);
@@ -47,7 +44,7 @@ void my_plugin_run(unsigned char *frame)
   // Send to paparazzi
   gst2ppz.ID = 0x0001;
   gst2ppz.counter++;
-  //paparazzi_message_send();
+  paparazzi_message_send();
 
   // Verbose
   if (verbose > 0)

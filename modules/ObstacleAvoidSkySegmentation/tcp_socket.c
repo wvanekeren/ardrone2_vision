@@ -1,8 +1,22 @@
 /*
- * tcp_socket.c
+ * Copyright (C) 2012-2013
  *
- *  Created on: Nov 26, 2013
- *      Author: mavlab
+ * This file is part of Paparazzi.
+ *
+ * Paparazzi is free software; you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation; either version 2, or (at your option)
+ * any later version.
+ *
+ * Paparazzi is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with Paparazzi; see the file COPYING.  If not, write to
+ * the Free Software Foundation, 59 Temple Place - Suite 330,
+ * Boston, MA 02111-1307, USA.
  */
 
 #include <arpa/inet.h>        // inet (3) funtions
@@ -39,13 +53,13 @@ int initSocket() {
   servaddr.sin_port        = htons(PORT);
   if(inet_pton(AF_INET, ipa, &servaddr.sin_addr)<=0)
   {
-    printf("\n inet_pton error occured\n");
+    printf("Inet_pton error occured.\n");
     return -1;
   }
 
   if( connect(list_s, (struct sockaddr *)&servaddr, sizeof(servaddr)) < 0)
   {
-    printf("\n Error : Video Connect Failed. Is gst-launch running? \n");
+    printf("Error : PPRZ<->GST Connect Failed?\n");
     return -1;
   }
 

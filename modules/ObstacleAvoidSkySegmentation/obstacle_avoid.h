@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2013 Kevin van Hecke
+ * Copyright (C) 2012-2013
  *
  * This file is part of Paparazzi.
  *
@@ -20,29 +20,22 @@
  */
 
 /**
- * @file subsystems/video/video_ardrone2.h
- * Video implementation for ardrone2.
+ * @file obstacle_avoid.h
+ * Outdoor obstacle avoidance for ardrone2.
  *
  * Use the tcp output of a custom GStreamer framework plugin to receive
- * telemetry based on video
  */
 
-#ifndef VIDEO_ARDRONE2_H
-#define VIDEO_ARDRONE2_H
+#ifndef OBSTACLE_AVOID_H
+#define OBSTACLE_AVOID_H
 
 #include "std.h"
 #include "video.h"
 
-
 struct VideoARDrone {
-  uint32_t maxY;		//maximum brightness
-  uint32_t max_idx;		//x coordinate of brightest pixel
-  uint32_t max_idy;		//y .....
   uint32_t counter;		//counter to keep track of data
 };
 extern struct VideoARDrone video_impl;
 
 
-
-
-#endif /* VIDEO_ARDRONE2_H */
+#endif /* OBSTACLE_AVOID_H */

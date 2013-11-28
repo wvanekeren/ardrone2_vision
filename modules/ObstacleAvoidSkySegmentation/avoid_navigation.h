@@ -23,6 +23,15 @@
 #ifndef AVOID_NAVIGATION_H_
 #define AVOID_NAVIGATION_H_
 
+#include <std.h>
+
+struct AvoidNavigationStruct {
+  uint8_t mode; ///< 0 = nothing, 1 =  climb, 2 = sideways, ...
+};
+
+/** global VIDEO state */
+extern struct AvoidNavigationStruct avoid_navigation_data;
+
 
 void init_avoid_navigation(void);
 void run_avoid_navigation_onvision(void);

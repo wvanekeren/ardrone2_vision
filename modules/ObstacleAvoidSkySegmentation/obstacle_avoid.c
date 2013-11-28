@@ -32,7 +32,6 @@
 
 // Paparazzi State: Attitude -> Vision
 #include "state.h" // for attitude
-//#include "math/pprz_algebra_int.h"
 
 
 #ifndef DOWNLINK_DEVICE
@@ -91,6 +90,7 @@ void video_receive(void) {
   ppz2gst.counter++; // 512 Hz
   ppz2gst.roll = att->phi;
   ppz2gst.pitch = att->theta;
+  ppz2gst.adjust_factor = obstacle_avoid_adjust_factor;
   udp_write(sock, (char *) &ppz2gst, sizeof(ppz2gst));
 
 }

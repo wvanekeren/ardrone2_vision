@@ -23,16 +23,92 @@
 #include "avoid_navigation.h"
 
 // Paparazzi Data
-#include "subsystems/gps/gps_ardrone2.h"
-#include "subsystems/imu/imu_ardrone2_raw.h"
+#include "state.h"
 
+// Vision Data
+#include "../../pprz_gst_plugins/ObstacleAvoidSkySegmentation/video_message_structs.h"
+
+// Interact with navigation
+#include "navigation.h"
+
+// Know waypoint numbers and blocks
+#include "generated/flight_plan.h"
+
+struct AvoidNavigationStruct avoid_navigation_data;
 
 void init_avoid_navigation()
 {
-
+  avoid_navigation_data.mode = 0;
 }
 
-void run_avoid_navigation_onvision()
+void run_avoid_navigation_climb_until_clear(void);
+void run_avoid_navigation_move_target_waypoint(void);
+
+void run_avoid_navigation_onvision(void)
 {
+  switch (avoid_navigation_data.mode)
+  {
+  case 1:     // climb until clear
+    run_avoid_navigation_climb_until_clear();
+    break;
+  default:    // do nothing
+    break;
+  }
 
 }
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+//  HELPER FUNCTIONS
+
+
+
+static uint8_t average_bin(void)
+{
+  uint16_t avg = 0;
+  for (int i=0; i < N_BINS; i++)
+    avg += gst2ppz.obstacle_bins[i];
+  avg /= N_BINS;
+  return avg;
+}
+
+static uint8_t all_bins_less_than(uint8_t thres)
+{
+  for (int i=0; i < N_BINS; i++)
+    if (gst2ppz.obstacle_bins[i] >= thres)
+      return FALSE;
+  return TRUE;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////////
+//
+//  AVOID FUNCTIONS
+
+void run_avoid_navigation_climb_until_clear(void)
+{
+  if (all_bins_less_than(10))
+  {
+    // Stop climbing
+    avoid_navigation_data.mode = 0;
+  }
+  else
+  {
+    // On each video frame
+
+    // nav_heading = atan(vy,vx) // INT32_ANGLE_FRAC
+    navigation_SetFlightAltitude(flight_altitude + 0.1f);
+  }
+}
+
+void run_avoid_navigation_move_target_waypoint(void)
+{
+  uint8_t avg = average_bin();
+  if (avg > 10)
+  {
+    // There is danger!!
+  }
+}
+
+
+
+

@@ -25,6 +25,7 @@ void my_plugin_init(void)
   // Init variables
   ppz2gst.pitch = 0;
   ppz2gst.pitch = 0;
+  ppz2gst.adjust_factor = -1;
 
   gst2ppz.counter = 0;
 
@@ -34,9 +35,13 @@ void my_plugin_init(void)
 
 void my_plugin_run(unsigned char *frame)
 {
-  // 12 bit FRAC in Radians -> Degrees
+  // 12 bit FRAC in Radians -> 0 bit FRAC Degrees
   int pitch = ppz2gst.pitch / 71.488686161687739470794373877294;
-  int roll = ppz2gst.roll / 71.488686161687739470794373877294;
+  int roll  = ppz2gst.roll / 71.488686161687739470794373877294;
+
+  // If received a usefull value
+  if (ppz2gst.adjust_factor >= 0)
+    adjust_factor = ppz2gst.adjust_factor;
 
   // Run actual Image Analysis
   get_obstacle_bins_above_horizon(frame, img_uncertainty, adjust_factor, N_BINS, gst2ppz.obstacle_bins, gst2ppz.uncertainty_bins, pitch, roll);

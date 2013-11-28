@@ -36,6 +36,7 @@
 
 struct AvoidNavigationStruct avoid_navigation_data;
 
+// Called once on paparazzi autopilot start
 void init_avoid_navigation()
 {
   avoid_navigation_data.mode = 0;
@@ -44,12 +45,16 @@ void init_avoid_navigation()
 void run_avoid_navigation_climb_until_clear(void);
 void run_avoid_navigation_move_target_waypoint(void);
 
+// Called on each vision analysis result after receiving the struct
 void run_avoid_navigation_onvision(void)
 {
   switch (avoid_navigation_data.mode)
   {
   case 1:     // climb until clear
     run_avoid_navigation_climb_until_clear();
+    break;
+  case 2:
+    run_avoid_navigation_move_target_waypoint();
     break;
   default:    // do nothing
     break;
@@ -93,15 +98,30 @@ void run_avoid_navigation_climb_until_clear(void)
   }
   else
   {
-    // On each video frame
-
-    // nav_heading = atan(vy,vx) // INT32_ANGLE_FRAC
+    // On each video frame: about 10Hz
+    // Climb X meters
     navigation_SetFlightAltitude(flight_altitude + 0.1f);
+
+    // Look in all directions!?
+    // nav_heading +=  // INT32_ANGLE_FRAC
   }
 }
 
 void run_avoid_navigation_move_target_waypoint(void)
 {
+  // TODO:
+
+  // Use flightplan: LINE p1-p2
+  // WP_p1 -> WP_p2
+
+  // Align the nose with the direction of motion:
+  int32_t dx = waypoints[WP_p2].x - waypoints[WP_p1].x;
+  int32_t dy = waypoints[WP_p2].y - waypoints[WP_p1].y;
+  // nav_heading = atan2() // INT32_ANGLE_FRAC
+  nav_heading = nav_course;
+
+
+
   uint8_t avg = average_bin();
   if (avg > 10)
   {

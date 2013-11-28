@@ -17,6 +17,8 @@ all:
 D = $(DESTDIR)
 
 
+GST_H = ../../ardrone2_gstreamer/opt/arm/gst/include/gstreamer-0.10/gst/gst.h
+
 gst_plugin := libObstacleAvoidSkySegmentation.so
 
 $(gst_plugin):  gst_obstacleavoidskysegmentation_plugin.o obstacleavoidskysegmentation_code.o skysegmentation.o trig.o ../../gst_plugin_framework/socket.o
@@ -26,7 +28,7 @@ $(gst_plugin): override LIBS += $(GST_LIBS)
 
 targets += $(gst_plugin)
 
-../../ardrone2_gstreamer/opt/arm/gst/include/gstreamer-0.10/gst/gst.h:
+$(GST_H):
 	make -C ../../ardrone2_gstreamer
 
 upload:
@@ -49,7 +51,7 @@ endif
 
 %.so: override CFLAGS += -fPIC
 
-%.o:: %.c
+%.o:: %.c $(GST_H)
 	$(QUIET_CC)$(CC) $(CFLAGS) -MMD -MP -o $@ -c $<
 
 $(bins):

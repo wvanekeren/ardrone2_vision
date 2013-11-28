@@ -11,18 +11,18 @@
 struct gst2ppz_message_struct gst2ppz;
 struct ppz2gst_message_struct ppz2gst;
 
-////////////////////////////////////////////////
-// OWN INIT
+inline void paparazzi_message_server_start(void);
+inline void paparazzi_message_send(void);
 
 struct UdpSocket *sock;
 
-void paparazzi_message_server_start(void)
+inline void paparazzi_message_server_start(void)
 {
   sock = udp_socket("192.168.1.1", 2000, 2001, FMS_UNICAST);
 }
 
 
-void paparazzi_message_send()
+inline void paparazzi_message_send(void)
 {
   udp_write(sock, (char *) &gst2ppz, sizeof(gst2ppz));
   int ret = udp_read(sock, (unsigned char *) &ppz2gst, sizeof(ppz2gst));

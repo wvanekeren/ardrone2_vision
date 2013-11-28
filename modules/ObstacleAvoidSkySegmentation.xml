@@ -20,8 +20,8 @@
 
 VISION_FOLDER = $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/modules/ObstacleAvoidSkySegmentation
           
-$(TARGET).srcs += $(VISION_FOLDER)/video.c
 $(TARGET).srcs += $(VISION_FOLDER)/obstacle_avoid.c
+$(TARGET).srcs += $(VISION_FOLDER)/avoid_navigation.c
 $(TARGET).srcs += $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/gst_plugin_framework/socket.c
 $(TARGET).CFLAGS += -I$(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/modules
 $(TARGET).LDFLAGS += -pthread
@@ -29,6 +29,7 @@ $(TARGET).LDFLAGS += -pthread
 all:
 	echo "Compiling libObstacleAvoidSkySegmentation.so plugin"
 	sb2 make -C $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/pprz_gst_plugins/ObstacleAvoidSkySegmentation all
+	make -C $(VISION_FOLDER)/visionresult/
 	
 upload_extra:
 	@echo "====================================VISION UPLOAD======================================"

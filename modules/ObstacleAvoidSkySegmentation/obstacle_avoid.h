@@ -29,13 +29,8 @@
 #ifndef OBSTACLE_AVOID_H
 #define OBSTACLE_AVOID_H
 
-#include "std.h"
 #include "video.h"
 
-struct VideoARDrone {
-  uint32_t counter;		//counter to keep track of data
-};
-extern struct VideoARDrone video_impl;
-
+extern int obstacle_avoid_adjust_factor;
 
 #endif /* OBSTACLE_AVOID_H */

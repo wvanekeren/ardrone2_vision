@@ -35,13 +35,14 @@
 #include <asm/types.h>
 #include <linux/videodev2.h>
 #include <pthread.h>
-#include "../util/util.h"
+//#include "../util/util.h"
 #include "video.h"
 
 #define CLEAR(x) memset (&(x), 0, sizeof (x))
 
 
 pthread_t video_thread;
+void *video_thread_main(void* data);
 void *video_thread_main(void* data)
 {
   struct vid_struct* vid = (struct vid_struct*)data;
@@ -69,7 +70,6 @@ void *video_thread_main(void* data)
     }
 
     struct v4l2_buffer buf;
-    unsigned int i;
 
     CLEAR(buf);
     buf.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
@@ -84,7 +84,9 @@ void *video_thread_main(void* data)
     vid->seq++;
 
     if(vid->trigger) {
-      vid->img->timestamp = util_timestamp();
+
+      // todo add timestamp again
+      //vid->img->timestamp = util_timestamp();
       vid->img->seq = vid->seq;
       memcpy(vid->img->buf, vid->buffers[buf.index].buf, vid->w*vid->h*2);
       vid->trigger=0;
@@ -95,6 +97,7 @@ void *video_thread_main(void* data)
       break;
     }
   }
+  return 0;
 }
 
 int video_Init(struct vid_struct *vid)
@@ -190,6 +193,7 @@ int video_Init(struct vid_struct *vid)
   }
 
   //start video thread
+//  int rc = (int) video_thread_main(vid);
   int rc = pthread_create(&video_thread, NULL, video_thread_main, vid);
   if(rc) {
     printf("ctl_Init: Return code from pthread_create(mot_thread) is %d\n", rc);
@@ -202,7 +206,7 @@ int video_Init(struct vid_struct *vid)
 void video_Close(struct vid_struct *vid)
 {
   int i;
-  for (i = 0; i < vid->n_buffers; ++i) {
+  for (i = 0; i < (int)vid->n_buffers; ++i) {
     if (-1 == munmap(vid->buffers[i].buf, vid->buffers[i].length)) printf("munmap() failed.\n");
   }
   close(vid->fd);

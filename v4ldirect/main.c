@@ -1,15 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
-#include "./video/video.h"
-#include "socket.h"
+
+#include "video.h"
+#include "jpeg.h"
+
+#include "../gst_plugin_framework/socket.h"
 
 int main(int argc,char ** argv)
 {
+  struct UdpSocket* sock;
   long len;
   printf("Starting video test program!\n");
 
 
+  // Video Input
   struct vid_struct vid;
   vid.device = (char*)"/dev/video1";
   vid.w=1280;
@@ -21,13 +26,16 @@ int main(int argc,char ** argv)
     return 0;
   }
 
+  // Video Grabbing
   struct img_struct* img_new = video_CreateImage(&vid);
 
+  // Video Compression
+  uint8_t* jpegbuf = (uint8_t*)malloc(vid.h*vid.w*2);
 
-  if (!initSocket()) {
-    printf("Error initialising connection\n");
-    return 0;
-  }
+  // Network Transmit
+  //#define FMS_UNICAST 0
+  //#define FMS_BROADCAST 1
+  sock = udp_socket("192.168.1.2", 5000, 5001, FMS_UNICAST);
 
   while (1) {
 
@@ -35,11 +43,33 @@ int main(int argc,char ** argv)
     printf("Aquiring an image ...\n");
     video_GrabImage(&vid, img_new);
 
+
+
+
+    // JPEG encode the image:
+    // quality factor from 1 (high quality) to 8 (low quality)
+    uint32_t quality_factor = 4;
+    // format (in jpeg.h)
+    uint32_t image_format = FOUR_TWO_TWO;
+    uint8_t* end = encode_image (img_new->buf, jpegbuf+10, quality_factor, image_format, img_new->w, img_new->h);
+    uint32_t size = end-jpegbuf-10;
+    uint8_t* p = (uint8_t*) & size;
+    jpegbuf[0]='#';
+    jpegbuf[1]='#';
+    jpegbuf[2]='I';
+    jpegbuf[3]='M';
+    jpegbuf[4]='J';
+    jpegbuf[5]='9';
+    jpegbuf[6]=p[0];
+    jpegbuf[7]=p[1];
+    jpegbuf[8]=p[2];
+    jpegbuf[9]=0x00;
+
+
     //send image
     printf("Sending an image ...%ld\n",len);
-    Writeline_socket(img_new, len);
-
-    sleep(1);
+    udp_write(sock, (char*) jpegbuf, size+10);
+//    extern int udp_read(struct UdpSocket* me, unsigned char* buf, int len);
 
   }
 

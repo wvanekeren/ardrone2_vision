@@ -7,6 +7,32 @@
 
 #include "../gst_plugin_framework/socket.h"
 
+
+void resize_uyuv(struct img_struct* input, struct img_struct* output, int downsample)
+{
+  uint8_t *source = input->buf;
+  uint8_t *dest = output->buf;
+
+  int pixelskip = downsample-1;
+  for (int y=0;y<output->h;y++)
+  {
+    for (int x=0;x<output->w;x+=2)
+    {
+      // YUYV
+      *dest++ = *source++; // U
+      *dest++ = *source++; // Y
+      // now skip 3 pixels
+      source+=(pixelskip+1)*2;
+      *dest++ = *source++; // U
+      *dest++ = *source++; // V
+      source+=(pixelskip-1)*2;
+    }
+    // skip 3 rows
+    source += pixelskip * input->w * 2;
+  }
+}
+
+
 int main(int argc,char ** argv)
 {
   struct UdpSocket* sock;
@@ -49,44 +75,19 @@ int main(int argc,char ** argv)
     printf("Aquiring an image ...\n");
     video_GrabImage(&vid, img_new);
 
-    uint8_t *source = img_new->buf;
-    uint8_t *dest = small.buf;
-    for (int y=0;y<small.h;y++)
-    {
-      for (int x=0;x<small.w;x+=2)
-      {
-        // YUYV
-        *dest++ = *source++; // Y
-        *dest++ = *source++; // U
-        *dest++ = *source++; // Y
-        *dest++ = *source++; // v
-        // now skip 3 pixels
-        source+=6*2;
-//        *dest++ = *source++; // Y
-        // U
-//        source+=2; // YV
-//        *dest++ = *source++; // V
-//        source+=2*2;
 
-/*        small.buf[x*2+small.w*y*2]   = img_new->buf[x*8+img_new->w*y*8];
-        small.buf[x*2+small.w*y*2+1] = img_new->buf[x*8+img_new->w*y*8+1];
-        small.buf[x*2+small.w*y*2+2] = img_new->buf[x*8+img_new->w*y*8+8];
-        small.buf[x*2+small.w*y*2+3] = img_new->buf[x*8+img_new->w*y*8+8+3];
-*/
-      }
-      // skip 3 rows
-      source += 3 * (img_new->w*2);
-    }
-
-
+    // Resize: device by 4
+    resize_uyuv(img_new, &small, 4);
 
     // JPEG encode the image:
-    // quality factor from 1 (high quality) to 8 (low quality)
-    uint32_t quality_factor = 4;
-    // format (in jpeg.h)
-    uint32_t image_format = FOUR_TWO_TWO;
+    uint32_t quality_factor = 1; // quality factor from 1 (high quality) to 8 (low quality)
+    uint32_t image_format = FOUR_TWO_TWO;  // format (in jpeg.h)
     uint8_t* end = encode_image (small.buf, jpegbuf+10, quality_factor, image_format, small.w, small.h);
     uint32_t size = end-jpegbuf-10;
+    printf("Sending an image ...%u\n",size);
+
+    //send image
+    // SVS Surveyor Jpeg UDP format
     uint8_t* p = (uint8_t*) & size;
     jpegbuf[0]='#';
     jpegbuf[1]='#';
@@ -98,12 +99,7 @@ int main(int argc,char ** argv)
     jpegbuf[7]=p[1];
     jpegbuf[8]=p[2];
     jpegbuf[9]=0x00;
-
-
-    //send image
-    printf("Sending an image ...%ld\n",len);
     udp_write(sock, (char*) jpegbuf, size+10);
-//    extern int udp_read(struct UdpSocket* me, unsigned char* buf, int len);
 
   }
 

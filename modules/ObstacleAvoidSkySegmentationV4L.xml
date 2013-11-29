@@ -20,9 +20,11 @@
 
 VISION_FOLDER = $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/modules/ObstacleAvoidSkySegmentation
           
-$(TARGET).srcs += $(VISION_FOLDER)/obstacle_avoid.c
+$(TARGET).srcs += $(VISION_FOLDER)/obstacle_avoid_v4l.c
 $(TARGET).srcs += $(VISION_FOLDER)/avoid_navigation.c
 $(TARGET).srcs += $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/gst_plugin_framework/socket.c
+$(TARGET).srcs += $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/v4ldirect/video.c
+$(TARGET).srcs += $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/v4ldirect/jpeg.c
 $(TARGET).CFLAGS += -I$(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/modules
 $(TARGET).LDFLAGS += -pthread
 

@@ -2,10 +2,19 @@
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "obstacleavoidskysegmentation_code.h"
-#include "skysegmentation.h"
+// Computer Vision
+#include "skysegmentation/skysegmentation.h"
 
-#include "paparazzi.h"
+// Own Header
+#include "obstacleavoidskysegmentation_code.h"
+
+// Communication
+#include "../video_message_structs.h"
+
+struct gst2ppz_message_struct gst2ppz;
+struct ppz2gst_message_struct ppz2gst;
+
+//#include "paparazzi.h"
 
 // Settable by pluging
 unsigned int imgWidth, imgHeight;
@@ -30,7 +39,7 @@ void my_plugin_init(void)
   gst2ppz.counter = 0;
 
   // Start Socket Thread
-  paparazzi_message_server_start();
+  //paparazzi_message_server_start();
 }
 
 void my_plugin_run(unsigned char *frame)
@@ -49,7 +58,7 @@ void my_plugin_run(unsigned char *frame)
   // Send to paparazzi
   gst2ppz.ID = 0x0001;
   gst2ppz.counter++;
-  paparazzi_message_send();
+  //paparazzi_message_send();
 
   // Verbose
   if (verbose > 0)

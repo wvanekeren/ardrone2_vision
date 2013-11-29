@@ -1,15 +1,27 @@
 
+
+DIR_GST_PLUGIN_FRAMEWORK = ../../../gst_plugin_framework
+DIR_GSTREAMER            = ../../../ardrone2_gstreamer
+
+DIR_LIB                  = ../../../lib
+DIR_CV                   = ../../../cv
+
 ifeq ($(PROCESSOR),x86)
-	include ../../gst_plugin_framework/Makefile-x86.conf
+	include $(DIR_GST_PLUGIN_FRAMEWORK)/Makefile-x86.conf
 	override CFLAGS += -std=c99 -D_GNU_SOURCE -DGST_DISABLE_DEPRECATED
 	override CFLAGS += -DDSP_API=$(DSP_API) -DSN_API=$(SN_API)
-	override CFLAGS += -I../../gst_plugin_framework
 else
-	include ../../gst_plugin_framework/Makefile-ARM.conf
+	include $(DIR_GST_PLUGIN_FRAMEWORK)/Makefile-ARM.conf
 	override CFLAGS += -std=c99 -D_GNU_SOURCE -DGST_DISABLE_DEPRECATED -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp -ftree-vectorize
 	override CFLAGS += -DDSP_API=$(DSP_API) -DSN_API=$(SN_API)
-	override CFLAGS += -I../../gst_plugin_framework -I./
 endif
+
+
+override CFLAGS += -I$(DIR_GST_PLUGIN_FRAMEWORK) 
+override CFLAGS += -I$(DIR_LIB) 
+override CFLAGS += -I$(DIR_CV) 
+override CFLAGS += -I./
+override CFLAGS += -I../../../lib
 
 
 all:
@@ -17,11 +29,11 @@ all:
 D = $(DESTDIR)
 
 
-GST_H = ../../ardrone2_gstreamer/opt/arm/gst/include/gstreamer-0.10/gst/gst.h
+GST_H = $(DIR_GSTREAMER)/opt/arm/gst/include/gstreamer-0.10/gst/gst.h
 
 gst_plugin := libObstacleAvoidSkySegmentation.so
 
-$(gst_plugin):  gst_obstacleavoidskysegmentation_plugin.o obstacleavoidskysegmentation_code.o skysegmentation.o trig.o ../../gst_plugin_framework/socket.o
+$(gst_plugin):  gst_obstacleavoidskysegmentation_plugin.o obstacleavoidskysegmentation_code.o $(DIR_CV)/skysegmentation/skysegmentation.o $(DIR_CV)/trig.o $(DIR_LIB)/udp/socket.o
 $(gst_plugin): override CFLAGS += $(GST_CFLAGS) \
 	-D VERSION='"$(version)"' -D DSPDIR='"$(dspdir)"'
 $(gst_plugin): override LIBS += $(GST_LIBS)
@@ -29,10 +41,10 @@ $(gst_plugin): override LIBS += $(GST_LIBS)
 targets += $(gst_plugin)
 
 $(GST_H):
-	make -C ../../ardrone2_gstreamer
+	make -C $(DIR_GSTREAMER)
 
 upload:
-	sb2 make -C ./ all && ../../ardrone2_gstreamer/ardrone2.py upload_gst_module $(gst_plugin)
+	sb2 make -C ./ all && $(DIR_GSTREAMER)/ardrone2.py upload_gst_module $(gst_plugin)
 
 doc: $(gst_plugin)
 	$(MAKE) -C doc
@@ -65,7 +77,7 @@ $(bins):
 
 clean:
 	echo $(PROCESSOR)
-	$(QUIET_CLEAN)$(RM) -v $(targets) $(bins) *.o *.d tidsp/*.d tidsp/*.o ../../gst_plugin_framework/*.o ../../gst_plugin_framework/*.d
+	$(QUIET_CLEAN)$(RM) -v $(targets) $(bins) *.o *.d tidsp/*.d tidsp/*.o $(DIR_LIB)/udp/*.o $(DIR_LIB)/udp/*.d $(DIR_CV)/skysegmentation/*.o
 
 dist: base := gst-dsp-$(version)
 dist:

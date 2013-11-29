@@ -29,13 +29,9 @@ $(TARGET).CFLAGS += -I$(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/modules
 $(TARGET).LDFLAGS += -pthread
 
 all:
-	echo "Compiling libObstacleAvoidSkySegmentation.so plugin"
-	sb2 make -C $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/pprz_gst_plugins/ObstacleAvoidSkySegmentation all
 	make -C $(VISION_FOLDER)/visionresult/
 	
 upload_extra:
-	@echo "====================================VISION UPLOAD======================================"
-	make -C $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/pprz_gst_plugins/ObstacleAvoidSkySegmentation upload
 
     </raw>
   </makefile>

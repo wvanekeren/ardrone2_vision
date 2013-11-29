@@ -23,8 +23,7 @@
 // Own header
 #include "obstacle_avoid.h"
 
-// UDP Message with GST vision
-#include "../../gst_plugin_framework/socket.h"
+// Vision Result
 #include "../../pprz_gst_plugins/ObstacleAvoidSkySegmentation/video_message_structs.h"
 
 // Navigate Based On Vision
@@ -32,6 +31,9 @@
 
 // Paparazzi State: Attitude -> Vision
 #include "state.h" // for attitude
+
+// Send Images to ground
+#include "../../gst_plugin_framework/socket.h"
 
 
 #ifndef DOWNLINK_DEVICE
@@ -65,6 +67,14 @@ void video_init(void) {
 
 void video_receive(void) {
 
+  // Send Attitude To GST Module
+  struct Int32Eulers* att = stateGetNedToBodyEulers_i();
+  ppz2gst.counter++; // 512 Hz
+  ppz2gst.roll = att->phi;
+  ppz2gst.pitch = att->theta;
+  ppz2gst.adjust_factor = obstacle_avoid_adjust_factor;
+
+
   // Read Latest GST Module Results
   int ret = udp_read(sock, (unsigned char *) &gst2ppz, sizeof(gst2ppz));
   if (ret >= sizeof(gst2ppz))
@@ -83,16 +93,6 @@ void video_receive(void) {
     if (nr >= N_BINS)
       nr = 0;
   }
-
-
-  // Send Attitude To GST Module
-  struct Int32Eulers* att = stateGetNedToBodyEulers_i();
-  ppz2gst.counter++; // 512 Hz
-  ppz2gst.roll = att->phi;
-  ppz2gst.pitch = att->theta;
-  ppz2gst.adjust_factor = obstacle_avoid_adjust_factor;
-  udp_write(sock, (char *) &ppz2gst, sizeof(ppz2gst));
-
 }
 
 

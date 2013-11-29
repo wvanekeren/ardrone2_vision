@@ -7,6 +7,7 @@
 
 #include "../gst_plugin_framework/socket.h"
 
+#define DOWNSIZE_FACTOR   2
 
 void resize_uyuv(struct img_struct* input, struct img_struct* output, int downsample)
 {
@@ -57,8 +58,8 @@ int main(int argc,char ** argv)
 
   // Video Resizing
   struct img_struct small;
-  small.w = 320;
-  small.h = 180;
+  small.w = vid.w / DOWNSIZE_FACTOR;
+  small.h = vid.h / DOWNSIZE_FACTOR;
   small.buf = (uint8_t*)malloc(small.w*small.h*2);
 
   // Video Compression
@@ -77,10 +78,10 @@ int main(int argc,char ** argv)
 
 
     // Resize: device by 4
-    resize_uyuv(img_new, &small, 4);
+    resize_uyuv(img_new, &small, DOWNSIZE_FACTOR);
 
     // JPEG encode the image:
-    uint32_t quality_factor = 1; // quality factor from 1 (high quality) to 8 (low quality)
+    uint32_t quality_factor = 3; // quality factor from 1 (high quality) to 8 (low quality)
     uint32_t image_format = FOUR_TWO_TWO;  // format (in jpeg.h)
     uint8_t* end = encode_image (small.buf, jpegbuf+10, quality_factor, image_format, small.w, small.h);
     uint32_t size = end-jpegbuf-10;
@@ -94,7 +95,7 @@ int main(int argc,char ** argv)
     jpegbuf[2]='I';
     jpegbuf[3]='M';
     jpegbuf[4]='J';
-    jpegbuf[5]='5'; // 1=(40,30) 2=(128,96) 3=(160,120) 5=(320,240) 7=(640,480) 9=(1280,1024);
+    jpegbuf[5]='7'; // 1=(40,30) 2=(128,96) 3=(160,120) 5=(320,240) 7=(640,480) 9=(1280,1024);
     jpegbuf[6]=p[0];
     jpegbuf[7]=p[1];
     jpegbuf[8]=p[2];

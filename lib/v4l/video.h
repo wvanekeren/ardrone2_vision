@@ -18,20 +18,15 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
     MA 02110-1301 USA.
  */
+
 #ifndef _VIDEO_H
 #define _VIDEO_H
+
+#include "../../cv/image.h"
 
 struct buffer_struct {
   void * buf;
   size_t length;
-};
-
-struct img_struct {
-  int seq;
-  double timestamp;
-  unsigned char *buf;
-  int w;
-  int h;
 };
 
 struct vid_struct {
@@ -49,11 +44,10 @@ struct vid_struct {
 };
 
 
-int video_Init(struct vid_struct *vid);
-//create a new blank image
-struct img_struct *video_CreateImage(struct vid_struct *vid);
-//grabs next B&W image from stream (blocking)
-void video_GrabImage(struct vid_struct *vid, struct img_struct *img);
-void video_Close(struct vid_struct *vid);
+int video_init(struct vid_struct *vid);
+struct img_struct *video_create_image(struct vid_struct *vid);
+
+void video_grab_image(struct vid_struct *vid, struct img_struct *img);
+void video_close(struct vid_struct *vid);
 
 #endif

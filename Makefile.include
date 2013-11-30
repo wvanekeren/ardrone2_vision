@@ -1,0 +1,19 @@
+
+ARDRONE2_VISION := $(dir $(lastword $(MAKEFILE_LIST)))
+# ${shell echo ${PWD}}
+
+
+DIR_GSTREAMER	= $(ARDRONE2_VISION)ardrone2_gstreamer
+DIR_LIB		= $(ARDRONE2_VISION)lib
+DIR_CV		= $(ARDRONE2_VISION)cv
+
+
+DRONE_TOOL      = $(DIR_GSTREAMER)/ardrone2.py 
+
+
+GST_H 		= $(DIR_GSTREAMER)/opt/arm/gst/include/gstreamer-0.10/gst/gst.h
+
+$(GST_H):
+	make -C $(DIR_GSTREAMER)
+
+

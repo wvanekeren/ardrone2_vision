@@ -16,6 +16,41 @@
 #include "jpeg.h"
 
 
+static inline unsigned char svs_size_code(int w)
+{
+  // 1=(40,30) 2=(128,96) 3=(160,120) 5=(320,240) 7=(640,480) 9=(1280,1024);
+  if (w<=40)
+    return '1';
+  if (w<=128)
+    return '2';
+  if (w<=160)
+    return '3';
+  if (w<=320)
+    return '4';
+  if (w<=640)
+    return '7';
+  return '9';
+}
+
+int create_svs_jpeg_header(unsigned char* jpegbuf, int32_t size, int w)
+{
+  // SVS Surveyor Jpeg UDP format
+  uint32_t s = size;
+  uint8_t* p = (uint8_t*) & s;
+  jpegbuf[0]='#';
+  jpegbuf[1]='#';
+  jpegbuf[2]='I';
+  jpegbuf[3]='M';
+  jpegbuf[4]='J';
+  jpegbuf[5]=svs_size_code(w);
+  jpegbuf[6]=p[0];
+  jpegbuf[7]=p[1];
+  jpegbuf[8]=p[2];
+  jpegbuf[9]=0x00;
+  return size + 10;
+}
+
+
 typedef struct JPEG_ENCODER_STRUCTURE
 {
     uint16_t    mcu_width;

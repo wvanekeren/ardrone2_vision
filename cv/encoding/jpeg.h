@@ -11,5 +11,6 @@
 #define        RGB                     4
 
 unsigned char *encode_image (uint8_t* in, uint8_t* out, uint32_t, uint32_t, uint32_t, uint32_t);
+int create_svs_jpeg_header(unsigned char* buf, int32_t size, int w);
 
 #endif

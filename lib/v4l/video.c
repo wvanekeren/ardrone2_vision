@@ -35,7 +35,7 @@
 #include <asm/types.h>
 #include <linux/videodev2.h>
 #include <pthread.h>
-//#include "../util/util.h"
+
 #include "video.h"
 
 #define CLEAR(x) memset (&(x), 0, sizeof (x))
@@ -100,7 +100,7 @@ void *video_thread_main(void* data)
   return 0;
 }
 
-int video_Init(struct vid_struct *vid)
+int video_init(struct vid_struct *vid)
 {
   struct v4l2_capability cap;
   struct v4l2_format fmt;
@@ -203,7 +203,7 @@ int video_Init(struct vid_struct *vid)
   return 0;
 }
 
-void video_Close(struct vid_struct *vid)
+void video_close(struct vid_struct *vid)
 {
   int i;
   for (i = 0; i < (int)vid->n_buffers; ++i) {
@@ -212,7 +212,7 @@ void video_Close(struct vid_struct *vid)
   close(vid->fd);
 }
 
-struct img_struct *video_CreateImage(struct vid_struct *vid)
+struct img_struct *video_create_image(struct vid_struct *vid)
 {
   struct img_struct* img = (struct img_struct*)malloc(sizeof(struct img_struct));
   img->w=vid->w;
@@ -223,7 +223,7 @@ struct img_struct *video_CreateImage(struct vid_struct *vid)
 
 pthread_mutex_t video_grab_mutex = PTHREAD_MUTEX_INITIALIZER;
 
-void video_GrabImage(struct vid_struct *vid, struct img_struct *img) {
+void video_grab_image(struct vid_struct *vid, struct img_struct *img) {
   pthread_mutex_lock(&video_grab_mutex);
   vid->img = img;
   vid->trigger=1;

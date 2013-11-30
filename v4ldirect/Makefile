@@ -1,3 +1,5 @@
+include ../Makefile.include
+
 CROSS_COMPILE ?=
 CC := $(CROSS_COMPILE)gcc
 
@@ -9,9 +11,8 @@ GST_CFLAGS := -pthread
 GST_LIBS := -pthread -lrt 
 
 override CFLAGS += -std=c99 -D_GNU_SOURCE -DGST_DISABLE_DEPRECATED -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp -ftree-vectorize
-override CFLAGS += -DDSP_API=$(DSP_API) -DSN_API=$(SN_API)
-override CFLAGS += -I../../gst_plugin_framework -I./
-
+override CFLAGS += -I$(DIR_GSTREAMER)
+override CFLAGS += -I$(DIR_CV) -I$(DIR_LIB)
 
 D = $(DESTDIR)
 
@@ -19,18 +20,24 @@ D = $(DESTDIR)
 gst_plugin := grab.x
 
 
-$(gst_plugin):  main.o video.o jpeg.o ../gst_plugin_framework/socket.o
-$(gst_plugin): override CFLAGS += $(GST_CFLAGS) \
-	-D VERSION='"$(version)"' -D DSPDIR='"$(dspdir)"'
+OBJECTS =  	viewvideo.o \
+		$(DIR_LIB)/v4l/video.o \
+		$(DIR_LIB)/udp/socket.o \
+		$(DIR_CV)/encoding/jpeg.o \
+		$(DIR_CV)/trig.o \
+		../modules/ObstacleAvoidSkySegmentation/gst_plugin/obstacleavoidskysegmentation_code.o \
+		$(DIR_CV)/skysegmentation/skysegmentation.o
+
+$(gst_plugin): $(OBJECTS)
+
+
+$(gst_plugin): override CFLAGS += $(GST_CFLAGS)
 $(gst_plugin): override LIBS += $(GST_LIBS)
 
 targets += $(gst_plugin)
 
-$(GST_H):
-	make -C ../ardrone2_gstreamer
-
 upload:
-	sb2 make -C ./ all && ../ardrone2_gstreamer/ardrone2.py upload_paparazzi ./$(gst_plugin) vision
+	sb2 make -C ./ all && $(DRONE_TOOL) upload_paparazzi ./$(gst_plugin) vision
 
 all: $(targets) $(bins)
 
@@ -57,16 +64,6 @@ $(bins):
 
 clean:
 	echo $(PROCESSOR)
-	$(QUIET_CLEAN)$(RM) -v $(targets) $(bins) *.o *.d tidsp/*.d tidsp/*.o ../gst_plugin_framework/*.o ../gst_plugin_framework/*.d
-
-dist: base := gst-dsp-$(version)
-dist:
-	git archive --format=tar --prefix=$(base)/ HEAD > /tmp/$(base).tar
-	mkdir -p $(base)
-	echo $(version) > $(base)/.version
-	chmod 664 $(base)/.version
-	tar --append -f /tmp/$(base).tar --owner root --group root $(base)/.version
-	rm -r $(base)
-	gzip /tmp/$(base).tar
+	$(QUIET_CLEAN)$(RM) -v $(targets) $(bins) *.o *.d $(OBJECTS)
 
 -include *.d tidsp/*.d

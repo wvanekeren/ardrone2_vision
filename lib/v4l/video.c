@@ -18,6 +18,7 @@
     Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston,
     MA 02110-1301 USA.
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -193,7 +194,6 @@ int video_init(struct vid_struct *vid)
   }
 
   //start video thread
-//  int rc = (int) video_thread_main(vid);
   int rc = pthread_create(&video_thread, NULL, video_thread_main, vid);
   if(rc) {
     printf("ctl_Init: Return code from pthread_create(mot_thread) is %d\n", rc);

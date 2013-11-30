@@ -98,21 +98,10 @@ void video_receive(void) {
 
 void video_start(void)
 {
-  // Start GST plugiun
-  // Normal video 320
-  // system("/opt/arm/gst/bin/gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate=15/1' ! videoscale ! video/x-raw-yuv, width=320, height=240 !dspmp4venc ! rtpmp4vpay config-interval=2 ! udpsink host=192.168.1.255 port=5000 &");
-
-  // Sky Segment 160
-  //system("/opt/arm/gst/bin/gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate=15/1' ! videoscale ! video/x-raw-yuv, width=160, height=120 ! obstacleavoidskysegmentation adjust_factor=5 verbose=0 tcp_port=2000  ! dspmp4venc ! rtpmp4vpay config-interval=2 ! udpsink host=192.168.1.255 port=5000 &");
-
-  // Sky Segment 160 DSP 320
-  system("/opt/arm/gst/bin/gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate=15/1' ! videoscale ! video/x-raw-yuv, width=160, height=120 ! obstacleavoidskysegmentation adjust_factor=5 verbose=0 tcp_port=2000 ! videoscale ! video/x-raw-yuv, width=320, height=240  ! dspmp4venc ! rtpmp4vpay config-interval=2 ! udpsink host=192.168.1.255 port=5000 &");
 }
 
 void video_stop(void)
 {
-  // Stop GST-Plugin
-  system("kill -9 `pidof gst-launch-0.10` &");
 }
 
 

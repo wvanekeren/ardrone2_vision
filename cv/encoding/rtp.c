@@ -5,6 +5,8 @@
 
 #include "rtp.h"
 
+void send_rtp_packet(struct UdpSocket *sock, char * Jpeg, int JpegLen, uint32_t m_SequenceNumber, uint32_t m_Timestamp, uint32_t m_offset, uint8_t marker_bit, int w, int h);
+
 // http://www.ietf.org/rfc/rfc3550.txt
 
 #define KJpegCh1ScanDataLen 32
@@ -32,7 +34,25 @@ char JpegScanDataCh2B[KJpegCh2ScanDataLen] =
     0x80, 0x0a, 0x28, 0xa2, 0x80, 0x3f, 0xff, 0xd9
 };
 
-void send_rtp_packet(struct UdpSocket *sock, char * Jpeg, int JpegLen, uint32_t m_SequenceNumber, uint32_t m_Timestamp, uint32_t m_offset, uint8_t marker_bit, int w, int h);
+void test_rtp_frame(struct UdpSocket *sock)
+{
+  static uint32_t framecounter = 0;
+  static uint32_t timecounter = 0;
+  static uint8_t toggle = 0;
+  toggle = ! toggle;
+
+  if (toggle)
+  {
+    send_rtp_packet(sock, JpegScanDataCh2A,KJpegCh2ScanDataLen,framecounter, timecounter, 0, 1, 64, 48);
+  }
+  else
+  {
+    send_rtp_packet(sock, JpegScanDataCh2B,KJpegCh2ScanDataLen,framecounter, timecounter, 0, 1, 64, 48);
+  }
+  framecounter++;
+  timecounter+=3600;
+}
+
 
 void send_rtp_frame(struct UdpSocket *sock, char * Jpeg, uint32_t JpegLen, int w, int h)
 {

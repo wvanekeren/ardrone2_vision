@@ -13,6 +13,9 @@ DRONE_TOOL      = $(DIR_GSTREAMER)/ardrone2.py
 
 GST_H 		= $(DIR_GSTREAMER)/opt/arm/gst/include/gstreamer-0.10/gst/gst.h
 
+# Make sure all is the first target
+all:
+
 $(GST_H):
 	make -C $(DIR_GSTREAMER)
 

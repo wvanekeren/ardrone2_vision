@@ -1,4 +1,4 @@
-include ../Makefile.include
+include ../../Makefile.include
 
 CROSS_COMPILE ?=
 CC := $(CROSS_COMPILE)gcc
@@ -10,7 +10,8 @@ LDFLAGS := -Wl,--no-undefined -Wl,--as-needed
 GST_CFLAGS := -pthread 
 GST_LIBS := -pthread -lrt 
 
-override CFLAGS += -std=c99 -D_GNU_SOURCE -DGST_DISABLE_DEPRECATED -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp -ftree-vectorize
+override CFLAGS += -std=c99 -D_GNU_SOURCE -DGST_DISABLE_DEPRECATED
+override CFLAGS += -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp -ftree-vectorize
 override CFLAGS += -I$(DIR_GSTREAMER)
 override CFLAGS += -I$(DIR_CV) -I$(DIR_LIB)
 
@@ -24,9 +25,7 @@ OBJECTS =  	viewvideo.o \
 		$(DIR_LIB)/v4l/video.o \
 		$(DIR_LIB)/udp/socket.o \
 		$(DIR_CV)/encoding/jpeg.o \
-		$(DIR_CV)/trig.o \
-		../modules/ObstacleAvoidSkySegmentation/gst_plugin/obstacleavoidskysegmentation_code.o \
-		$(DIR_CV)/skysegmentation/skysegmentation.o
+		$(DIR_CV)/encoding/rtp.o
 
 $(gst_plugin): $(OBJECTS)
 

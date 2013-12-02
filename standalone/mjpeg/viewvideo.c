@@ -9,7 +9,7 @@
 
 #include "../cv/resize.h"
 
-#define DOWNSIZE_FACTOR   2
+#define DOWNSIZE_FACTOR   8
 
 
 int main(int argc,char ** argv)
@@ -44,7 +44,7 @@ int main(int argc,char ** argv)
   struct UdpSocket* sock;
   //#define FMS_UNICAST 0
   //#define FMS_BROADCAST 1
-  sock = udp_socket("192.168.1.70", 5000, 5001, FMS_BROADCAST);
+  sock = udp_socket("192.168.1.255", 5000, 5001, FMS_BROADCAST);
 
   while (1) {
 
@@ -57,13 +57,14 @@ int main(int argc,char ** argv)
     resize_uyuv(img_new, &small, DOWNSIZE_FACTOR);
 
     // JPEG encode the image:
-    uint32_t quality_factor = 3; // quality factor from 1 (high quality) to 8 (low quality)
+    uint32_t quality_factor = 4; // quality factor from 1 (high quality) to 8 (low quality)
     uint32_t image_format = FOUR_TWO_TWO;  // format (in jpeg.h)
-    uint8_t* end = encode_image (small.buf, jpegbuf+10, quality_factor, image_format, small.w, small.h);
+    uint8_t* end = encode_image (small.buf, jpegbuf, quality_factor, image_format, small.w, small.h);
     uint32_t size = end-(jpegbuf);
 
-    size = create_svs_jpeg_header(jpegbuf,size,small.w);
-    udp_write(sock,(char*)jpegbuf,size);
+    send_rtp_frame(sock, jpegbuf,size, small.w, small.h);
+//    size = create_svs_jpeg_header(jpegbuf,size,small.w);
+//    udp_write(sock,(char*)jpegbuf,size);
     printf("Sending an image ...%u\n",size);
 
     //send_rtp_frame(sock, (char*) jpegbuf, size, small.w, small.h);

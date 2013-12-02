@@ -56,11 +56,11 @@ void test_rtp_frame(struct UdpSocket *sock)
 
 void send_rtp_frame(struct UdpSocket *sock, char * Jpeg, uint32_t JpegLen, int w, int h)
 {
-  static uint32_t framecounter = 0;
+  static uint32_t packetcounter = 0;
   static uint32_t timecounter = 0;
   uint32_t offset = 0;
 
-#define MAX_PACKET_SIZE 512
+#define MAX_PACKET_SIZE 1400
 
   // Split frame into packets
   for (;JpegLen > 0;)
@@ -74,16 +74,18 @@ void send_rtp_frame(struct UdpSocket *sock, char * Jpeg, uint32_t JpegLen, int w
       len = JpegLen;
     }
 
-    send_rtp_packet(sock, Jpeg,len,framecounter, timecounter, offset, lastpacket, w, h);
+    send_rtp_packet(sock, Jpeg,len,packetcounter, timecounter, offset, lastpacket, w, h);
 
     JpegLen   -= len;
     Jpeg      += len;
     offset    += len;
+    packetcounter++;
   }
 
-  framecounter++;
   // timestamp = 1 / 90 000 seconds
-  timecounter+=3600;
+//  timecounter+=3600; // 25 Hz
+//  timecounter+=2800; //30 Hz
+  timecounter+=900;
 }
 
 /*
@@ -124,8 +126,8 @@ void send_rtp_packet(struct UdpSocket *sock, char * Jpeg, int JpegLen, uint32_t 
   // Prepare the 12 byte RTP header
   RtpBuf[0]  = 0x80;                               // RTP version
   RtpBuf[1]  = 0x1a + (marker_bit<<7);             // JPEG payload (26) and marker bit
-  RtpBuf[2]  = m_SequenceNumber & 0x0FF;           // each packet is counted with a sequence counter
-  RtpBuf[3]  = m_SequenceNumber >> 8;
+  RtpBuf[2]  = m_SequenceNumber >> 8;
+  RtpBuf[3]  = m_SequenceNumber & 0x0FF;           // each packet is counted with a sequence counter
   RtpBuf[4]  = (m_Timestamp & 0xFF000000) >> 24;   // each image gets a timestamp
   RtpBuf[5]  = (m_Timestamp & 0x00FF0000) >> 16;
   RtpBuf[6]  = (m_Timestamp & 0x0000FF00) >> 8;
@@ -153,8 +155,8 @@ void send_rtp_packet(struct UdpSocket *sock, char * Jpeg, int JpegLen, uint32_t 
   RtpBuf[13] = (m_offset & 0x00FF0000) >> 16;      // 3 byte fragmentation offset for fragmented images
   RtpBuf[14] = (m_offset & 0x0000FF00) >> 8;
   RtpBuf[15] = (m_offset & 0x000000FF);
-  RtpBuf[16] = 0x01;                               // type: 0 422 or 1 421
-  RtpBuf[17] = 0x5e;                               // quality scale factor
+  RtpBuf[16] = 0x00;                               // type: 0 422 or 1 421
+  RtpBuf[17] = 60;                               // quality scale factor
   RtpBuf[18] = w/8;                           // width  / 8 -> 48 pixel
   RtpBuf[19] = h/8;                           // height / 8 -> 32 pixel
   // append the JPEG scan data to the RTP buffer

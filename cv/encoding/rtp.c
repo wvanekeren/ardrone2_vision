@@ -5,7 +5,7 @@
 
 #include "rtp.h"
 
-void send_rtp_packet(struct UdpSocket *sock, char * Jpeg, int JpegLen, uint32_t m_SequenceNumber, uint32_t m_Timestamp, uint32_t m_offset, uint8_t marker_bit, int w, int h);
+void send_rtp_packet(struct UdpSocket *sock, uint8_t* Jpeg, int JpegLen, uint32_t m_SequenceNumber, uint32_t m_Timestamp, uint32_t m_offset, uint8_t marker_bit, int w, int h);
 
 // http://www.ietf.org/rfc/rfc3550.txt
 
@@ -13,7 +13,7 @@ void send_rtp_packet(struct UdpSocket *sock, char * Jpeg, int JpegLen, uint32_t 
 #define KJpegCh2ScanDataLen 56
 
 // RGB JPEG images as RTP payload - 64x48 pixel
-char JpegScanDataCh2A[KJpegCh2ScanDataLen] =
+uint8_t JpegScanDataCh2A[KJpegCh2ScanDataLen] =
 {
     0xf8, 0xbe, 0x8a, 0x28, 0xaf, 0xe5, 0x33, 0xfd,
     0xfc, 0x0a, 0x28, 0xa2, 0x80, 0x0a, 0x28, 0xa2,
@@ -23,7 +23,7 @@ char JpegScanDataCh2A[KJpegCh2ScanDataLen] =
     0x80, 0x0a, 0x28, 0xa2, 0x80, 0x0a, 0x28, 0xa2,
     0x80, 0x0a, 0x28, 0xa2, 0x80, 0x3f, 0xff, 0xd9
 };
-char JpegScanDataCh2B[KJpegCh2ScanDataLen] =
+uint8_t JpegScanDataCh2B[KJpegCh2ScanDataLen] =
 {
     0xf5, 0x8a, 0x28, 0xa2, 0xbf, 0xca, 0xf3, 0xfc,
     0x53, 0x0a, 0x28, 0xa2, 0x80, 0x0a, 0x28, 0xa2,
@@ -68,8 +68,8 @@ static const int jpeg_chroma_quantizer[64] = {
 /*
  * Call MakeTables with the Q factor and two u_char[64] return arrays
  */
-void
-MakeTables(int q, u_char *lqt, u_char *cqt)
+void MakeTables(int q, uint8_t *lqt, uint8_t *cqt);
+void MakeTables(int q, uint8_t *lqt, uint8_t *cqt)
 {
   int i;
   int factor = q;
@@ -122,7 +122,7 @@ void test_rtp_frame(struct UdpSocket *sock)
 }
 
 
-void send_rtp_frame(struct UdpSocket *sock, char * Jpeg, uint32_t JpegLen, int w, int h)
+void send_rtp_frame(struct UdpSocket *sock, uint8_t * Jpeg, uint32_t JpegLen, int w, int h)
 {
   static uint32_t packetcounter = 0;
   static uint32_t timecounter = 0;
@@ -163,13 +163,13 @@ void send_rtp_frame(struct UdpSocket *sock, char * Jpeg, uint32_t JpegLen, int w
  *
  */
 
-void send_rtp_packet(struct UdpSocket *sock, char * Jpeg, int JpegLen, uint32_t m_SequenceNumber, uint32_t m_Timestamp, uint32_t m_offset, uint8_t marker_bit, int w, int h)
+void send_rtp_packet(struct UdpSocket *sock, uint8_t * Jpeg, int JpegLen, uint32_t m_SequenceNumber, uint32_t m_Timestamp, uint32_t m_offset, uint8_t marker_bit, int w, int h)
 {
 
 #define KRtpHeaderSize 12           // size of the RTP header
 #define KJpegHeaderSize 8           // size of the special JPEG payload header
 
-  char        RtpBuf[2048];
+  uint8_t     RtpBuf[2048];
   int         RtpPacketSize = JpegLen + KRtpHeaderSize + KJpegHeaderSize;
 
   memset(RtpBuf,0x00,sizeof(RtpBuf));

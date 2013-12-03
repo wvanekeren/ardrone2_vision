@@ -85,7 +85,7 @@ int main(int argc,char ** argv)
     create_svs_jpeg_header(jpegbuf,size,small.w);
     printf("Sending an image ...%u\n",size);
 
-    udp_write(sock, (char*) jpegbuf, size+10);
+    udp_write(sock, jpegbuf, size+10);
 
   }
 

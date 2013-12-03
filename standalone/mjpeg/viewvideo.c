@@ -7,10 +7,11 @@
 #include "encoding/rtp.h"
 #include "udp/socket.h"
 
-#include "../cv/resize.h"
+#include "resize.h"
 
 #define DOWNSIZE_FACTOR   8
 
+#define RTP 1
 
 int main(int argc,char ** argv)
 {
@@ -62,12 +63,13 @@ int main(int argc,char ** argv)
     uint8_t* end = encode_image (small.buf, jpegbuf, quality_factor, image_format, small.w, small.h);
     uint32_t size = end-(jpegbuf);
 
-    send_rtp_frame(sock, (char*)jpegbuf,size, small.w, small.h);
-//    size = create_svs_jpeg_header(jpegbuf,size,small.w);
-//    udp_write(sock,(char*)jpegbuf,size);
     printf("Sending an image ...%u\n",size);
-
-    //send_rtp_frame(sock, (char*) jpegbuf, size, small.w, small.h);
+#if RTP == 1
+    send_rtp_frame(sock, jpegbuf,size, small.w, small.h);
+#else
+    size = create_svs_jpeg_header(jpegbuf,size,small.w);
+    udp_write(sock,jpegbuf,size);
+#endif
   }
 
   video_close(&vid);

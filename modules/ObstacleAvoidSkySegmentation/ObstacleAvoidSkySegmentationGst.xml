@@ -1,4 +1,4 @@
-<!DOCTYPE module SYSTEM "module.dtd">
+<!DOCTYPE module SYSTEM "../module.dtd">
 
 <module name="ObstacleAvoidSkySegmentation">
   <doc>
@@ -6,7 +6,7 @@
   </doc>
 
   <header>
-    <file name="video.h"/>
+    <file name="sky_seg_avoid.h"/>
   </header>
 
   <init fun="video_init()"/>
@@ -18,22 +18,23 @@
 <!--    <file name="video.c"/>  -->
       <raw>
 
-VISION_FOLDER = $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/modules/ObstacleAvoidSkySegmentation
+include $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/Makefile.include
           
-$(TARGET).srcs += $(VISION_FOLDER)/obstacle_avoid.c
-$(TARGET).srcs += $(VISION_FOLDER)/avoid_navigation.c
-$(TARGET).srcs += $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/gst_plugin_framework/socket.c
-$(TARGET).CFLAGS += -I$(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/modules
-$(TARGET).LDFLAGS += -pthread
+VISION_MODULE_FOLDER = $(DIR_MODULES)/ObstacleAvoidSkySegmentation
+          
+$(TARGET).srcs += $(VISION_MODULE_FOLDER)/sky_seg_avoid_gst.c
+$(TARGET).srcs += $(VISION_MODULE_FOLDER)/avoid_navigation.c
+$(TARGET).srcs += $(DIR_LIB)/udp/socket.c
+$(TARGET).CFLAGS += -I$(DIR_MODULES) -I$(DIR_CV) -I$(DIR_LIB)
 
 all:
 	echo "Compiling libObstacleAvoidSkySegmentation.so plugin"
-	sb2 make -C $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/pprz_gst_plugins/ObstacleAvoidSkySegmentation all
-	make -C $(VISION_FOLDER)/visionresult/
+	sb2 make -C $(VISION_MODULE_FOLDER)/gst_plugin all
+	make -C $(VISION_MODULE_FOLDER)/visionresult/
 	
 upload_extra:
 	@echo "====================================VISION UPLOAD======================================"
-	make -C $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/pprz_gst_plugins/ObstacleAvoidSkySegmentation upload
+	make -C $(VISION_MODULE_FOLDER) upload
 
     </raw>
   </makefile>

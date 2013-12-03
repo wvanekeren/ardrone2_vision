@@ -21,11 +21,11 @@
 
 
 // Own header
-#include "obstacle_avoid.h"
+#include "sky_seg_avoid.h"
 
 // UDP Message with GST vision
-#include "../../gst_plugin_framework/socket.h"
-#include "../../pprz_gst_plugins/ObstacleAvoidSkySegmentation/video_message_structs.h"
+#include "udp/socket.h"
+#include "video_message_structs.h"
 
 // Navigate Based On Vision
 #include "avoid_navigation.h"
@@ -91,7 +91,7 @@ void video_receive(void) {
   ppz2gst.roll = att->phi;
   ppz2gst.pitch = att->theta;
   ppz2gst.adjust_factor = obstacle_avoid_adjust_factor;
-  udp_write(sock, (char *) &ppz2gst, sizeof(ppz2gst));
+  udp_write(sock, (uint8_t*)&ppz2gst, sizeof(ppz2gst));
 
 }
 

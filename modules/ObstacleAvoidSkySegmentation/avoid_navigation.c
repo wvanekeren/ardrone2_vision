@@ -26,7 +26,7 @@
 #include "state.h"
 
 // Vision Data
-#include "../../pprz_gst_plugins/ObstacleAvoidSkySegmentation/video_message_structs.h"
+#include "video_message_structs.h"
 
 // Interact with navigation
 #include "navigation.h"

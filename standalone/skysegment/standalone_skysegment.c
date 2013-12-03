@@ -80,7 +80,7 @@ int main(int argc,char ** argv)
     // JPEG encode the image:
     uint32_t quality_factor = 1; // quality factor from 1 (high quality) to 8 (low quality)
     uint32_t image_format = FOUR_TWO_TWO;  // format (in jpeg.h)
-    uint8_t* end = encode_image (small.buf, jpegbuf+10, quality_factor, image_format, small.w, small.h);
+    uint8_t* end = encode_image (small.buf, jpegbuf+10, quality_factor, image_format, small.w, small.h, 1);
     uint32_t size = end-(jpegbuf+10);
     create_svs_jpeg_header(jpegbuf,size,small.w);
     printf("Sending an image ...%u\n",size);

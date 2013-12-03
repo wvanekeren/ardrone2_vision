@@ -20,6 +20,9 @@
  */
 
 
+#include <stdint.h>
+#include "image.h"
+
 inline void resize_uyuv(struct img_struct* input, struct img_struct* output, int downsample);
 inline void resize_uyuv(struct img_struct* input, struct img_struct* output, int downsample)
 {

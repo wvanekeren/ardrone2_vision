@@ -9,7 +9,7 @@
 #include "obstacleavoidskysegmentation_code.h"
 
 // Communication
-#include "../video_message_structs.h"
+#include "video_message_structs.h"
 
 struct gst2ppz_message_struct gst2ppz;
 struct ppz2gst_message_struct ppz2gst;

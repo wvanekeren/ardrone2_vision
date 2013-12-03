@@ -6,6 +6,7 @@ ARDRONE2_VISION := $(dir $(lastword $(MAKEFILE_LIST)))
 DIR_GSTREAMER	= $(ARDRONE2_VISION)ardrone2_gstreamer
 DIR_LIB		= $(ARDRONE2_VISION)lib
 DIR_CV		= $(ARDRONE2_VISION)cv
+DIR_MODULES	= $(ARDRONE2_VISION)modules
 
 
 DRONE_TOOL      = $(DIR_GSTREAMER)/ardrone2.py 

@@ -9,9 +9,9 @@
     <file name="sky_seg_avoid.h"/>
   </header>
 
-  <init fun="video_init()"/>
+  <init fun="sky_seg_avoid_init()"/>
 
-  <periodic fun="video_receive()" freq="200" start="video_start()" stop="video_stop()" autorun="FALSE"/>
+  <periodic fun="sky_seg_avoid_run()" freq="200" start="sky_seg_avoid_start()" stop="sky_seg_avoid_stop()" autorun="FALSE"/>
   <makefile>
     <define name="ARDRONE_VIDEO_PORT" value="2002" />
     <define name="USE_ARDRONE_VIDEO" />
@@ -29,8 +29,12 @@ $(TARGET).CFLAGS += -I$(DIR_MODULES) -I$(DIR_CV) -I$(DIR_LIB)
 
 all:
 	echo "Compiling libObstacleAvoidSkySegmentation.so plugin"
-	sb2 make -C $(VISION_MODULE_FOLDER)/gst_plugin all
+	sb2 make -C $(VISION_MODULE_FOLDER)/gst_plugin clean all
 	make -C $(VISION_MODULE_FOLDER)/visionresult/
+
+#clean:
+#	sb2 make -C $(VISION_MODULE_FOLDER)/gst_plugin clean
+
 	
 upload_extra:
 	@echo "====================================VISION UPLOAD======================================"

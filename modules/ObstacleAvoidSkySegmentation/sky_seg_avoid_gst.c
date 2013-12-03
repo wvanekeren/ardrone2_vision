@@ -34,22 +34,13 @@
 #include "state.h" // for attitude
 
 
-#ifndef DOWNLINK_DEVICE
-#define DOWNLINK_DEVICE DOWNLINK_AP_DEVICE
-#endif
-#include "messages.h"
-#include "subsystems/datalink/downlink.h"
-
-#include "boards/ardrone/navdata.h"
-
-
 struct UdpSocket *sock;
 struct gst2ppz_message_struct gst2ppz;
 struct ppz2gst_message_struct ppz2gst;
 int obstacle_avoid_adjust_factor;
 
 
-void video_init(void) {
+void sky_seg_avoid_init(void) {
   // Give unique ID's to messages TODO: check that received messages are correct (not from an incompatable gst plugin)
   ppz2gst.ID = 0x0003;
   gst2ppz.ID = 0x0004;
@@ -63,16 +54,13 @@ void video_init(void) {
 }
 
 
-void video_receive(void) {
+void sky_seg_avoid_run(void) {
 
   // Read Latest GST Module Results
   int ret = udp_read(sock, (unsigned char *) &gst2ppz, sizeof(gst2ppz));
   if (ret >= sizeof(gst2ppz))
   {
     run_avoid_navigation_onvision();
-
-    // Send ALL vision data to the ground
-    DOWNLINK_SEND_PAYLOAD(DefaultChannel, DefaultDevice, N_BINS, gst2ppz.obstacle_bins);
   }
   else
   {
@@ -96,7 +84,7 @@ void video_receive(void) {
 }
 
 
-void video_start(void)
+void sky_seg_avoid_start(void)
 {
   // Start GST plugiun
   // Normal video 320
@@ -109,7 +97,7 @@ void video_start(void)
   system("/opt/arm/gst/bin/gst-launch v4l2src device=/dev/video1 ! videorate ! 'video/x-raw-yuv,framerate=15/1' ! videoscale ! video/x-raw-yuv, width=160, height=120 ! obstacleavoidskysegmentation adjust_factor=5 verbose=0 tcp_port=2000 ! videoscale ! video/x-raw-yuv, width=320, height=240  ! dspmp4venc ! rtpmp4vpay config-interval=2 ! udpsink host=192.168.1.255 port=5000 &");
 }
 
-void video_stop(void)
+void sky_seg_avoid_stop(void)
 {
   // Stop GST-Plugin
   system("kill -9 `pidof gst-launch-0.10` &");

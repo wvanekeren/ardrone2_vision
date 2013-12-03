@@ -34,6 +34,17 @@
 // Know waypoint numbers and blocks
 #include "generated/flight_plan.h"
 
+// Downlink
+#ifndef DOWNLINK_DEVICE
+#define DOWNLINK_DEVICE DOWNLINK_AP_DEVICE
+#endif
+#include "messages.h"
+#include "subsystems/datalink/downlink.h"
+
+#include "boards/ardrone/navdata.h"
+
+
+
 struct AvoidNavigationStruct avoid_navigation_data;
 
 // Called once on paparazzi autopilot start
@@ -48,6 +59,9 @@ void run_avoid_navigation_move_target_waypoint(void);
 // Called on each vision analysis result after receiving the struct
 void run_avoid_navigation_onvision(void)
 {
+  // Send ALL vision data to the ground
+  DOWNLINK_SEND_PAYLOAD(DefaultChannel, DefaultDevice, N_BINS, gst2ppz.obstacle_bins);
+
   switch (avoid_navigation_data.mode)
   {
   case 1:     // climb until clear
@@ -120,7 +134,8 @@ void run_avoid_navigation_move_target_waypoint(void)
   // nav_heading = atan2() // INT32_ANGLE_FRAC
   nav_heading = nav_course;
 
-
+  dx *= dx;
+  dy *= dy;
 
   uint8_t avg = average_bin();
   if (avg > 10)

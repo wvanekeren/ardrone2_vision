@@ -29,8 +29,17 @@
 #ifndef OBSTACLE_AVOID_H
 #define OBSTACLE_AVOID_H
 
-#include "video.h"
 
+// Settings
 extern int obstacle_avoid_adjust_factor;
+
+
+// Module functions
+extern void sky_seg_avoid_init(void);
+extern void sky_seg_avoid_run(void);
+extern void sky_seg_avoid_start(void);
+extern void sky_seg_avoid_stop(void);
+
+
 
 #endif /* OBSTACLE_AVOID_H */

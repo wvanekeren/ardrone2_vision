@@ -21,10 +21,11 @@
 
 
 // Own header
-#include "obstacle_avoid.h"
+#include "sky_seg_avoid.h"
 
-// Vision Result
-#include "../../pprz_gst_plugins/ObstacleAvoidSkySegmentation/video_message_structs.h"
+// UDP Message with GST vision
+#include "udp/socket.h"
+#include "video_message_structs.h"
 
 // Navigate Based On Vision
 #include "avoid_navigation.h"
@@ -32,17 +33,8 @@
 // Paparazzi State: Attitude -> Vision
 #include "state.h" // for attitude
 
-// Send Images to ground
-#include "../../gst_plugin_framework/socket.h"
-
-
-#ifndef DOWNLINK_DEVICE
-#define DOWNLINK_DEVICE DOWNLINK_AP_DEVICE
-#endif
-#include "messages.h"
-#include "subsystems/datalink/downlink.h"
-
-#include "boards/ardrone/navdata.h"
+// Threaded computer vision
+#include <pthread.h>
 
 
 struct UdpSocket *sock;
@@ -51,7 +43,7 @@ struct ppz2gst_message_struct ppz2gst;
 int obstacle_avoid_adjust_factor;
 
 
-void video_init(void) {
+void sky_seg_avoid_init(void) {
   // Give unique ID's to messages TODO: check that received messages are correct (not from an incompatable gst plugin)
   ppz2gst.ID = 0x0003;
   gst2ppz.ID = 0x0004;
@@ -65,7 +57,9 @@ void video_init(void) {
 }
 
 
-void video_receive(void) {
+volatile uint8_t computervision_thread_has_results = 0;
+
+void sky_seg_avoid_run(void) {
 
   // Send Attitude To GST Module
   struct Int32Eulers* att = stateGetNedToBodyEulers_i();
@@ -75,14 +69,12 @@ void video_receive(void) {
   ppz2gst.adjust_factor = obstacle_avoid_adjust_factor;
 
 
-  // Read Latest GST Module Results
-  int ret = udp_read(sock, (unsigned char *) &gst2ppz, sizeof(gst2ppz));
-  if (ret >= sizeof(gst2ppz))
-  {
-    run_avoid_navigation_onvision();
 
-    // Send ALL vision data to the ground
-    DOWNLINK_SEND_PAYLOAD(DefaultChannel, DefaultDevice, N_BINS, gst2ppz.obstacle_bins);
+  // Read Latest GST Module Results
+  if (computervision_thread_has_results)
+  {
+    computervision_thread_has_results = 0;
+    run_avoid_navigation_onvision();
   }
   else
   {
@@ -95,13 +87,108 @@ void video_receive(void) {
   }
 }
 
+/////////////////////////////////////////////////////////////////////////
+// COMPUTER VISION THREAD
 
-void video_start(void)
+// Video
+#include "v4l/video.h"
+#include "resize.h"
+
+// Payload Code
+#include "obstacleavoidskysegmentation_code.h"
+
+#define DOWNLINK_VIDEO 1
+
+#ifdef DOWNLINK_VIDEO
+#include "encoding/jpeg.h"
+#include "encoding/rtp.h"
+#endif
+
+#include <stdio.h>
+
+pthread_t computervision_thread;
+volatile uint8_t computervision_thread_status = 0;
+volatile uint8_t computer_vision_thread_command = 0;
+void *computervision_thread_main(void* data);
+void *computervision_thread_main(void* data)
 {
+  // Video Input
+  struct vid_struct vid;
+  vid.device = (char*)"/dev/video1";
+  vid.w=1280;
+  vid.h=720;
+  vid.n_buffers = 4;
+  if (video_init(&vid)<0) {
+    printf("Error initialising video\n");
+    computervision_thread_status = -1;
+    return 0;
+  }
+
+  // Video Grabbing
+  struct img_struct* img_new = video_create_image(&vid);
+
+  // Video Resizing
+  #define DOWNSIZE_FACTOR   8
+  struct img_struct small;
+  small.w = vid.w / DOWNSIZE_FACTOR;
+  small.h = vid.h / DOWNSIZE_FACTOR;
+  small.buf = (uint8_t*)malloc(small.w*small.h*2);
+
+#ifdef DOWNLINK_VIDEO
+
+  // Video Compression
+  uint8_t* jpegbuf = (uint8_t*)malloc(vid.h*vid.w*2);
+
+  // Network Transmit
+  struct UdpSocket* vsock;
+  //#define FMS_UNICAST 0
+  //#define FMS_BROADCAST 1
+  vsock = udp_socket("192.168.1.255", 5000, 5001, FMS_BROADCAST);
+
+#endif
+
+  my_plugin_init();
+
+  while (computer_vision_thread_command > 0)
+  {
+    video_grab_image(&vid, img_new);
+
+    // Resize: device by 4
+    resize_uyuv(img_new, &small, DOWNSIZE_FACTOR);
+
+    // Process
+    my_plugin_run(small.buf);
+
+#ifdef DOWNLINK_VIDEO
+    // JPEG encode the image:
+    uint32_t quality_factor = 6; // quality factor from 1 (high quality) to 8 (low quality)
+    uint32_t image_format = FOUR_TWO_TWO;  // format (in jpeg.h)
+    uint8_t* end = encode_image (small.buf, jpegbuf, quality_factor, image_format, small.w, small.h, 0);
+    uint32_t size = end-(jpegbuf);
+
+    printf("Sending an image ...%u\n",size);
+    send_rtp_frame(vsock, jpegbuf,size, small.w, small.h,0, 30, 0, 500);
+#endif
+    computervision_thread_has_results++;
+  }
+  printf("Thread Closed\n");
+  video_close(&vid);
+  computervision_thread_status = -100;
+  return 0;
 }
 
-void video_stop(void)
+void sky_seg_avoid_start(void)
 {
+  computer_vision_thread_command = 1;
+  int rc = pthread_create(&computervision_thread, NULL, computervision_thread_main, NULL);
+  if(rc) {
+    printf("ctl_Init: Return code from pthread_create(mot_thread) is %d\n", rc);
+  }
+}
+
+void sky_seg_avoid_stop(void)
+{
+  computer_vision_thread_command = 0;
 }
 
 

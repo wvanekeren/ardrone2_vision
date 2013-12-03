@@ -1,4 +1,6 @@
 
+#ifndef _OBST_AV_SKY_SEG_H
+#define _OBST_AV_SKY_SEG_H
 
 // Settable by pluging
 extern unsigned int imgWidth, imgHeight;
@@ -10,3 +12,4 @@ extern unsigned int verbose;
 void my_plugin_init(void);
 void my_plugin_run(unsigned char *frame);
 
+#endif

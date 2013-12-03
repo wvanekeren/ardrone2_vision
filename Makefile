@@ -5,15 +5,17 @@ all:
 	git submodule init
 	git submodule update
 	make -C ./ardrone2_gstreamer
-	sb2 make -C ./pprz_gst_plugins/gst-MAVLab clean all
-	sb2 make -C ./pprz_gst_plugins/BrightSpotDetector clean all
-	sb2 make -C ./pprz_gst_plugins/ObstacleAvoidSkySegmentation clean all
+	sb2 make -C ./modules/ObstacleAvoidSkySegmentation/gst_plugin clean all
+	sb2 make -C ./standalone/rtp_test clean all
+	sb2 make -C ./standalone/mjpeg clean all
+	sb2 make -C ./standalone/skysegment clean all
 
 clean:
 	make -C ./ardrone2_gstreamer clean
-	sb2 make -C ./pprz_gst_plugins/gst-MAVLab clean
-	sb2 make -C ./pprz_gst_plugins/BrightSpotDetector clean
-	sb2 make -C ./pprz_gst_plugins/ObstacleAvoidSkySegmentation clean
+	sb2 make -C ./modules/ObstacleAvoidSkySegmentation/gst_plugin clean
+	sb2 make -C ./standalone/rtp_test clean
+	sb2 make -C ./standalone/mjpeg clean
+	sb2 make -C ./standalone/skysegment clean
 
 install:
 	make -C ./ardrone2_gstreamer install

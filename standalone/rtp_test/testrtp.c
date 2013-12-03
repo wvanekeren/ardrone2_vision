@@ -16,7 +16,8 @@ int main(int argc,char ** argv)
   //#define FMS_UNICAST 0
   //#define FMS_BROADCAST 1
 //  sock = udp_socket("192.168.1.71", 5000, 5001, FMS_UNICAST);
-  sock = udp_socket("192.168.1.3", 5000, 5001, FMS_UNICAST);
+  sock = udp_socket("192.168.209.34", 5000, 5001, FMS_UNICAST);
+//  sock = udp_socket("192.168.127.129", 5000, 5001, FMS_UNICAST);
 
   long cnt = 0;
   while (1) {

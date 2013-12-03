@@ -5,7 +5,7 @@
 
 #include "rtp.h"
 
-void send_rtp_packet(struct UdpSocket *sock, uint8_t* Jpeg, int JpegLen, uint32_t m_SequenceNumber, uint32_t m_Timestamp, uint32_t m_offset, uint8_t marker_bit, int w, int h);
+void send_rtp_packet(struct UdpSocket *sock, uint8_t* Jpeg, int JpegLen, uint32_t m_SequenceNumber, uint32_t m_Timestamp, uint32_t m_offset, uint8_t marker_bit, int w, int h, uint8_t format_code, uint8_t quality_code, uint8_t has_dri_header);
 
 // http://www.ietf.org/rfc/rfc3550.txt
 
@@ -109,20 +109,23 @@ void test_rtp_frame(struct UdpSocket *sock)
   static uint8_t toggle = 0;
   toggle = ! toggle;
 
+  uint8_t format_code = 0x01;
+  uint8_t quality_code = 0x54;
+
   if (toggle)
   {
-    send_rtp_packet(sock, JpegScanDataCh2A,KJpegCh2ScanDataLen,framecounter, timecounter, 0, 1, 64, 48);
+    send_rtp_packet(sock, JpegScanDataCh2A,KJpegCh2ScanDataLen,framecounter, timecounter, 0, 1, 64, 48, format_code, quality_code, 0);
   }
   else
   {
-    send_rtp_packet(sock, JpegScanDataCh2B,KJpegCh2ScanDataLen,framecounter, timecounter, 0, 1, 64, 48);
+    send_rtp_packet(sock, JpegScanDataCh2B,KJpegCh2ScanDataLen,framecounter, timecounter, 0, 1, 64, 48, format_code, quality_code, 0);
   }
   framecounter++;
   timecounter+=3600;
 }
 
 
-void send_rtp_frame(struct UdpSocket *sock, uint8_t * Jpeg, uint32_t JpegLen, int w, int h)
+void send_rtp_frame(struct UdpSocket *sock, uint8_t * Jpeg, uint32_t JpegLen, int w, int h, uint8_t format_code, uint8_t quality_code, uint8_t has_dri_header, uint32_t delta_t)
 {
   static uint32_t packetcounter = 0;
   static uint32_t timecounter = 0;
@@ -142,7 +145,7 @@ void send_rtp_frame(struct UdpSocket *sock, uint8_t * Jpeg, uint32_t JpegLen, in
       len = JpegLen;
     }
 
-    send_rtp_packet(sock, Jpeg,len,packetcounter, timecounter, offset, lastpacket, w, h);
+    send_rtp_packet(sock, Jpeg,len,packetcounter, timecounter, offset, lastpacket, w, h, format_code, quality_code, has_dri_header);
 
     JpegLen   -= len;
     Jpeg      += len;
@@ -151,9 +154,7 @@ void send_rtp_frame(struct UdpSocket *sock, uint8_t * Jpeg, uint32_t JpegLen, in
   }
 
   // timestamp = 1 / 90 000 seconds
-//  timecounter+=3600; // 25 Hz
-//  timecounter+=2800; //30 Hz
-  timecounter+=900;
+  timecounter+=delta_t;
 }
 
 /*
@@ -163,7 +164,14 @@ void send_rtp_frame(struct UdpSocket *sock, uint8_t * Jpeg, uint32_t JpegLen, in
  *
  */
 
-void send_rtp_packet(struct UdpSocket *sock, uint8_t * Jpeg, int JpegLen, uint32_t m_SequenceNumber, uint32_t m_Timestamp, uint32_t m_offset, uint8_t marker_bit, int w, int h)
+void send_rtp_packet(
+    struct UdpSocket *sock,
+    uint8_t * Jpeg, int JpegLen,
+    uint32_t m_SequenceNumber, uint32_t m_Timestamp,
+    uint32_t m_offset, uint8_t marker_bit,
+    int w, int h,
+    uint8_t format_code, uint8_t quality_code,
+    uint8_t has_dri_header)
 {
 
 #define KRtpHeaderSize 12           // size of the RTP header
@@ -223,12 +231,14 @@ void send_rtp_packet(struct UdpSocket *sock, uint8_t * Jpeg, int JpegLen, uint32
   RtpBuf[13] = (m_offset & 0x00FF0000) >> 16;      // 3 byte fragmentation offset for fragmented images
   RtpBuf[14] = (m_offset & 0x0000FF00) >> 8;
   RtpBuf[15] = (m_offset & 0x000000FF);
-  RtpBuf[16] = 0x00;                               // type: 0 422 or 1 421
+  RtpBuf[16] = 0x00;                             // type: 0 422 or 1 421
   RtpBuf[17] = 60;                               // quality scale factor
-  RtpBuf[16] = 0x01;                               // type: 0 422 or 1 421
-  RtpBuf[17] = 0x54;                               // quality scale factor
-  RtpBuf[18] = w/8;                           // width  / 8 -> 48 pixel
-  RtpBuf[19] = h/8;                           // height / 8 -> 32 pixel
+  RtpBuf[16] = format_code;                      // type: 0 422 or 1 421
+  if (has_dri_header)
+    RtpBuf[16] |= 0x40; // DRI flag
+  RtpBuf[17] = quality_code;                     // quality scale factor
+  RtpBuf[18] = w/8;                              // width  / 8 -> 48 pixel
+  RtpBuf[19] = h/8;                              // height / 8 -> 32 pixel
   // append the JPEG scan data to the RTP buffer
   memcpy(&RtpBuf[20],Jpeg,JpegLen);
 

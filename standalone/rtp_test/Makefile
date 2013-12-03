@@ -11,7 +11,7 @@ GST_CFLAGS := -pthread
 GST_LIBS := -pthread -lrt 
 
 override CFLAGS += -std=c99 -D_GNU_SOURCE -DGST_DISABLE_DEPRECATED
-override CFLAGS += -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp -ftree-vectorize
+#override CFLAGS += -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp -ftree-vectorize
 override CFLAGS += -I$(DIR_GSTREAMER)
 override CFLAGS += -I$(DIR_CV) -I$(DIR_LIB)
 
@@ -24,7 +24,6 @@ gst_plugin := grab.x
 OBJECTS =  	testrtp.o \
 		$(DIR_LIB)/v4l/video.o \
 		$(DIR_LIB)/udp/socket.o \
-		$(DIR_CV)/encoding/jpeg.o \
 		$(DIR_CV)/encoding/rtp.o
 
 $(gst_plugin): $(OBJECTS)

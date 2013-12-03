@@ -372,7 +372,7 @@ void initialization (JPEG_ENCODER_STRUCTURE *jpeg, uint32_t image_format, uint32
     bitindex = 0;
 }
 
-uint8_t* encode_image (uint8_t *input_ptr, uint8_t *output_ptr, uint32_t quality_factor, uint32_t image_format, uint32_t image_width, uint32_t image_height)
+uint8_t* encode_image (uint8_t *input_ptr, uint8_t *output_ptr, uint32_t quality_factor, uint32_t image_format, uint32_t image_width, uint32_t image_height, uint8_t add_dri_header)
 {
     uint16_t i, j;
 
@@ -386,7 +386,10 @@ uint8_t* encode_image (uint8_t *input_ptr, uint8_t *output_ptr, uint32_t quality
     initialize_quantization_tables (quality_factor);
 
     /* Writing Marker Data */
-    output_ptr = write_markers (output_ptr, image_format, image_width, image_height);
+    if (add_dri_header)
+    {
+      output_ptr = write_markers (output_ptr, image_format, image_width, image_height);
+    }
 
     for (i=1; i<=jpeg_encoder_structure->vertical_mcus; i++)
     {

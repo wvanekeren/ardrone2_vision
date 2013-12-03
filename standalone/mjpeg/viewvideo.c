@@ -49,6 +49,8 @@ int main(int argc,char ** argv)
 
   while (1) {
 
+    uint8_t with_header = 0;
+
     // Aquire image
     printf("Aquiring an image ...\n");
     video_grab_image(&vid, img_new);
@@ -58,15 +60,17 @@ int main(int argc,char ** argv)
     resize_uyuv(img_new, &small, DOWNSIZE_FACTOR);
 
     // JPEG encode the image:
-    uint32_t quality_factor = 4; // quality factor from 1 (high quality) to 8 (low quality)
+    uint32_t quality_factor = 6; // quality factor from 1 (high quality) to 8 (low quality)
     uint32_t image_format = FOUR_TWO_TWO;  // format (in jpeg.h)
-    uint8_t* end = encode_image (small.buf, jpegbuf, quality_factor, image_format, small.w, small.h);
+    uint8_t* end = encode_image (small.buf, jpegbuf, quality_factor, image_format, small.w, small.h, with_header);
     uint32_t size = end-(jpegbuf);
 
     printf("Sending an image ...%u\n",size);
 #if RTP == 1
-    send_rtp_frame(sock, jpegbuf,size, small.w, small.h);
+#pragma message "sending over RTP"
+    send_rtp_frame(sock, jpegbuf,size, small.w, small.h,0, 30, with_header, 500);
 #else
+#pragma message "sending over UDP+SVS Header"
     size = create_svs_jpeg_header(jpegbuf,size,small.w);
     udp_write(sock,jpegbuf,size);
 #endif

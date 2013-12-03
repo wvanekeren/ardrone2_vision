@@ -10,7 +10,15 @@
 #define        FOUR_FOUR_FOUR          3
 #define        RGB                     4
 
-unsigned char *encode_image (uint8_t* in, uint8_t* out, uint32_t, uint32_t, uint32_t, uint32_t);
+unsigned char *encode_image (
+    uint8_t* in,
+    uint8_t* out,
+    uint32_t q,                       // image quality
+    uint32_t fmt,                     // image format code
+    uint32_t width,                   // image width
+    uint32_t height,                  // image height
+    uint8_t add_dri_header            // data only or full jpeg file
+);
 int create_svs_jpeg_header(unsigned char* buf, int32_t size, int w);
 
 #endif

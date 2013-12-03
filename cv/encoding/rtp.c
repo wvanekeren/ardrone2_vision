@@ -225,6 +225,8 @@ void send_rtp_packet(struct UdpSocket *sock, uint8_t * Jpeg, int JpegLen, uint32
   RtpBuf[15] = (m_offset & 0x000000FF);
   RtpBuf[16] = 0x00;                               // type: 0 422 or 1 421
   RtpBuf[17] = 60;                               // quality scale factor
+  RtpBuf[16] = 0x01;                               // type: 0 422 or 1 421
+  RtpBuf[17] = 0x54;                               // quality scale factor
   RtpBuf[18] = w/8;                           // width  / 8 -> 48 pixel
   RtpBuf[19] = h/8;                           // height / 8 -> 32 pixel
   // append the JPEG scan data to the RTP buffer

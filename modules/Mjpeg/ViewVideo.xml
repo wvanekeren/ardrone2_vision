@@ -9,7 +9,7 @@
     <file name="viewvideo.h"/>
   </header>
 
-  <periodic fun="viewvideo_run()" freq="1" start="viewvideo_start()" stop="viewvideo_stop()" autorun="FALSE"/>
+  <periodic fun="viewvideo_run()" freq="1" start="viewvideo_start()" stop="viewvideo_stop()" autorun="TRUE"/>
   <makefile>
       <raw>
 

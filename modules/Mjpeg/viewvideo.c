@@ -97,7 +97,16 @@ void *computervision_thread_main(void* data)
     uint32_t size = end-(jpegbuf);
 
     printf("Sending an image ...%u\n",size);
-    send_rtp_frame(vsock, jpegbuf,size, small.w, small.h,0, 30, 0, 500);
+
+    send_rtp_frame(
+        vsock,            // UDP
+        jpegbuf,size,     // JPEG
+        small.w, small.h, // Img Size
+        0,                // Format 422
+        30,               // Jpeg-Quality
+        0,                // DRI Header
+        2700              // 90kHz time increment
+     );
   }
   printf("Thread Closed\n");
   video_close(&vid);

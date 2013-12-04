@@ -227,6 +227,7 @@ void video_grab_image(struct vid_struct *vid, struct img_struct *img) {
   pthread_mutex_lock(&video_grab_mutex);
   vid->img = img;
   vid->trigger=1;
-  while(vid->trigger) pthread_yield();
+  //  while(vid->trigger) pthread_yield();
+  while(vid->trigger) usleep(1);
   pthread_mutex_unlock(&video_grab_mutex);
 }

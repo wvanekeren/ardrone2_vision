@@ -1,9 +1,5 @@
 include ../../Makefile.include
 
-# Add pthread
-override CFLAGS += -pthread
-override LIBS   += -pthread -lrt
-
 # Specify used paths
 override CFLAGS += -I$(DIR_CV)
 override CFLAGS += -I$(DIR_LIB)

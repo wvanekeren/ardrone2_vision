@@ -1,21 +1,15 @@
-
 DIR_ARDRONE2_VISION := $(dir $(lastword $(MAKEFILE_LIST)))
-# ${shell echo ${PWD}}
 
-# Paths
-DIR_GSTREAMER   ?= $(DIR_ARDRONE2_VISION)ardrone2_gstreamer
-DIR_LIB		    ?= $(DIR_ARDRONE2_VISION)lib
-DIR_CV          ?= $(DIR_ARDRONE2_VISION)cv
-DIR_MODULES     ?= $(DIR_ARDRONE2_VISION)modules
-
-# Tools
-DRONE_TOOL      ?= $(DIR_GSTREAMER)/ardrone2.py
-
+include $(DIR_ARDRONE2_VISION)/Makefile.paths
 
 CROSS_COMPILE   ?=
 CC              := $(CROSS_COMPILE)gcc
 CFLAGS          := -O2 -ggdb -Wall -Wextra -Wno-unused-parameter -Wmissing-prototypes -ansi
 LDFLAGS         := -Wl,--no-undefined -Wl,--as-needed
+
+# Add pthread
+override CFLAGS += -pthread
+override LIBS   += -pthread -lrt
 
 
 ifeq ($(PROCESSOR),x86)

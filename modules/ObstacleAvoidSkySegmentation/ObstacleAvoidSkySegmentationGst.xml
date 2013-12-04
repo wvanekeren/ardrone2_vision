@@ -18,7 +18,7 @@
 <!--    <file name="video.c"/>  -->
       <raw>
 
-include $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/Makefile.include
+include $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/Makefile.paths
           
 VISION_MODULE_FOLDER = $(DIR_MODULES)/ObstacleAvoidSkySegmentation
           

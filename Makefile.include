@@ -1,23 +1,38 @@
 
-ARDRONE2_VISION := $(dir $(lastword $(MAKEFILE_LIST)))
+DIR_ARDRONE2_VISION := $(dir $(lastword $(MAKEFILE_LIST)))
 # ${shell echo ${PWD}}
 
+# Paths
+DIR_GSTREAMER   ?= $(DIR_ARDRONE2_VISION)ardrone2_gstreamer
+DIR_LIB		    ?= $(DIR_ARDRONE2_VISION)lib
+DIR_CV          ?= $(DIR_ARDRONE2_VISION)cv
+DIR_MODULES     ?= $(DIR_ARDRONE2_VISION)modules
 
-DIR_GSTREAMER	= $(ARDRONE2_VISION)ardrone2_gstreamer
-DIR_LIB		= $(ARDRONE2_VISION)lib
-DIR_CV		= $(ARDRONE2_VISION)cv
-DIR_MODULES	= $(ARDRONE2_VISION)modules
+# Tools
+DRONE_TOOL      ?= $(DIR_GSTREAMER)/ardrone2.py
 
 
-DRONE_TOOL      = $(DIR_GSTREAMER)/ardrone2.py 
+CROSS_COMPILE   ?=
+CC              := $(CROSS_COMPILE)gcc
+CFLAGS          := -O2 -ggdb -Wall -Wextra -Wno-unused-parameter -Wmissing-prototypes -ansi
+LDFLAGS         := -Wl,--no-undefined -Wl,--as-needed
 
 
-GST_H 		= $(DIR_GSTREAMER)/opt/arm/gst/include/gstreamer-0.10/gst/gst.h
+ifeq ($(PROCESSOR),x86)
+	CFLAGS      += -mtune=native -march=native
+else
+	# erase existing values for CPU
+	override CFLAGS += -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp -ftree-vectorize
+endif
+
+override CFLAGS += -std=c99 -D_GNU_SOURCE -DGST_DISABLE_DEPRECATED
 
 # Make sure all is the first target
 all:
 
-$(GST_H):
-	make -C $(DIR_GSTREAMER)
-
-
+# pretty print
+ifndef V
+QUIET_CC    = @echo '   CC         '$@;
+QUIET_LINK  = @echo '   LINK       '$@;
+QUIET_CLEAN = @echo '   CLEAN      '$@;
+endif

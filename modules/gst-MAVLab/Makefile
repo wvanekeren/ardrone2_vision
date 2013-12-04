@@ -1,7 +1,7 @@
 
 ifeq ($(PROCESSOR),x86)
 	include ../../gst_plugin_framework/Makefile-x86.conf
-	override CFLAGS += -std=c99 -D_GNU_SOURCE -DGST_DISABLE_DEPRECATED 
+	override CFLAGS += -std=c99 -D_GNU_SOURCE -DGST_DISABLE_DEPRECATED
 	override CFLAGS += -DDSP_API=$(DSP_API) -DSN_API=$(SN_API)
 	override CFLAGS += -I../../gst_plugin_framework
 else
@@ -10,14 +10,14 @@ else
 	override CFLAGS += -DDSP_API=$(DSP_API) -DSN_API=$(SN_API)
 	override CFLAGS += -I../../gst_plugin_framework
 endif
-override CFLAGS += -lm -fno-builtin-cos -fno-builtin-sin -fno-builtin-acos -fno-builtin-asin -fno-builtin-atan 
+override CFLAGS += -lm -fno-builtin-cos -fno-builtin-sin -fno-builtin-acos -fno-builtin-asin -fno-builtin-atan
 
 all:
 
 D = $(DESTDIR)
 
 
-gst_plugin := libMAVLab.so 
+gst_plugin := libMAVLab.so
 
 $(gst_plugin):  gstardrone.o ardrone_pprz.o optic_flow.o trig.o ../../gst_plugin_framework/socket.o
 $(gst_plugin): override CFLAGS += $(GST_CFLAGS) \

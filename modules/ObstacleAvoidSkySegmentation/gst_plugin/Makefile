@@ -1,27 +1,16 @@
+# Include master makefile
 include ../../../Makefile.include
-DIR_GST_PLUGIN_FRAMEWORK = $(DIR_GSTREAMER)/gst_plugin_framework
 
-ifeq ($(PROCESSOR),x86)
-	include $(DIR_GST_PLUGIN_FRAMEWORK)/Makefile-x86.conf
-	override CFLAGS += -std=c99 -D_GNU_SOURCE -DGST_DISABLE_DEPRECATED
-	override CFLAGS += -DDSP_API=$(DSP_API) -DSN_API=$(SN_API)
-else
-	include $(DIR_GST_PLUGIN_FRAMEWORK)/Makefile-ARM.conf
-	override CFLAGS += -std=c99 -D_GNU_SOURCE -DGST_DISABLE_DEPRECATED -mcpu=cortex-a8 -mfpu=neon -mfloat-abi=softfp -ftree-vectorize
-	override CFLAGS += -DDSP_API=$(DSP_API) -DSN_API=$(SN_API)
-endif
+# Include gstreamer makefile
+include $(DIR_GSTREAMER)/Makefile.include
 
-
-override CFLAGS += -I$(DIR_GST_PLUGIN_FRAMEWORK) 
-override CFLAGS += -I$(DIR_LIB) 
-override CFLAGS += -I$(DIR_CV) 
+# Specify paths of interest
+override CFLAGS += -I$(DIR_LIB)
+override CFLAGS += -I$(DIR_CV)
 override CFLAGS += -I$(DIR_MODULES)
 override CFLAGS += -I../
 
 all:
-
-D = $(DESTDIR)
-
 
 gst_plugin := libObstacleAvoidSkySegmentation.so
 
@@ -31,13 +20,9 @@ OBJECTS  =  	gst_obstacleavoidskysegmentation_plugin.o \
 		$(DIR_CV)/trig.o \
 		$(DIR_LIB)/udp/socket.o
 
-$(gst_plugin):	$(OBJECTS)
-
-$(gst_plugin): override CFLAGS += $(GST_CFLAGS) \
-	-D VERSION='"$(version)"' -D DSPDIR='"$(dspdir)"'
+$(gst_plugin): $(OBJECTS)
+$(gst_plugin): override CFLAGS += $(GST_CFLAGS) -D VERSION='"$(version)"' -D DSPDIR='"$(dspdir)"'
 $(gst_plugin): override LIBS += $(GST_LIBS)
-
-targets += $(gst_plugin)
 
 upload:
 	sb2 make -C ./ all && $(DRONE_TOOL) upload_gst_module $(gst_plugin)
@@ -48,14 +33,7 @@ doc: $(gst_plugin)
 doc-install: doc
 	$(MAKE) -C doc install
 
-all: $(targets) $(bins)
-
-# pretty print
-ifndef V
-QUIET_CC    = @echo '   CC         '$@;
-QUIET_LINK  = @echo '   LINK       '$@;
-QUIET_CLEAN = @echo '   CLEAN      '$@;
-endif
+all: $(gst_plugin)
 
 %.so: override CFLAGS += -fPIC
 
@@ -73,7 +51,7 @@ $(bins):
 
 clean:
 	echo $(PROCESSOR)
-	$(QUIET_CLEAN)$(RM) -v $(targets) $(bins) *.o *.d tidsp/*.d tidsp/*.o $(OBJECTS) $(OBJECTS:.o=.d) 
+	$(QUIET_CLEAN)$(RM) -v $(gst_plugin) *.o *.d tidsp/*.d tidsp/*.o $(OBJECTS) $(OBJECTS:.o=.d)
 
 dist: base := gst-dsp-$(version)
 dist:

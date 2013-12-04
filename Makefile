@@ -25,3 +25,4 @@ drone:
 
 cleanspaces:
 	find . -name '*.[ch]' -exec sed -i {} -e 's/[ \t]*$$//' \;
+	find . -name 'Makefile*' -exec sed -i {} -e 's/[ \t]*$$//' \;

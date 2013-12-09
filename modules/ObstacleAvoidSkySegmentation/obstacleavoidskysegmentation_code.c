@@ -45,8 +45,8 @@ void my_plugin_init(void)
 void my_plugin_run(unsigned char *frame)
 {
   // 12 bit FRAC in Radians -> 0 bit FRAC Degrees
-  int pitch = ppz2gst.pitch / 71.488686161687739470794373877294;
-  int roll  = ppz2gst.roll / 71.488686161687739470794373877294;
+  int pitch = ppz2gst.pitch / 71.488686161687739470794373877294f;
+  int roll  = ppz2gst.roll / 71.488686161687739470794373877294f;
 
   // If received a usefull value
   if (ppz2gst.adjust_factor >= 0)

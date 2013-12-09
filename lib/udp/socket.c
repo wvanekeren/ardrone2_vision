@@ -56,9 +56,11 @@ struct UdpSocket* udp_socket(const char* str_ip_out, const int port_out, const i
 }
 
 #include <stdio.h>
+//#define UDP_MODE  MSG_DONTWAIT
+#define UDP_MODE 0
 
 int udp_write(struct UdpSocket* me, unsigned char* buf, int len) {
-  sendto(me->socket_out, buf, len, MSG_DONTWAIT,
+  sendto(me->socket_out, buf, len, UDP_MODE,
                                 (struct sockaddr*)&me->addr_out, sizeof(me->addr_out));
   //printf("sendto ret=%d\n",ret);
   return len;

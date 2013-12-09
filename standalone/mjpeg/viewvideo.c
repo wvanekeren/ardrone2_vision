@@ -68,7 +68,7 @@ int main(int argc,char ** argv)
     printf("Sending an image ...%u\n",size);
 #if RTP == 1
 #pragma message "sending over RTP"
-    send_rtp_frame(sock, jpegbuf,size, small.w, small.h,0, 30, with_header, 500);
+    send_rtp_frame(sock, jpegbuf,size, small.w, small.h,0, 30, with_header, 2500);
 #else
 #pragma message "sending over UDP+SVS Header"
     size = create_svs_jpeg_header(jpegbuf,size,small.w);

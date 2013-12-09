@@ -69,7 +69,11 @@ void *computervision_thread_main(void* data)
   struct img_struct* img_new = video_create_image(&vid);
 
   // Video Resizing
-  #define DOWNSIZE_FACTOR   8
+  #define DOWNSIZE_FACTOR   4
+  uint8_t quality_factor = 50; // From 0 to 99 (99=high)
+  uint8_t dri_jpeg_header = 0;
+  int millisleep = 250;
+
   struct img_struct small;
   small.w = vid.w / DOWNSIZE_FACTOR;
   small.h = vid.h / DOWNSIZE_FACTOR;
@@ -85,27 +89,29 @@ void *computervision_thread_main(void* data)
 
   while (computer_vision_thread_command > 0)
   {
+    usleep(1000* millisleep);
     video_grab_image(&vid, img_new);
 
     // Resize: device by 4
     resize_uyuv(img_new, &small, DOWNSIZE_FACTOR);
 
     // JPEG encode the image:
-    uint32_t quality_factor = 6; // quality factor from 1 (high quality) to 8 (low quality)
     uint32_t image_format = FOUR_TWO_TWO;  // format (in jpeg.h)
-    uint8_t* end = encode_image (small.buf, jpegbuf, quality_factor, image_format, small.w, small.h, 0);
+    uint8_t* end = encode_image (small.buf, jpegbuf, quality_factor, image_format, small.w, small.h, dri_jpeg_header);
     uint32_t size = end-(jpegbuf);
 
     printf("Sending an image ...%u\n",size);
-
+/*
+ *
+ */
     send_rtp_frame(
         vsock,            // UDP
         jpegbuf,size,     // JPEG
         small.w, small.h, // Img Size
         0,                // Format 422
-        30,               // Jpeg-Quality
-        0,                // DRI Header
-        2700              // 90kHz time increment
+        quality_factor,               // Jpeg-Quality
+        dri_jpeg_header,                // DRI Header
+        0              // 90kHz time increment
      );
   }
   printf("Thread Closed\n");

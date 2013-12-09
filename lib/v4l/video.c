@@ -67,7 +67,7 @@ void *video_thread_main(void* data)
 
     if (0 == r) {
       fprintf(stderr, "select timeout\n");
-      exit(EXIT_FAILURE);
+      return 0;
     }
 
     struct v4l2_buffer buf;

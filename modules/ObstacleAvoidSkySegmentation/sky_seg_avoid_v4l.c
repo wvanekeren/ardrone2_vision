@@ -49,9 +49,6 @@ void sky_seg_avoid_init(void) {
   gst2ppz.ID = 0x0004;
   obstacle_avoid_adjust_factor = 5;
 
-  // Open UDP socket
-  sock = udp_socket("192.168.1.1", 2001, 2000, FMS_UNICAST);
-
   // Navigation Code
   init_avoid_navigation();
 }
@@ -147,6 +144,10 @@ void *computervision_thread_main(void* data)
 
 #endif
 
+  // First Apply Settings before init
+  imgWidth = small.w;
+  imgHeight = small.h;
+  verbose = 2;
   my_plugin_init();
 
   while (computer_vision_thread_command > 0)
@@ -161,13 +162,15 @@ void *computervision_thread_main(void* data)
 
 #ifdef DOWNLINK_VIDEO
     // JPEG encode the image:
-    uint32_t quality_factor = 6; // quality factor from 1 (high quality) to 8 (low quality)
+    uint32_t quality_factor = 60; // quality factor from 1 (high quality) to 8 (low quality)
+    uint8_t dri_header = 0;
     uint32_t image_format = FOUR_TWO_TWO;  // format (in jpeg.h)
-    uint8_t* end = encode_image (small.buf, jpegbuf, quality_factor, image_format, small.w, small.h, 0);
+    uint8_t* end = encode_image (small.buf, jpegbuf, quality_factor, image_format, small.w, small.h, dri_header);
     uint32_t size = end-(jpegbuf);
 
     printf("Sending an image ...%u\n",size);
-    send_rtp_frame(vsock, jpegbuf,size, small.w, small.h,0, 30, 0, 500);
+    uint32_t delta_t_per_frame = 0; // 0 = use drone clock
+    send_rtp_frame(vsock, jpegbuf,size, small.w, small.h,0, quality_factor, dri_header, delta_t_per_frame);
 #endif
     computervision_thread_has_results++;
   }

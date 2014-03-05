@@ -42,6 +42,6 @@ extern uint8_t color_cb_max;
 extern uint8_t color_cr_min;
 extern uint8_t color_cr_max;
 
-
+extern int color_count;
 
 #endif /* BOTTOM_CAM_SEARCH_H */

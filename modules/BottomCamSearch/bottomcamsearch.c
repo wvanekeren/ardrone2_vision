@@ -30,6 +30,7 @@
 #include <pthread.h>
 
 
+
 void bottomcamsearch_run(void) {
 }
 
@@ -40,6 +41,7 @@ void bottomcamsearch_run(void) {
 // Video
 #include "v4l/video.h"
 #include "resize.h"
+#include "color.h"
 
 #include "encoding/jpeg.h"
 #include "encoding/rtp.h"
@@ -94,6 +96,8 @@ void *computervision_thread_main(void* data)
 
     // Resize: device by 4
     resize_uyuv(img_new, &small, DOWNSIZE_FACTOR);
+
+    isred_uyuv(&small,&small);
 
     // JPEG encode the image:
     uint32_t image_format = FOUR_TWO_TWO;  // format (in jpeg.h)

@@ -47,7 +47,7 @@ void sky_seg_avoid_init(void) {
   // Give unique ID's to messages TODO: check that received messages are correct (not from an incompatable gst plugin)
   ppz2gst.ID = 0x0003;
   gst2ppz.ID = 0x0004;
-  obstacle_avoid_adjust_factor = 5;
+  obstacle_avoid_adjust_factor = 4;
 
   // Navigation Code
   init_avoid_navigation();

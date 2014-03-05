@@ -23,8 +23,8 @@
 #include <stdint.h>
 #include "image.h"
 
-inline void grayscale_uyuv(struct img_struct* input, struct img_struct* output);
-inline void grayscale_uyuv(struct img_struct* input, struct img_struct* output)
+inline void grayscale_uyvy(struct img_struct* input, struct img_struct* output);
+inline void grayscale_uyvy(struct img_struct* input, struct img_struct* output)
 {
   uint8_t *source = input->buf;
   uint8_t *dest = output->buf;
@@ -42,9 +42,10 @@ inline void grayscale_uyuv(struct img_struct* input, struct img_struct* output)
   }
 }
 
-inline void isred_uyuv(struct img_struct* input, struct img_struct* output);
-inline void isred_uyuv(struct img_struct* input, struct img_struct* output)
+inline int colorfilt_uyvy(struct img_struct* input, struct img_struct* output, uint8_t y_m, uint8_t y_M, uint8_t u_m, uint8_t u_M, uint8_t v_m, uint8_t v_M);
+inline int colorfilt_uyvy(struct img_struct* input, struct img_struct* output, uint8_t y_m, uint8_t y_M, uint8_t u_m, uint8_t u_M, uint8_t v_m, uint8_t v_M)
 {
+  int cnt = 0;
   uint8_t *source = input->buf;
   uint8_t *dest = output->buf;
 
@@ -54,11 +55,16 @@ inline void isred_uyuv(struct img_struct* input, struct img_struct* output)
     {
       // Color Check:
       if (
-               (dest[1] >80)   // sufficient light
-            && (dest[2] >180)   // red & purple
-            && (dest[0] <140)   // not too purple
+          // Light
+               (dest[1] >= y_m)
+            && (dest[1] <= y_M)
+            && (dest[0] >= u_m)
+            && (dest[0] <= u_M)
+            && (dest[2] >= v_m)
+            && (dest[2] <= v_M)
          )// && (dest[2] > 128))
       {
+        cnt ++;
         // UYVY
         dest[0] = 64;        // U
         dest[1] = source[1];  // Y
@@ -82,5 +88,6 @@ inline void isred_uyuv(struct img_struct* input, struct img_struct* output)
       source+=4;
     }
   }
+  return cnt;
 }
 

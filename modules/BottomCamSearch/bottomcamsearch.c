@@ -30,6 +30,13 @@
 #include <pthread.h>
 
 
+uint8_t color_lum_min = 105;
+uint8_t color_lum_max = 205;
+uint8_t color_cb_min  = 52;
+uint8_t color_cb_max  = 140;
+uint8_t color_cr_min  = 180;
+uint8_t color_cr_max  = 255;
+
 
 void bottomcamsearch_run(void) {
 }
@@ -97,7 +104,13 @@ void *computervision_thread_main(void* data)
     // Resize: device by 4
     resize_uyuv(img_new, &small, DOWNSIZE_FACTOR);
 
-    isred_uyuv(&small,&small);
+    int cnt = colorfilt_uyvy(&small,&small,
+        color_lum_min,color_lum_max,
+        color_cb_min,color_cb_max,
+        color_cr_min,color_cr_max
+        );
+
+    printf("ColorCount = %d \n", cnt);
 
     // JPEG encode the image:
     uint32_t image_format = FOUR_TWO_TWO;  // format (in jpeg.h)

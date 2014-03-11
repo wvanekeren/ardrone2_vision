@@ -1,14 +1,17 @@
 
 
 all:
-	git submodule sync
-	git submodule init
-	git submodule update
+	make get_gstreamer
 	make -C ./ardrone2_gstreamer
 	sb2 make -C ./modules/ObstacleAvoidSkySegmentation/gst_plugin clean all
 	sb2 make -C ./standalone/rtp_test clean all
 	sb2 make -C ./standalone/mjpeg clean all
 	sb2 make -C ./standalone/skysegment clean all
+
+get_gstreamer:
+	git submodule sync
+	git submodule init
+	git submodule update
 
 clean:
 	make -C ./ardrone2_gstreamer clean

@@ -157,10 +157,16 @@ void *computervision_thread_main(void* data)
     // Resize: device by 4
     resize_uyuv(img_new, &small, DOWNSIZE_FACTOR);
 
-    // Process
-    my_plugin_run(small.buf);
+    static uint8_t toggle = 1;
+    toggle = 1-toggle;
+
+
+    // Process Before sending
+    if (toggle == 1)
+      my_plugin_run(small.buf);
 
 #ifdef DOWNLINK_VIDEO
+
     // JPEG encode the image:
     uint32_t quality_factor = 60; // quality factor from 1 (high quality) to 8 (low quality)
     uint8_t dri_header = 0;
@@ -172,8 +178,14 @@ void *computervision_thread_main(void* data)
     uint32_t delta_t_per_frame = 0; // 0 = use drone clock
     send_rtp_frame(vsock, jpegbuf,size, small.w, small.h,0, quality_factor, dri_header, delta_t_per_frame);
 #endif
+
+    // Else process after sending raw
+    if (toggle != 1)
+      my_plugin_run(small.buf);
+
     computervision_thread_has_results++;
   }
+
   printf("Thread Closed\n");
   video_close(&vid);
   computervision_thread_status = -100;

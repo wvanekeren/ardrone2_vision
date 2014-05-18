@@ -33,6 +33,7 @@
 // Paparazzi State: Attitude -> Vision
 #include "state.h" // for attitude
 
+#include "std.h"
 
 struct gst2ppz_message_struct gst2ppz;
 struct ppz2gst_message_struct ppz2gst;
@@ -52,6 +53,13 @@ void sky_seg_avoid_init(void) {
   init_avoid_navigation();
 }
 
+/** Normalize a degree angle between 0 and 359 */
+#define NormAngleRad(x) { \
+  int dont_loop_forever = 0;  \
+  while ((x < (- M_PI)) && ++dont_loop_forever) x += (2 * M_PI); \
+  while ((x >= (M_PI)) && ++dont_loop_forever) x -= (2 * M_PI); \
+}
+
 
 void sky_seg_avoid_run(void) {
   static int counter = 0;
@@ -60,10 +68,46 @@ void sky_seg_avoid_run(void) {
   // Read Latest GST Module Results
   if (counter >= (512/15))
   {
-    float dh = (17.0f - stateGetPositionEnu_f()->z) * 10.0f;
+    // Vertical
+    float dx = sqrt ( (stateGetPositionEnu_f()->x * stateGetPositionEnu_f()->x) + (stateGetPositionEnu_f()->y * stateGetPositionEnu_f()->y) );
+
+    float dh = (17.0f - stateGetPositionEnu_f()->z);
+    float vang = atan2(dh,dx) * 80.9F * 2.0f; // 255 / PI
+
+    if (vang < 0.0f)
+      vang = 0.0f;
+    if (vang > 255.0f)
+      vang = 255.0f;
+
+    // Horizontal
+    float bearing = atan2(- stateGetPositionEnu_f()->x, - stateGetPositionEnu_f()->y );
+    float heading = stateGetNedToBodyEulers_f()->psi;
+    float diff = bearing - heading;
+    NormAngleRad(diff);
+    diff = DegOfRad(diff);
+
+    float hang = DegOfRad(atan2(10,dx)); // 255 / PI
+
+
+    float viewangle = 50; // degrees
+    float range = viewangle/2.0f;
+    float deg_per_bin = viewangle/ ((float) N_BINS);
+
+    float bin_nr_mid = range/deg_per_bin;
+    float bin_nr_start = bin_nr_mid + diff/deg_per_bin - hang/deg_per_bin;
+    float bin_nr_stop  = bin_nr_mid + diff/deg_per_bin + hang/deg_per_bin;
+
+
     for (int i=0; i<N_BINS; i++)
     {
-      gst2ppz.obstacle_bins[i] = dh;
+      if ((i > bin_nr_start) && (i <= (bin_nr_stop)))
+      {
+        gst2ppz.obstacle_bins[i] = vang;
+      }
+      else
+      {
+        gst2ppz.obstacle_bins[i] = 0.0f;
+      }
     }
 
     counter = 0;

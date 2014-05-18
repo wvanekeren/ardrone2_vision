@@ -108,13 +108,13 @@ void run_avoid_navigation_climb_until_clear(void)
   if (all_bins_less_than(10))
   {
     // Stop climbing
-    avoid_navigation_data.mode = 0;
+    // avoid_navigation_data.mode = 0;
   }
   else
   {
     // On each video frame: about 10Hz
     // Climb X meters
-    navigation_SetFlightAltitude(flight_altitude + 0.1f);
+    navigation_SetFlightAltitude(flight_altitude + 0.2f);
 
     // Look in all directions!?
     // nav_heading +=  // INT32_ANGLE_FRAC

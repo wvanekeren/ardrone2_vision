@@ -27,6 +27,13 @@
 
 struct AvoidNavigationStruct {
   uint8_t mode; ///< 0 = nothing, 1 =  climb, 2 = sideways, ...
+  //float meters_climbed;
+  int climb_extra_when_clear_timer;
+
+  // settings
+  int setting_climb_extra_climb_timer;
+  int setting_climb_bin_threshold;
+  float setting_climb_speed;
 };
 
 /** global VIDEO state */

@@ -37,7 +37,7 @@
 
 struct gst2ppz_message_struct gst2ppz;
 struct ppz2gst_message_struct ppz2gst;
-int obstacle_avoid_adjust_factor;
+int sky_seg_avoid_vision_adjust_factor;
 
 
 void sky_seg_avoid_init(void) {
@@ -47,7 +47,7 @@ void sky_seg_avoid_init(void) {
   {
     gst2ppz.obstacle_bins[i] = 0;
   }
-  obstacle_avoid_adjust_factor = 4;
+  sky_seg_avoid_vision_adjust_factor = 4;
 
   // Navigation Code
   init_avoid_navigation();

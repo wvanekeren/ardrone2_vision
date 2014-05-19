@@ -50,7 +50,16 @@ struct AvoidNavigationStruct avoid_navigation_data;
 // Called once on paparazzi autopilot start
 void init_avoid_navigation()
 {
+  // Do nothing
   avoid_navigation_data.mode = 0;
+
+  // Variables
+  avoid_navigation_data.climb_extra_when_clear_timer = 0;
+
+  // Settings
+  avoid_navigation_data.setting_climb_extra_climb_timer = 10;
+  avoid_navigation_data.setting_climb_bin_threshold = 10;
+  avoid_navigation_data.setting_climb_speed = 0.2f;
 }
 
 void run_avoid_navigation_climb_until_clear(void);
@@ -105,19 +114,21 @@ static uint8_t all_bins_less_than(uint8_t thres)
 
 void run_avoid_navigation_climb_until_clear(void)
 {
-  if (all_bins_less_than(10))
+  if (all_bins_less_than(avoid_navigation_data.setting_climb_bin_threshold))
   {
-    // Stop climbing
-    // avoid_navigation_data.mode = 0;
+    // Stop climbing after some time.
+    if (avoid_navigation_data.climb_extra_when_clear_timer > 0)
+    {
+      avoid_navigation_data.climb_extra_when_clear_timer--;
+      navigation_SetFlightAltitude(flight_altitude + avoid_navigation_data.setting_climb_speed);
+    }
   }
   else
   {
     // On each video frame: about 10Hz
     // Climb X meters
-    navigation_SetFlightAltitude(flight_altitude + 0.2f);
-
-    // Look in all directions!?
-    // nav_heading +=  // INT32_ANGLE_FRAC
+    navigation_SetFlightAltitude(flight_altitude + avoid_navigation_data.setting_climb_speed);
+    avoid_navigation_data.climb_extra_when_clear_timer = avoid_navigation_data.setting_climb_extra_climb_timer;
   }
 }
 

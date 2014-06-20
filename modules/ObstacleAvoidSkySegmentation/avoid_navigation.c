@@ -143,7 +143,8 @@ void run_avoid_navigation_move_target_waypoint(void)
   int32_t dx = waypoints[WP_p2].x - waypoints[WP_p1].x;
   int32_t dy = waypoints[WP_p2].y - waypoints[WP_p1].y;
   // nav_heading = atan2() // INT32_ANGLE_FRAC
-  nav_heading = nav_course;
+
+  //nav_set_heading_towards_waypoint(WP_p1);
 
   dx *= dx;
   dy *= dy;

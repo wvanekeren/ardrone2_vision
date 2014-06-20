@@ -44,7 +44,7 @@
     </block>
     <block name="Descend P1"  strip_button="Line 1-2-1" strip_icon="line.png" group="nav">
       <!-- Descend again -->
-      <call fun="{navigation_SetFlightAltitude( WaypointAlt(WP_p1) + POS_FLOAT_OF_BFP(ground_alt) ); FALSE;}"/>
+      <call fun="{navigation_SetFlightAltitude( WaypointAlt(WP_p1) + POS_FLOAT_OF_BFP(GetAltRef()) ); FALSE;}"/>
       <stay wp="p1" until="stage_time>10"/>
     </block>
     <block name="Heading P2">
@@ -67,7 +67,7 @@
     </block>
     <block name="descend P2" >
       <!-- Descend again -->
-      <call fun="{navigation_SetFlightAltitude( WaypointAlt(WP_p2) + POS_FLOAT_OF_BFP(ground_alt) ); FALSE;}"/>
+      <call fun="{navigation_SetFlightAltitude( WaypointAlt(WP_p2) + POS_FLOAT_OF_BFP(GetAltRef()) ); FALSE;}"/>
       <stay wp="p2" until="stage_time>10"/>
     </block>
     <block name="heading P1" >

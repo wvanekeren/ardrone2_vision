@@ -20,15 +20,16 @@ include $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/Makefile.paths
 VISION_MODULE_FOLDER = $(DIR_MODULES)/StereoAvoid
 
 $(TARGET).srcs += $(VISION_MODULE_FOLDER)/avoid_navigation.c
-$(TARGET).CFLAGS += -I$(DIR_MODULES) -I$(DIR_CV) -I$(DIR_LIB) -DUSE_UART1 -DUART1_BAUD=B9600
+$(TARGET).CFLAGS += -I$(DIR_MODULES) -I$(DIR_CV) -I$(DIR_LIB)
 $(TARGET).LDFLAGS += -lrt
 
 ifeq ($(TARGET),ap)
 $(TARGET).srcs += $(VISION_MODULE_FOLDER)/stereo_avoid.c
+$(TARGET).CFLAGS +=  -DUSE_UART1 -DUART1_BAUD=B9600
 endif
 
 ifneq ($(TARGET),ap)
-$(TARGET).srcs += $(VISION_MODULE_FOLDER)/sky_seg_avoid_sim.c
+$(TARGET).srcs += $(VISION_MODULE_FOLDER)/stereo_avoid_sim.c
 endif
 
     </raw>

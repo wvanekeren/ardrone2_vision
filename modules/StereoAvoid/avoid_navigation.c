@@ -79,7 +79,7 @@ static uint8_t average_bin(void)
 {
   uint16_t avg = 0;
   for (int i=0; i < N_BINS; i++)
-    avg += gst2ppz.obstacle_bins[i];
+    avg += gst2ppz.obstacle_bins[i]
   avg /= N_BINS;
   return avg;
 }

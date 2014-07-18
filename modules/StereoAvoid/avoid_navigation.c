@@ -43,6 +43,8 @@
 
 
 struct AvoidNavigationStruct avoid_navigation_data;
+bool_t obstacle_detected = FALSE;
+int32_t counter = 0;
 
 // Called once on paparazzi autopilot start
 void init_avoid_navigation()
@@ -55,18 +57,51 @@ void init_avoid_navigation()
 void run_avoid_navigation_onvision(void)
 {
   // Send ALL vision data to the ground
-  DOWNLINK_SEND_PAYLOAD(DefaultChannel, DefaultDevice, 2, avoid_navigation_data.stereo_bin);
+  DOWNLINK_SEND_PAYLOAD(DefaultChannel, DefaultDevice, 3, avoid_navigation_data.stereo_bin, (avoid_navigation_data.stereo_bin[0]>20));
 
   switch (avoid_navigation_data.mode)
   {
-  case 1:     // climb until clear
+  case 0:     // Go to Goal and stop at obstacles
+    //count 4 subsequent obstacles
+    if(avoid_navigation_data.stereo_bin[0]>20)
+      counter = counter + 1;
+      if(counter > 4) {
+        counter = 0;
+        //Obstacle detected, go to turn until clear mode
+        obstacle_detected = TRUE;
+        avoid_navigation_data.mode = 1;
+      }
+    else
+      counter = 0;
+    break;
+  case 1:     // Turn until clear
+    //count 4 subsequent free frames
+    if(avoid_navigation_data.stereo_bin[0]<15)
+      counter = counter + 1;
+      if(counter > 10) {
+        counter = 0;
+        //Stop and put waypoint 2.5 m ahead
+        struct EnuCoor_i* new_coor;
+        struct EnuCoor_i* pos = stateGetPositionEnu_i();
+        new_coor->x = pos->x + POS_BFP_OF_REAL(sinf(POS_FLOAT_OF_BFP(nav_heading))*2.5);
+        new_coor->y = pos->y + POS_BFP_OF_REAL(sinf(POS_FLOAT_OF_BFP(nav_heading))*2.5);
+        new_coor->z = POS_BFP_OF_REAL(2.0)*100;
+        nav_move_waypoint(WP_W1, new_coor);
+        obstacle_detected = FALSE;
+        avoid_navigation_data.mode = 0;
+      }
+    else
+      counter = 0;
     break;
   case 2:
     break;
   default:    // do nothing
     break;
   }
+}
 
+void increase_nav_heading(int32_t *heading, int32_t increment) {
+  *heading = *heading + increment;
 }
 
 /////////////////////////////////////////////////////////////////////////////////////////
@@ -79,7 +114,7 @@ static uint8_t average_bin(void)
 {
   uint16_t avg = 0;
   for (int i=0; i < N_BINS; i++)
-    avg += gst2ppz.obstacle_bins[i]
+    avg += gst2ppz.obstacle_bins[i];
   avg /= N_BINS;
   return avg;
 }

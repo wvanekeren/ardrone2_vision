@@ -32,10 +32,11 @@ struct AvoidNavigationStruct {
 
 /** global VIDEO state */
 extern struct AvoidNavigationStruct avoid_navigation_data;
-
+extern bool_t obstacle_detected;
 
 void init_avoid_navigation(void);
 void run_avoid_navigation_onvision(void);
+extern void increase_nav_heading(int32_t *heading, int32_t increment);
 
 
 #endif /* AVOID_NAVIGATION_H_ */

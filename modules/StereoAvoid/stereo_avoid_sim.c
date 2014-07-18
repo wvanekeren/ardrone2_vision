@@ -44,7 +44,7 @@ void stereo_avoid_init(void) {
 /** Normalize a degree angle between 0 and 359 */
 #define NormAngleRad(x) { \
   int dont_loop_forever = 0;  \
-  while ((x < (- M_PI)) && ++dont_loop_forever) x += (2 * M_PI); \
+  while ((x < (-M_PI)) && ++dont_loop_forever) x += (2 * M_PI); \
   while ((x >= (M_PI)) && ++dont_loop_forever) x -= (2 * M_PI); \
 }
 
@@ -84,12 +84,21 @@ void stereo_avoid_run(void) {
     float range = viewangle/2.0f;
     float deg_per_bin = viewangle/ ((float) 2);
 
+    float disperity = 0;
+
+    if(fabs(diff) > range)
+      disperity = 0;
+    else if(dx > 2)
+      disperity = 0;
+    else
+      disperity = 30;
+
     //float bin_nr_mid = range/deg_per_bin;
     //float bin_nr_start = bin_nr_mid + diff/deg_per_bin - hang/deg_per_bin;
     //float bin_nr_stop  = bin_nr_mid + diff/deg_per_bin + hang/deg_per_bin;
 
-    avoid_navigation_data.stereo_bin[0] = dx;
-    avoid_navigation_data.stereo_bin[1] = deg_per_bin;
+    avoid_navigation_data.stereo_bin[0] = disperity;
+    avoid_navigation_data.stereo_bin[1] = diff;
 
     counter = 0;
     run_avoid_navigation_onvision();

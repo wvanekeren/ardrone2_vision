@@ -57,39 +57,43 @@ void init_avoid_navigation()
 void run_avoid_navigation_onvision(void)
 {
   // Send ALL vision data to the ground
-  DOWNLINK_SEND_PAYLOAD(DefaultChannel, DefaultDevice, 3, avoid_navigation_data.stereo_bin, (avoid_navigation_data.stereo_bin[0]>20));
+  DOWNLINK_SEND_PAYLOAD(DefaultChannel, DefaultDevice, 5, avoid_navigation_data.stereo_bin);
 
   switch (avoid_navigation_data.mode)
   {
   case 0:     // Go to Goal and stop at obstacles
     //count 4 subsequent obstacles
-    if(avoid_navigation_data.stereo_bin[0]>20)
+    if(avoid_navigation_data.stereo_bin[0]>20) {
       counter = counter + 1;
-      if(counter > 4) {
+      if(counter > 2) {
         counter = 0;
         //Obstacle detected, go to turn until clear mode
         obstacle_detected = TRUE;
         avoid_navigation_data.mode = 1;
       }
+    }
     else
       counter = 0;
     break;
   case 1:     // Turn until clear
-    //count 4 subsequent free frames
-    if(avoid_navigation_data.stereo_bin[0]<15)
+    //count 20 subsequent free frames
+    if(avoid_navigation_data.stereo_bin[0]<15) {
       counter = counter + 1;
-      if(counter > 10) {
+      if(counter > 12) {
         counter = 0;
         //Stop and put waypoint 2.5 m ahead
-        struct EnuCoor_i* new_coor;
+        struct EnuCoor_i new_coor;
         struct EnuCoor_i* pos = stateGetPositionEnu_i();
-        new_coor->x = pos->x + POS_BFP_OF_REAL(sinf(POS_FLOAT_OF_BFP(nav_heading))*2.5);
-        new_coor->y = pos->y + POS_BFP_OF_REAL(sinf(POS_FLOAT_OF_BFP(nav_heading))*2.5);
-        new_coor->z = POS_BFP_OF_REAL(2.0)*100;
-        nav_move_waypoint(WP_W1, new_coor);
+        float sin_heading = sinf(ANGLE_FLOAT_OF_BFP(nav_heading));
+        float cos_heading = cosf(ANGLE_FLOAT_OF_BFP(nav_heading));
+        new_coor.x = pos->x + POS_BFP_OF_REAL(sin_heading*2.0);
+        new_coor.y = pos->y + POS_BFP_OF_REAL(cos_heading*2.0);
+        new_coor.z = pos->z;
+        nav_move_waypoint(WP_W1, &new_coor);
         obstacle_detected = FALSE;
         avoid_navigation_data.mode = 0;
       }
+    }
     else
       counter = 0;
     break;
@@ -97,6 +101,16 @@ void run_avoid_navigation_onvision(void)
     break;
   default:    // do nothing
     break;
+  }
+  avoid_navigation_data.stereo_bin[2] = avoid_navigation_data.stereo_bin[0]>20;
+  avoid_navigation_data.stereo_bin[3] = avoid_navigation_data.mode;
+  avoid_navigation_data.stereo_bin[4] = counter;
+
+  if(obstacle_detected) {
+    LED_ON(3);
+  }
+  else {
+    LED_OFF(3);
   }
 }
 

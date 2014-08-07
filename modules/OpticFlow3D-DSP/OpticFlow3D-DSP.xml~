@@ -1,0 +1,46 @@
+<!DOCTYPE module SYSTEM "../module.dtd">
+
+<module name="OpticFlowDSP">
+  <doc>
+    <description>Video ARDone 2</description>
+  </doc>
+
+  <header>
+    <file name="opticflowdsp_module.h"/>
+  </header>
+
+  <init fun="opticflowdsp_module_init()"/>
+
+  <periodic fun="opticflowdsp_module_run()" freq="60" start="opticflowdsp_module_start()" stop="opticflowdsp_module_stop()" autorun="TRUE"/>
+  <makefile>
+    <define name="ARDRONE_VIDEO_PORT" value="2002" />
+    <define name="USE_ARDRONE_VIDEO" />  
+    <define name="USE_FMS" value="0"/>
+    <define name="OPTIC_FLOW_DSP" value="1"/>
+    <define name="USE_OPTITRACK_Z" value="1"/>
+<!--    <file name="video.c"/>  -->
+      <raw>
+
+include $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/Makefile.paths
+          
+VISION_MODULE_FOLDER = $(DIR_MODULES)/OpticFlow3D-DSP
+DSP_API_FOLDER = $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/dsp
+
+$(TARGET).srcs += $(DIR_CV)/encoding/jpeg.c
+$(TARGET).srcs += $(DIR_CV)/encoding/rtp.c
+$(TARGET).srcs += $(DIR_CV)/trig.c
+$(TARGET).srcs += $(DIR_LIB)/udp/socket.c
+$(TARGET).srcs += $(DIR_LIB)/v4l/video.c
+$(TARGET).srcs += $(DSP_API_FOLDER)/dsp.c
+$(TARGET).srcs += $(VISION_MODULE_FOLDER)/opticflowdsp_module.c
+$(TARGET).CFLAGS += -D_GPP_ -I$(DIR_MODULES) -I$(DIR_CV) -I$(DSP_API_FOLDER) -I$(DSP_API_FOLDER)/inc -I$(DIR_LIB) -pthread -Wno-missing-prototypes -Wno-comment -Wno-missing-declarations -Wno-strict-prototypes
+$(TARGET).LDFLAGS += -L$(DSP_API_FOLDER)/lib -lbridge -pthread -lrt -static
+
+
+all:
+	<!--make -C $(VISION_MODULE_FOLDER)/visionresult/-->
+
+    </raw>
+  </makefile>
+</module>
+

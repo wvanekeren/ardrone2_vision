@@ -1,0 +1,51 @@
+<!DOCTYPE module SYSTEM "../module.dtd">
+
+<module name="OpticFlow">
+  <doc>
+    <description>Video ARDone 2</description>
+  </doc>
+
+  <header>
+    <file name="opticflow_module.h"/>
+  </header>
+
+  <init fun="opticflow_module_init()"/>
+
+  <periodic fun="opticflow_module_run()" freq="60" start="opticflow_module_start()" stop="opticflow_module_stop()" autorun="TRUE"/>
+  <makefile>
+    <define name="ARDRONE_VIDEO_PORT" value="2002" />
+    <define name="USE_ARDRONE_VIDEO" />  
+    <define name="USE_FMS" value="0"/>
+    <define name="USE_OPTICFLOW_HOVER" value="1"/>
+<!--    <file name="video.c"/>  -->
+      <raw>
+
+include $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/Makefile.paths
+          
+VISION_MODULE_FOLDER = $(DIR_MODULES)/OpticFlow
+      	     	
+$(TARGET).CFLAGS += -I$(DIR_MODULES) -I$(DIR_CV) -I$(DIR_LIB) -pthread -D__USE_GNU 
+$(TARGET).CXXFLAGS += -I$(PAPARAZZI_HOME)/sw/include/ -I$(PAPARAZZI_SRC)/sw/airborne -$(PAPARAZZI_SRC)/conf/autopilot -I$(PAPARAZZI_SRC)/sw/airborne/arch/$($(TARGET).ARCHDIR) -I$(VARINCLUDE) -I$(ACINCLUDE) -I$(PAPARAZZI_SRC)/sw/airborne/modules/$(TARGET).CXXFLAGS += -I$(DIR_MODULES) -I$(DIR_CV) -I$(DIR_LIB) -pthread -D__USE_GNU
+
+$(TARGET).srcs += $(VISION_MODULE_FOLDER)/opticflow_module.c
+$(TARGET).srcs += $(VISION_MODULE_FOLDER)/opticflow_code.c
+#$(TARGET).srcs += $(VISION_MODULE_FOLDER)/opticflow_code_new.c
+#$(TARGET).srcs += $(VISION_MODULE_FOLDER)/land_guidance.c
+$(TARGET).srcs += $(DIR_CV)/opticflow/optic_flow_gdc.c
+$(TARGET).srcs += $(DIR_CV)/opticflow/fastRosten.c
+$(TARGET).srcs += $(DIR_CV)/opticflow/nrutil.c
+$(TARGET).srcs += $(DIR_CV)/encoding/jpeg.c
+$(TARGET).srcs += $(DIR_CV)/encoding/rtp.c
+$(TARGET).srcs += $(DIR_CV)/trig.c
+$(TARGET).srcs += $(DIR_LIB)/udp/socket.c
+$(TARGET).srcs += $(DIR_LIB)/v4l/video.c
+$(TARGET).CFLAGS += -I$(DIR_MODULES) -I$(DIR_CV) -I$(DIR_LIB) -pthread
+$(TARGET).LDFLAGS += -pthread -lrt -static
+
+all:
+	make -C $(VISION_MODULE_FOLDER)/visionresult/
+
+    </raw>
+  </makefile>
+</module>
+

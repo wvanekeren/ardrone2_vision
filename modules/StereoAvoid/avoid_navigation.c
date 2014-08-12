@@ -66,7 +66,7 @@ void run_avoid_navigation_onvision(void)
   case 0:     // Go to Goal and stop at obstacles
     for(uint8_t i=0; i<6; i++) {
       //count 4 subsequent obstacles in any of the bins
-      if(avoid_navigation_data.stereo_bin[i]>6) {
+      if(avoid_navigation_data.stereo_bin[i]>7) {
         counter[i] = counter[i] + 1;
         if(counter[i] > 3) {
           for(uint8_t j=0; j<6; j++) {
@@ -78,20 +78,18 @@ void run_avoid_navigation_onvision(void)
         }
       }
       else
-        for(uint8_t j=0; j<6; j++) {
-          counter[j] = 0;
-        }
+        counter[i] = 0;
     }
     break;
   case 1:     // Turn until clear
     //count 20 subsequent free frames
     obstacle_in_frame = 0;
     for(uint8_t i=0; i<6; i++) {
-      obstacle_in_frame += avoid_navigation_data.stereo_bin[i]<7;
+      obstacle_in_frame += avoid_navigation_data.stereo_bin[i]>7;
     }
     if(obstacle_in_frame == 0) {
       free_frame_counter = free_frame_counter + 1;
-      if(free_frame_counter > 12) {
+      if(free_frame_counter > 10) {
         free_frame_counter = 0;
         //Stop and put waypoint 2.5 m ahead
         struct EnuCoor_i new_coor;

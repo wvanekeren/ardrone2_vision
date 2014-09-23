@@ -25,6 +25,7 @@
  * Runs Maxime's OpticFlow written for DSP completely on ARM side
  */
 
+// flag 1 23/09/2014 13:27
 
 // Own header
 #include "opticflowarm_module.h"
@@ -96,8 +97,8 @@ volatile uint8_t computervision_thread_has_results = 0;
 
 void opticflow_module_run(void) {
   
-	if(autopilot_mode == AP_MODE_OPTIC_FLOW)
-	{
+	//if(autopilot_mode == AP_MODE_OPTIC_FLOW)
+	//{
 		// Read Latest Vision Module Results
 		if (computervision_thread_has_results)
 		{
@@ -137,12 +138,12 @@ void opticflow_module_run(void) {
 			first = 0;
 		}
 		//stabilization_attitude_set_rpy_setpoint_i(&cmd_euler); // wait with this line until testing is justifiable
-	}
-	else
-	{
-		OFXInt = 0;
-		OFYInt = 0;
-	}
+	//}
+	//else
+	//{
+	//	OFXInt = 0;
+	//	OFYInt = 0;
+	//}
 	DOWNLINK_SEND_OPTICFLOW_CTRL(DefaultChannel, DefaultDevice, &cmd_euler.phi, &cmd_euler.theta);
 
 }

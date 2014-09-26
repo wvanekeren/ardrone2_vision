@@ -37,7 +37,7 @@
 #include "udp/socket.h"
 
 // Timing
-#include <time.h>
+#include <sys/time.h>
 
 // Threaded computer vision
 #include <pthread.h>
@@ -144,7 +144,12 @@ void opticflow_module_run(void) {
 	//	OFXInt = 0;
 	//	OFYInt = 0;
 	//}
-	DOWNLINK_SEND_OPTICFLOW_CTRL(DefaultChannel, DefaultDevice, &cmd_euler.phi, &cmd_euler.theta);
+	
+	// for downlink only
+	int32_t dl_cmd_phi = cmd_euler.phi;
+	int32_t dl_cmd_theta = cmd_euler.theta;
+	
+	DOWNLINK_SEND_OPTICFLOW_CTRL(DefaultChannel, DefaultDevice, &dl_cmd_phi, &dl_cmd_theta);
 
 }
 
@@ -170,10 +175,10 @@ volatile long time_elapsed (struct timeval *t1, struct timeval *t2)
 	return sec*USEC_PER_SEC + usec;
 }
 void start_timer() {
-	gettimeofday (&start_time, NULL);
+	gettimeofday(&start_time, NULL);
 }
 long end_timer() {
-	gettimeofday (&end_time, NULL);
+	gettimeofday(&end_time, NULL);
 	return time_elapsed(&start_time, &end_time);
 }
 
@@ -181,10 +186,10 @@ struct timeval start_time_rates;
 struct timeval end_time_rates;
 
 void start_timer_rates(void) {
-	gettimeofday (&start_time_rates, NULL);
+	gettimeofday(&start_time_rates, NULL);
 }
 long end_timer_rates(void) {
-	gettimeofday (&end_time_rates, NULL);
+	gettimeofday(&end_time_rates, NULL);
 	return time_elapsed(&start_time_rates, &end_time_rates);
 }
 
@@ -215,33 +220,13 @@ void *computervision_thread_main(void* data)
   // Video Grabbing
   struct img_struct* img_new = video_create_image(&vid);
 
-  // Video Resizing
-  #define DOWNSIZE_FACTOR   1
-  uint8_t quality_factor = 50; // From 0 to 99 (99=high)
-  uint8_t dri_jpeg_header = 0;
-  int millisleep = 250;
-  
-  // image small is only used for transmitting to GCS
-  struct img_struct small;
-  small.w = vid.w / DOWNSIZE_FACTOR;
-  small.h = vid.h / DOWNSIZE_FACTOR;
-  small.buf = (uint8_t*)malloc(small.w*small.h*2);
-  
-  // Video Compression
-  uint8_t* jpegbuf = (uint8_t*)malloc(vid.h*vid.w*2);
-
-  // Network Transmit
-  struct UdpSocket* vsock;
-  vsock = udp_socket("192.168.1.255", 5000, 5001, FMS_BROADCAST);
-
-  
   // declare and initialise parameters for calcFlowXYZ
   unsigned int profileX[320] = {}; 	// feature histograms
   unsigned int prevProfileX[320] = {};
   unsigned int profileY[240] = {};
   unsigned int prevProfileY[240] = {};
   
-  unsigned int *histTempX,*histTempY; 	// hist Temp
+  //unsigned int *histTempX,*histTempY; 	// hist Temp
 
   unsigned int threshold = 1000; 	// initial feature detection threshold
   
@@ -253,19 +238,16 @@ void *computervision_thread_main(void* data)
   unsigned int percentDetected;
   
   float h=0.0;
-  long timestamp;
   float FPS;
   
   struct FloatRates* body_rate;
   float dt=0.0;
   long diffTime;
-  float p=0.0,		q=0.0; 			// originially, these variables were defined outside computer_vision_thread
   float p_temp=0.0,	q_temp=0.0;		// originially, these variables were defined outside computer_vision_thread
   float p_corr=0.0, 	q_corr=0.0;
   float Tx_corr = 0.0, 	Ty_corr=0.0;
   
   float Vx=0.0, Vy=0.0, Vz=0.0; 	// velocity in body frame
-  float Vxprev=0.0, Vyprev=0.0, Vzprev=0.0;
   
   
   // temporary
@@ -276,49 +258,32 @@ void *computervision_thread_main(void* data)
   {
     
 
-    // Grab image from camera
-    video_grab_image(&vid, img_new);
+     // Grab image from camera
+     video_grab_image(&vid, img_new);
 
-    /*// Send encoded image to GCS
-    // Resize: device by 4
-    resize_uyuv(img_new, &small, DOWNSIZE_FACTOR);
     
-    // JPEG encode the image:
-    uint32_t image_format = FOUR_TWO_TWO;  // format (in jpeg.h)
-    uint8_t* end = encode_image (small.buf, jpegbuf, quality_factor, image_format, small.w, small.h, dri_jpeg_header);
-    uint32_t size = end-(jpegbuf);
-
-    printf("Sending an image ...%u\n",size);
-
-    send_rtp_frame(
-        vsock,            // UDP
-        jpegbuf,size,     // JPEG
-        small.w, small.h, // Img Size
-        0,                // Format 422
-        quality_factor,               // Jpeg-Quality
-        dri_jpeg_header,                // DRI Header
-        0              // 90kHz time increment
-     );*/
-     
-    
+     // ----------------------------
      // CALCULATE FEATURE HISTOGRAMS
+     // ----------------------------
      percentDetected = ApplySobelFilter2(img_new, profileX, profileY, &threshold); 
      
+     // --------------
      // CALCULATE FLOW
+     // --------------
      // Tx/Ty/Tz are (probably) integers of 0.01 px
      erreur = calcFlowXYZ(&Txp,&Typ,&Tzp,profileX,prevProfileX,profileY,prevProfileY,&nbSkipped);
      
      // Convert from [percent px] to [px]
      Tx = Txp/100;
      Ty = Typ/100;
+     
      // ------------------
      // CALCULATE VELOCITY
      // ------------------
-     
      // first, wait to proceed
      sem_wait(&sem_results);
      
-     // delta t
+     // delta t (for FPS and for micro-rotation)
      diffTime = end_timer();
      start_timer();
      dt = (float)(diffTime)/USEC_PER_SEC;
@@ -335,8 +300,6 @@ void *computervision_thread_main(void* data)
      //micro roation
      p_corr = p_temp*dt; // this is actually not a rate but an angle (RAD)
      q_corr = q_temp*dt; // this is actually not a rate but an angle (RAD)
-     //p_corr = p; q_corr = q;
-     //p = 0; q = 0;
      
      // calculate corrected flow with current roll/pitch movements (in px)
      Tx_corr = (float)Tx - p_corr*(float)Fx;
@@ -347,7 +310,7 @@ void *computervision_thread_main(void* data)
      
      // ACTUAL VELOCITY CALCULATION
      // velocity calculation from optic flow
-     Vx = h*FPS*(float)Tx_corr/(Fx); // [m/s]
+     Vx = -h*FPS*(float)Tx_corr/(Fx); // [m/s]
      Vy = h*FPS*(float)Ty_corr/(Fy); // [m/s]
      Vz = h*FPS*(float)Tz; 
      
@@ -372,8 +335,40 @@ void *computervision_thread_main(void* data)
      */
      sem_post(&sem_results);
      
+     // GET AUTOPILOT BODY VELOCITY
+     
+    // example
+    //struct Int32Vect3 acc_c_imu;
+    //struct Int32RMat *body_to_imu_rmat = orientationGetRMat_i(&imu.body_to_imu);
+    //INT32_RMAT_VMULT(acc_c_imu, *body_to_imu_rmat, acc_c_body);     
+     
+     // Enu velocity
+     struct NedCoor_f* V_enu;
+     V_enu = stateGetSpeedNed_f();
+     
+     
+     // attitude
+     struct FloatQuat* BodyQuaternions = stateGetNedToBodyQuat_f();
+     
+     struct FloatRMat Rmat_Ned2Body;
+     
+     // rotation matrix from quaternions
+     FLOAT_RMAT_OF_QUAT(Rmat_Ned2Body,*BodyQuaternions);
+     
+     struct FloatVect3 vect_ned;
+     vect_ned.x = V_ned->x;
+     vect_ned.y = V_ned->y;
+     vect_ned.z = V_ned->z;
+     
+     struct FloatVect3 V_body;
+
+     // multiply
+     FLOAT_RMAT_VECT3_MUL(V_body, Rmat_Ned2Body, vect_ned);
+     
+     
      // DOWNLINK
-     DOWNLINK_SEND_OF_DEBUG(DefaultChannel,DefaultDevice,&Tx,&Ty,&Tz, &Vx, &Vy, &Vz, &Vx_filt, &Vy_filt, &Vz_filt, &p_corr, &q_corr, &percentDetected, &erreur, &FPS, &h);
+     DOWNLINK_SEND_OF_VELOCITIES(DefaultChannel,DefaultDevice,&Vx_filt,&Vy_filt,&Vz_filt,&(V_body.x),&(V_body.y),&(V_body.z),&(vect_ned.x),&(vect_ned.y),&(vect_ned.z));
+     DOWNLINK_SEND_OF_DEBUG(DefaultChannel,DefaultDevice,&Tx,&Ty,&Tz, &Vx, &Vy, &Vz, &Vx_filt, &Vy_filt, &Vz_filt, &p_corr, &q_corr, &percentDetected, &threshold, &erreur, &FPS, &h);
     
      // report new results
      computervision_thread_has_results++;

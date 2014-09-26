@@ -36,9 +36,9 @@ unsigned int calcFlowXYZ(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *hi
     int Tx=0,Ty=0,Tz=0;
     int Tz_inf,Tz_sup;
     int TyPrev=-255;
-    short start,end;
-    unsigned int erreurX,erreurY;
-    unsigned int erreur,min;
+    short start=-1,end=0;
+    unsigned int erreur=0,erreurX=0,erreurY=0;
+    unsigned int min=99999;
     short first=1;
     int idx,idxGros;
     short i;

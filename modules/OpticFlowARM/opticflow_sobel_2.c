@@ -123,7 +123,7 @@ unsigned int ApplySobelFilter2(struct img_struct* imgIn, unsigned int *profileX,
     return percentDetected;
 }
 
-char TrackZone_2(unsigned int *act, unsigned int *prev, unsigned int start, unsigned int end, signed int *depl)
+/*char TrackZone_2(unsigned int *act, unsigned int *prev, unsigned int start, unsigned int end, signed int *depl)
 {
 	//Déplacement max:+/-10 pixels
 	int i,j;
@@ -231,4 +231,4 @@ int CalcOF3_2(unsigned int *act, unsigned int *prev, unsigned int length)
 	T =  buff[nbZones/2];	
 	free(buff);
 	return T;
-}
+}*/

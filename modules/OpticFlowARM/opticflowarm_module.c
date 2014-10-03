@@ -46,6 +46,11 @@
 #include "state.h" // for attitude
 #include "subsystems/ins/ins_int.h" // used for ins.sonar_z
 #include "autopilot.h"
+#include "firmwares/rotorcraft/autopilot.h"
+#include "firmwares/rotorcraft/navigation.h"
+#include "firmwares/rotorcraft/guidance/guidance_h.h"
+#include "firmwares/rotorcraft/stabilization.h"
+
 
 //Values from optitrack system
 #include "subsystems/gps.h"
@@ -97,8 +102,10 @@ volatile uint8_t computervision_thread_has_results = 0;
 
 void opticflow_module_run(void) {
   
-	//if(autopilot_mode == AP_MODE_OPTIC_FLOW)
-	//{
+	if(autopilot_mode == AP_MODE_ATTITUDE_Z_HOLD)
+	{
+	  
+	  vertical_mode=VERTICAL_MODE_ALT;
 		// Read Latest Vision Module Results
 		if (computervision_thread_has_results)
 		{
@@ -108,15 +115,15 @@ void opticflow_module_run(void) {
 
 			if(saturateX==0)
 			{
-				OFXInt += iGainHover*Vx_filt/10;
+				OFXInt += iGainHover*Vx_filt*100/10;
 			}
 			if(saturateY==0)
 			{
-				OFYInt += iGainHover*Vy_filt/10;
+				OFYInt += iGainHover*Vy_filt*100/10;
 			}
 
-			cmd_euler.phi = (pGainHover*Vx_filt + OFXInt)/10;
-			cmd_euler.theta = (pGainHover*Vy_filt + OFYInt)/10;
+			cmd_euler.phi = (pGainHover*Vx_filt*100 + OFXInt)/10;
+			cmd_euler.theta = (pGainHover*Vy_filt*100 + OFYInt)/10;
 
 			sem_post(&sem_results);
 
@@ -137,19 +144,28 @@ void opticflow_module_run(void) {
 			cmd_euler.psi = stateGetNedToBodyEulers_i()->psi;
 			first = 0;
 		}
-		//stabilization_attitude_set_rpy_setpoint_i(&cmd_euler); // wait with this line until testing is justifiable
-	//}
-	//else
-	//{
-	//	OFXInt = 0;
-	//	OFYInt = 0;
-	//}
+
+		// for downlink only
+		int32_t dl_cmd_phi = cmd_euler.phi;
+		int32_t dl_cmd_theta = cmd_euler.theta;
+		int32_t dl_cmd_psi = cmd_euler.psi;
+		
+		float dl_cmd_phi_f = ANGLE_FLOAT_OF_BFP(cmd_euler.phi);
+		float dl_cmd_theta_f = ANGLE_FLOAT_OF_BFP(cmd_euler.theta);	
+		float dl_cmd_psi_f = ANGLE_FLOAT_OF_BFP(cmd_euler.psi);		
+		stabilization_attitude_set_rpy_setpoint_i(&cmd_euler); // wait with this line until testing is justifiable
+		DOWNLINK_SEND_OPTICFLOW_CTRL(DefaultChannel, DefaultDevice, &dl_cmd_phi, &dl_cmd_theta, &dl_cmd_psi, &dl_cmd_phi_f, &dl_cmd_theta_f, &dl_cmd_psi_f);
+	}
+	else
+	{
+		OFXInt = 0;
+		OFYInt = 0;
+	}
 	
-	// for downlink only
-	int32_t dl_cmd_phi = cmd_euler.phi;
-	int32_t dl_cmd_theta = cmd_euler.theta;
+
 	
-	DOWNLINK_SEND_OPTICFLOW_CTRL(DefaultChannel, DefaultDevice, &dl_cmd_phi, &dl_cmd_theta);
+	
+	
 
 }
 
@@ -237,7 +253,6 @@ void *computervision_thread_main(void* data)
   unsigned int erreur;
   unsigned int percentDetected;
   
-  float h=0.0;
   float FPS;
   
   struct FloatRates* body_rate;
@@ -249,9 +264,26 @@ void *computervision_thread_main(void* data)
   
   float Vx=0.0, Vy=0.0, Vz=0.0; 	// velocity in body frame
   
+  // flow filter
+  float alpha_v = 0.16;
+  
+  // sonar height
+  float h_sonar_prev = 0.0;
+  float h_sonar = 0.0;
+  float h_sonar_m = 0.0;
+  float h_sonar_raw = 0.0;
+  float h_gps_corr = 0.0;
+  float h = 0.0;
+  float sonar_scaling = 1; // rough estimate of the scaling 
+  float alpha_h = 0.5;
+  
+  uint8_t msg_id = 0;
   
   // temporary
   sem_post(&sem_results);
+  uint8_t profileYpart1[120] = {}; // for downlink
+  uint8_t profileYpart2[120] = {};
+  uint8_t part_id = 0;
   
   
   while (computer_vision_thread_command > 0)
@@ -267,15 +299,19 @@ void *computervision_thread_main(void* data)
      // ----------------------------
      percentDetected = ApplySobelFilter2(img_new, profileX, profileY, &threshold); 
      
+     
+     
      // --------------
      // CALCULATE FLOW
      // --------------
      // Tx/Ty/Tz are (probably) integers of 0.01 px
+     
      erreur = calcFlowXYZ(&Txp,&Typ,&Tzp,profileX,prevProfileX,profileY,prevProfileY,&nbSkipped);
      
-     // Convert from [percent px] to [px]
-     Tx = Txp/100;
-     Ty = Typ/100;
+     // Convert from [percent px] to [px] (this is also a cast from int to float)
+     // watch out!! from image axes to body axes conversion!!
+     Tx = (float)Typ/100/10; 	// 10 because we are skipping 9! shouldn't be hardcoded.
+     Ty = -(float)Txp/100/10;
      
      // ------------------
      // CALCULATE VELOCITY
@@ -302,21 +338,36 @@ void *computervision_thread_main(void* data)
      q_corr = q_temp*dt; // this is actually not a rate but an angle (RAD)
      
      // calculate corrected flow with current roll/pitch movements (in px)
-     Tx_corr = (float)Tx - p_corr*(float)Fx;
-     Ty_corr = (float)Ty - q_corr*(float)Fy;
+     // watch out: Fy,Fx are in image axes!
+     Tx_corr = (float)Tx;// - q_corr*(float)Fy;
+     Ty_corr = (float)Ty;// + p_corr*(float)Fx;
      
-     // actual height [m]
-     h = (float)ins_impl.sonar_z/1000; // sonar_z is an integer with unit [mm]
+     // SONAR HEIGHT [m]
+     h_sonar_prev = h_sonar;
+     h_sonar_raw = (float)ins_impl.sonar_z/1000*sonar_scaling;// sonar_z is an integer with unit [mm]
      
+     // delete outliers
+     if (abs(h_sonar-h_sonar_prev)>3)
+       h_sonar = h_sonar_prev;
+     else
+       h_sonar = h_sonar_raw;
+     
+     // corrected gps height
+     h_gps_corr = stateGetPositionEnu_f()->z - 0.32; // 0.32 is the standard optitrack offset
+     
+     // which height do you use?
+     h = h_gps_corr;
+
      // ACTUAL VELOCITY CALCULATION
      // velocity calculation from optic flow
-     Vx = -h*FPS*(float)Tx_corr/(Fx); // [m/s]
-     Vy = h*FPS*(float)Ty_corr/(Fy); // [m/s]
+     // watch out: Fy,Fx are in image axes
+     Vx = h*FPS*(float)Tx_corr/(Fy); // [m/s]
+     Vy = h*FPS*(float)Ty_corr/(Fx); // [m/s]
      Vz = h*FPS*(float)Tz; 
      
      // filter V
-     Vx_filt = 0.16*Vx + 0.84*Vx_filt;
-     Vy_filt = 0.16*Vy + 0.84*Vy_filt;
+     Vx_filt = alpha_v*Vx + (1-alpha_v)*Vx_filt;
+     Vy_filt = alpha_v*Vy + (1-alpha_v)*Vy_filt;
 
      /* original calculations to calculate flow (Txp is the integer from calcFlowXYZ)
 			Tx = (float)(Txp) - p_corr*(float)(Fx);
@@ -343,8 +394,8 @@ void *computervision_thread_main(void* data)
     //INT32_RMAT_VMULT(acc_c_imu, *body_to_imu_rmat, acc_c_body);     
      
      // Enu velocity
-     struct NedCoor_f* V_enu;
-     V_enu = stateGetSpeedNed_f();
+     struct NedCoor_f* V_ned;
+     V_ned = stateGetSpeedNed_f();
      
      
      // attitude
@@ -367,9 +418,36 @@ void *computervision_thread_main(void* data)
      
      
      // DOWNLINK
-     DOWNLINK_SEND_OF_VELOCITIES(DefaultChannel,DefaultDevice,&Vx_filt,&Vy_filt,&Vz_filt,&(V_body.x),&(V_body.y),&(V_body.z),&(vect_ned.x),&(vect_ned.y),&(vect_ned.z));
-     DOWNLINK_SEND_OF_DEBUG(DefaultChannel,DefaultDevice,&Tx,&Ty,&Tz, &Vx, &Vy, &Vz, &Vx_filt, &Vy_filt, &Vz_filt, &p_corr, &q_corr, &percentDetected, &threshold, &erreur, &FPS, &h);
+     
+     
+     if (msg_id > 99)
+       msg_id = 1;	
+     else
+       msg_id++;
+  
+     
+     for (int i=0;i<240;i++) {
+       
+       if (i<120) {
+	 profileYpart1[i] = profileY[i];
+       }
+       else {
+	 profileYpart2[i-120] = profileY[i];
+       }
+     }
     
+
+     
+     DOWNLINK_SEND_OF_VELOCITIES(DefaultChannel,DefaultDevice,&Vx_filt,&Vy_filt,&Vz_filt,&(V_body.x),&(V_body.y),&(V_body.z),&(vect_ned.x),&(vect_ned.y),&(vect_ned.z));
+     DOWNLINK_SEND_OF_DEBUG(DefaultChannel,DefaultDevice,&Tx,&Ty,&Tz, &Vx, &Vy, &Vz, &Vx_filt, &Vy_filt, &Vz_filt, &p_corr, &q_corr, &percentDetected, &threshold, &erreur, &FPS, &h_sonar, &h_sonar_raw, &h, &msg_id);
+     
+     /*//send a LOT of hist data
+     part_id=1;
+     DOWNLINK_SEND_OF_HIST(DefaultChannel,DefaultDevice,&msg_id,&part_id,&Typ,&erreur,120,profileYpart1);// warning from this line (truncation of integer in profileX)
+     part_id=2;
+     DOWNLINK_SEND_OF_HIST(DefaultChannel,DefaultDevice,&msg_id,&part_id,&Typ,&erreur,120,profileYpart2);// warning from this line (truncation of integer in profileX)
+     */
+   
      // report new results
      computervision_thread_has_results++;
      
@@ -397,6 +475,13 @@ void opticflow_module_stop(void)
 {
   computer_vision_thread_command = 0;
 }
+
+
+int opticflow_ap_set_mode(uint8_t new_autopilot_mode) {
+  autopilot_set_mode(new_autopilot_mode); 
+  return 0;
+}
+
 
 
 

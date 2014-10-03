@@ -23,6 +23,8 @@
  * @file VIEW_VIDEO.h
  */
 
+#include <std.h>
+
 #ifndef VIEW_VIDEO_H
 #define VIEW_VIDEO_H
 
@@ -35,6 +37,12 @@ extern unsigned int OF_I_HOVER;
 extern void opticflow_module_run(void);
 extern void opticflow_module_start(void);
 extern void opticflow_module_stop(void);
+
+// added to change ap_mode in flight plan (must have return type int)
+extern int opticflow_ap_set_mode(uint8_t new_autopilot_mode);
+  
+  
+
 void *computervision_thread_main(void* data);
 
 void start_timer(void);

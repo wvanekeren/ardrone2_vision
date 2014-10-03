@@ -33,27 +33,18 @@ unsigned int errorHists(unsigned int *hist1, unsigned int *hist2, unsigned int s
 
 unsigned int calcFlowXYZ(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *histX, unsigned int *prevHistX, unsigned int *histY, unsigned int *prevHistY, unsigned int *skip)
 {
-// x,y in image plane!! image plane is rotated 90 degrees with respect to body frame: x_body = y_image, y_body =  -x_image
-// in this function, the flow Tx,Ty,Tz is in percent, so Tx = 100*flow;  
-  
     int Tx=0,Ty=0,Tz=0;
-    //int Tz_inf,Tz_sup; // unused
+    int Tz_inf,Tz_sup;
     int TyPrev=-255;
     short start=-1,end=0;
     unsigned int erreur=0,erreurX=0,erreurY=0;
-    unsigned int min=99999999; // 99 million
+    unsigned int min=99999;
     short first=1;
-    int idx_shifted;
+    int idx,idxGros;
     short i;
-    
-    int width = 320;
-    int halfwidth = width/2;
-    int height = 240;
-    int halfheight = height/2;
-    
     //short X,Y; // unused
 	#define FACT	100
-	/*
+	
 	Tz_inf = prevTz-10;
 	if(Tz_inf<-30)
 	{
@@ -63,7 +54,7 @@ unsigned int calcFlowXYZ(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *hi
 	if(Tz_sup>30)
 	{
 		Tz_sup = 30;
-	}*/
+	}
 	
 
     // try for all possible Tx,Ty,Tz around Tz=0,Tx=prevTx,Ty=prevTy
@@ -77,19 +68,18 @@ unsigned int calcFlowXYZ(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *hi
 				// set histTempX to zero
 				start = -1;
 				memset(histTempX,0,320*sizeof(unsigned int));
-				for(i=-halfwidth;i<halfwidth;i++)
+				for(i=-160;i<160;i++)
 				{
-					//idxGros = i*(100+Tz)-Tx;				  
-					//idx = idxGros/100 + halfwidth;
-					idx_shifted = halfwidth+i*(1+Tz/100)-Tx/100;
-					if(idx_shifted>=0 && idx_shifted<320)
+					idxGros = i*(100+Tz)-Tx;
+					idx = idxGros/100 + 160;
+					if(idx>=0 && idx<320)
 					{
 						if(start==-1)
-							start = idx_shifted;
-						end = idx_shifted;
+							start = idx;
+						end = idx;
 						
 						// on Temporary Hist X, fill it with the correct values of previous Hist X on the correct locations (x-shift in px)
-						histTempX[halfwidth+i] = prevHistX[idx_shifted];
+						histTempX[160+i] = prevHistX[idx];
 					}
 				}
 				
@@ -100,17 +90,16 @@ unsigned int calcFlowXYZ(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *hi
     			{
 					start = -1;
 					memset(histTempY,0,240*sizeof(unsigned int));
-					for(i=-halfheight;i<halfheight;i++)
+					for(i=-120;i<120;i++)
 					{
-						//idxGros = i*(100+Tz)-Ty;
-						//idx = idxGros/100 + 120;
-						idx_shifted = halfheight+i*(1+Tz/100)-Ty/100;
-						if(idx_shifted>=0 && idx_shifted<height)
+						idxGros = i*(100+Tz)-Ty;
+				aphist		idx = idxGros/100 + 120;
+						if(idx>=0 && idx<240)
 						{
 							if(start==-1)
-								start = idx_shifted;
-							end = idx_shifted;
-							histTempY[halfheight+i] = prevHistY[idx_shifted];
+								start = idx;
+							end = idx;
+							histTempY[120+i] = prevHistY[idx];
 						}
 					}
 					erreurY = errorHists(histTempY,histY,start,end+1);
@@ -138,15 +127,12 @@ unsigned int calcFlowXYZ(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *hi
     	}
     }
     
-    // skip?
-    if(*Tz_min==0 && (*skip)++<9) // skip=0 is tested, the normal 60 FPS is reached.
+    if(*Tz_min==0 && (*skip)++<9)
     {
     	*Tx_min = prevTx;
     	*Ty_min = prevTy;
     	*Tz_min = prevTz;
     }
-    
-    // or use calculated values
     else
     {
 		prevTx = *Tx_min;
@@ -155,9 +141,9 @@ unsigned int calcFlowXYZ(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *hi
 		*skip=0;
 		memcpy(prevHistX,histX,320*sizeof(unsigned int));
 		memcpy(prevHistY,histY,240*sizeof(unsigned int));
-    }
-
+	}
     
-    return min;	
+	
+	return min;
 }
 

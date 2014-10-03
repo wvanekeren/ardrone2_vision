@@ -9,7 +9,7 @@
     <file name="opticflowarm_module.h"/>
   </header>
 
-  <periodic fun="opticflow_module_run()" freq="15" start="opticflow_module_start()" stop="opticflow_module_stop()" autorun="TRUE"/>
+  <periodic fun="opticflow_module_run()" freq="60" start="opticflow_module_start()" stop="opticflow_module_stop()" autorun="TRUE"/>
   <makefile>
       <raw>
 

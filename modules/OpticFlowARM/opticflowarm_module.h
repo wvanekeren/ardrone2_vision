@@ -29,8 +29,8 @@
 #define VIEW_VIDEO_H
 
 // Settings
-extern unsigned int OF_P_HOVER;
-extern unsigned int OF_I_HOVER;
+extern unsigned int pGainHover;
+extern unsigned int iGainHover;
 
 
 // Module functions
@@ -41,7 +41,8 @@ extern void opticflow_module_stop(void);
 // added to change ap_mode in flight plan (must have return type int)
 extern int opticflow_ap_set_mode(uint8_t new_autopilot_mode);
   
-  
+int optic_flow_ctrl_start(void);  
+int optic_flow_ctrl_stop(void);
 
 void *computervision_thread_main(void* data);
 

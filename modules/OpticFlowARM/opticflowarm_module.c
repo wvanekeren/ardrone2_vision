@@ -27,6 +27,7 @@
 
 // flag 1 23/09/2014 13:27
 
+
 // Own header
 #include "opticflowarm_module.h"
 
@@ -38,6 +39,9 @@
 
 // Timing
 #include <sys/time.h>
+
+// Calculations
+#include <math.h>
 
 // Threaded computer vision
 #include <pthread.h>
@@ -90,10 +94,10 @@ static sem_t sem_results;
 
 float OFXInt = 0;
 float OFYInt = 0;
-unsigned int pGainHover = 12;
-unsigned int iGainHover = 6;
+unsigned int pGainHover = 1000;
+unsigned int iGainHover = 0;
 
-#define SAT	1500
+#define SAT	1500 // as int32 angle, so angle in rad = 1500/(1<<INT32_ANGLE_FRAC) = 1500/(2^12) = 0.36 rad (21 deg)
 unsigned char saturateX = 0, saturateY = 0;
 unsigned char first = 1;
 
@@ -102,10 +106,9 @@ volatile uint8_t computervision_thread_has_results = 0;
 
 void opticflow_module_run(void) {
   
-	if(autopilot_mode == AP_MODE_ATTITUDE_Z_HOLD)
+	if(optic_flow_ctrl == 1)
 	{
-	  
-	  vertical_mode=VERTICAL_MODE_ALT;
+	  	
 		// Read Latest Vision Module Results
 		if (computervision_thread_has_results)
 		{
@@ -115,23 +118,26 @@ void opticflow_module_run(void) {
 
 			if(saturateX==0)
 			{
-				OFXInt += iGainHover*Vx_filt*100/10;
+				OFYInt -= iGainHover*Vy_filt; // minus sign: positive Y velocity = negative phi command
 			}
 			if(saturateY==0)
 			{
-				OFYInt += iGainHover*Vy_filt*100/10;
+				OFXInt += iGainHover*Vx_filt;
 			}
 
-			cmd_euler.phi = (pGainHover*Vx_filt*100 + OFXInt)/10;
-			cmd_euler.theta = (pGainHover*Vy_filt*100 + OFYInt)/10;
+			cmd_euler.phi = (pGainHover*-Vy_filt + OFYInt); // minus sign: positive Y velocity = negative phi command
+			cmd_euler.theta = (pGainHover*Vx_filt + OFXInt);
 
 			sem_post(&sem_results);
 
 			saturateX = 0; saturateY = 0;
+			
+			/*// if saturation limits are reached, integrator should not integrate extra
 			if(cmd_euler.phi<-SAT){cmd_euler.phi = -SAT; saturateX = 1;}
 			else if(cmd_euler.phi>SAT){cmd_euler.phi = SAT; saturateX = 1;}
 			if(cmd_euler.theta<-SAT){cmd_euler.theta = -SAT; saturateY = 1;}
 			else if(cmd_euler.theta>SAT){cmd_euler.theta = SAT;saturateY = 1;}
+			*/
 		}
 		/*else
 		{
@@ -153,25 +159,22 @@ void opticflow_module_run(void) {
 		float dl_cmd_phi_f = ANGLE_FLOAT_OF_BFP(cmd_euler.phi);
 		float dl_cmd_theta_f = ANGLE_FLOAT_OF_BFP(cmd_euler.theta);	
 		float dl_cmd_psi_f = ANGLE_FLOAT_OF_BFP(cmd_euler.psi);		
+		
 		stabilization_attitude_set_rpy_setpoint_i(&cmd_euler); // wait with this line until testing is justifiable
 		DOWNLINK_SEND_OPTICFLOW_CTRL(DefaultChannel, DefaultDevice, &dl_cmd_phi, &dl_cmd_theta, &dl_cmd_psi, &dl_cmd_phi_f, &dl_cmd_theta_f, &dl_cmd_psi_f);
 	}
 	else
 	{
+		// when optic flow inactive, do not increase integrator
 		OFXInt = 0;
 		OFYInt = 0;
 	}
-	
-
-	
-	
-	
 
 }
 
 
 // COMPUTER VISION THREAD
-
+void send_this_image(struct img_struct* img_new);
 
 // Timers
 struct timeval start_time;
@@ -221,6 +224,9 @@ volatile uint8_t computer_vision_thread_command = 1;
 
 void *computervision_thread_main(void* data)
 {
+  
+  printf("computervision_thread_main started\n");
+  
   // Video Input
   struct vid_struct vid;
   vid.device = (char*)"/dev/video2";
@@ -232,7 +238,7 @@ void *computervision_thread_main(void* data)
     computervision_thread_status = -1;
     return 0;
   }
-    
+  
   // Video Grabbing
   struct img_struct* img_new = video_create_image(&vid);
 
@@ -247,6 +253,8 @@ void *computervision_thread_main(void* data)
   unsigned int threshold = 1000; 	// initial feature detection threshold
   
   unsigned int nbSkipped = 0;
+  unsigned int framesskip = 5;
+  unsigned int skip_counter = 0;
   int Txp=0,Typ=0,Tzp=0;			// optical flow in percent px
   float Tx=0.0,Ty=0.0,Tz=0.0;			// optical flow in px
   
@@ -274,7 +282,7 @@ void *computervision_thread_main(void* data)
   float h_sonar_raw = 0.0;
   float h_gps_corr = 0.0;
   float h = 0.0;
-  float sonar_scaling = 1; // rough estimate of the scaling 
+  float sonar_scaling = 0.68; // rough estimate of the scaling 
   float alpha_h = 0.5;
   
   uint8_t msg_id = 0;
@@ -284,21 +292,33 @@ void *computervision_thread_main(void* data)
   uint8_t profileYpart1[120] = {}; // for downlink
   uint8_t profileYpart2[120] = {};
   uint8_t part_id = 0;
+  int img_counter = 0;
+  float Txp_slow=0.0;
+  float Typ_slow=0.0;
+  float Tnp_slow=0.0;
   
   
   while (computer_vision_thread_command > 0)
   {
     
-
+    
      // Grab image from camera
      video_grab_image(&vid, img_new);
-
-    
+     
+      
+     printf("new loop\n");
+     img_counter++;
+     if (img_counter == 60) {
+       printf("starting image writing\n");
+       //send_this_image(img_new);
+       img_counter=0;
+       printf("image written\n");
+     }
+     
      // ----------------------------
      // CALCULATE FEATURE HISTOGRAMS
      // ----------------------------
      percentDetected = ApplySobelFilter2(img_new, profileX, profileY, &threshold); 
-     
      
      
      // --------------
@@ -306,12 +326,38 @@ void *computervision_thread_main(void* data)
      // --------------
      // Tx/Ty/Tz are (probably) integers of 0.01 px
      
-     erreur = calcFlowXYZ(&Txp,&Typ,&Tzp,profileX,prevProfileX,profileY,prevProfileY,&nbSkipped);
+     erreur = calcFlowXYZ(&Txp,&Typ,&Tzp,profileX,prevProfileX,profileY,prevProfileY,&nbSkipped,&framesskip);
      
      // Convert from [percent px] to [px] (this is also a cast from int to float)
      // watch out!! from image axes to body axes conversion!!
-     Tx = (float)Typ/100/10; 	// 10 because we are skipping 9! shouldn't be hardcoded.
-     Ty = -(float)Txp/100/10;
+     Tx = (float)Typ/100/(framesskip+1); 	// 10 because we are skipping 9! shouldn't be hardcoded.
+     Ty = -(float)Txp/100/(framesskip+1);
+
+     Txp_slow = 0.05*(float)Txp/100 + 0.95*Txp_slow;
+     Typ_slow = 0.05*(float)Typ/100 + 0.95*Typ_slow;
+     Tnp_slow = sqrt(Txp_slow*Txp_slow+Typ_slow*Typ_slow);
+
+     // framesskip control
+     if (nbSkipped==0) { // only adjust framesskip after just calculating new flow
+	if (abs(Typ)==1200 || abs(Txp)==1200) {
+	  if (framesskip > 5) {
+	    framesskip=framesskip-3;
+	  }
+	  else if (framesskip>0){
+	    framesskip--;
+	    
+	  }
+	}
+	if (Tnp_slow < 2 && framesskip < 9) {
+	  skip_counter++;
+	  if (skip_counter == 60) {
+	    skip_counter=0;
+	    framesskip++;
+	  }
+	  
+	}
+     }
+       
      
      // ------------------
      // CALCULATE VELOCITY
@@ -356,7 +402,7 @@ void *computervision_thread_main(void* data)
      h_gps_corr = stateGetPositionEnu_f()->z - 0.32; // 0.32 is the standard optitrack offset
      
      // which height do you use?
-     h = h_gps_corr;
+     h = h_sonar;
 
      // ACTUAL VELOCITY CALCULATION
      // velocity calculation from optic flow
@@ -368,31 +414,11 @@ void *computervision_thread_main(void* data)
      // filter V
      Vx_filt = alpha_v*Vx + (1-alpha_v)*Vx_filt;
      Vy_filt = alpha_v*Vy + (1-alpha_v)*Vy_filt;
-
-     /* original calculations to calculate flow (Txp is the integer from calcFlowXYZ)
-			Tx = (float)(Txp) - p_corr*(float)(Fx);
-			Ty = (float)(Typ) - q_corr*(float)(Fy);
-#if USE_OPTITRACK_Z
-			Tx = (FPS*gps.optitrack_z*Tx)/(10*Fx);
-			Ty = (FPS*gps.optitrack_z*Ty)/(10*Fy);
-#else
-			Tx = (FPS*ins_impl.sonar_z*Tx)/(10*Fx);
-			Ty = (FPS*ins_impl.sonar_z*Ty)/(10*Fy);
-#endif
-
-			Tx_filt = 0.16*Tx + 0.84*Tx_filt;
-			Ty_filt = 0.16*Ty + 0.84*Ty_filt;
-
-     */
+     
+    
      sem_post(&sem_results);
-     
-     // GET AUTOPILOT BODY VELOCITY
-     
-    // example
-    //struct Int32Vect3 acc_c_imu;
-    //struct Int32RMat *body_to_imu_rmat = orientationGetRMat_i(&imu.body_to_imu);
-    //INT32_RMAT_VMULT(acc_c_imu, *body_to_imu_rmat, acc_c_body);     
-     
+ 
+     // AUTOPILOT BODY VELOCITY
      // Enu velocity
      struct NedCoor_f* V_ned;
      V_ned = stateGetSpeedNed_f();
@@ -418,8 +444,6 @@ void *computervision_thread_main(void* data)
      
      
      // DOWNLINK
-     
-     
      if (msg_id > 99)
        msg_id = 1;	
      else
@@ -436,17 +460,17 @@ void *computervision_thread_main(void* data)
        }
      }
     
-
+     uint32_t current_modus = framesskip;
      
-     DOWNLINK_SEND_OF_VELOCITIES(DefaultChannel,DefaultDevice,&Vx_filt,&Vy_filt,&Vz_filt,&(V_body.x),&(V_body.y),&(V_body.z),&(vect_ned.x),&(vect_ned.y),&(vect_ned.z));
-     DOWNLINK_SEND_OF_DEBUG(DefaultChannel,DefaultDevice,&Tx,&Ty,&Tz, &Vx, &Vy, &Vz, &Vx_filt, &Vy_filt, &Vz_filt, &p_corr, &q_corr, &percentDetected, &threshold, &erreur, &FPS, &h_sonar, &h_sonar_raw, &h, &msg_id);
+     DOWNLINK_SEND_OF_VELOCITIES(DefaultChannel,DefaultDevice,&Txp_slow,&Typ_slow,&Tnp_slow,&(V_body.x),&(V_body.y),&(V_body.z),&(vect_ned.x),&(vect_ned.y),&(vect_ned.z));
+     DOWNLINK_SEND_OF_DEBUG(DefaultChannel,DefaultDevice,&Tx,&Ty,&Tz, &Vx, &Vy, &Vz, &Vx_filt, &Vy_filt, &Vz_filt, &p_corr, &q_corr, &percentDetected, &current_modus, &erreur, &FPS, &h_sonar, &h_sonar_raw, &h, &msg_id);
      
-     /*//send a LOT of hist data
+     //send a LOT of hist data
      part_id=1;
      DOWNLINK_SEND_OF_HIST(DefaultChannel,DefaultDevice,&msg_id,&part_id,&Typ,&erreur,120,profileYpart1);// warning from this line (truncation of integer in profileX)
      part_id=2;
      DOWNLINK_SEND_OF_HIST(DefaultChannel,DefaultDevice,&msg_id,&part_id,&Typ,&erreur,120,profileYpart2);// warning from this line (truncation of integer in profileX)
-     */
+     
    
      // report new results
      computervision_thread_has_results++;
@@ -477,11 +501,59 @@ void opticflow_module_stop(void)
 }
 
 
-int opticflow_ap_set_mode(uint8_t new_autopilot_mode) {
-  autopilot_set_mode(new_autopilot_mode); 
+int optic_flow_ctrl_start(void) {
+  optic_flow_ctrl = 1;
   return 0;
 }
 
+int optic_flow_ctrl_stop(void) {
+  optic_flow_ctrl = 0;
+  return 0;
+}
+
+
+
+
+
+
+
+void send_this_image(struct img_struct* img_new) {
+
+    // Video Compression
+    uint8_t* jpegbuf = (uint8_t*)malloc(img_new->h*img_new->w*2);
+
+    // Network Transmit
+    struct UdpSocket* vsock;
+    vsock = udp_socket("192.168.1.255", 5000, 5001, FMS_BROADCAST);  
+  
+    // Video Resizing
+    #define DOWNSIZE_FACTOR   1
+    uint8_t quality_factor  = 99; // From 0 to 99 (99=high)
+    uint8_t dri_jpeg_header = 0;
+  
+    
+    
+    // JPEG encode the image:
+    uint32_t image_format = FOUR_TWO_TWO;  // format (in jpeg.h)
+    uint8_t* end = encode_image (img_new->buf, jpegbuf, quality_factor, image_format, img_new->w, img_new->h, dri_jpeg_header);
+    uint32_t size = end-(jpegbuf);
+
+    printf("Sending an image ...%u\n",size);
+    
+        send_rtp_frame(
+        vsock,            // UDP
+        jpegbuf,size,     // JPEG
+        img_new->w, img_new->h, // Img Size
+        0,                // Format 422
+        quality_factor,               // Jpeg-Quality
+        dri_jpeg_header,                // DRI Header
+        0              // 90kHz time increment
+     );
+    
+}
+
+  
+  
 
 
 

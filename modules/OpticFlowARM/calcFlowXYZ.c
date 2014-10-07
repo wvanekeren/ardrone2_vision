@@ -31,7 +31,7 @@ unsigned int errorHists(unsigned int *hist1, unsigned int *hist2, unsigned int s
 	return erreur/(end-start);
 }
 
-unsigned int calcFlowXYZ(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *histX, unsigned int *prevHistX, unsigned int *histY, unsigned int *prevHistY, unsigned int *skip)
+unsigned int calcFlowXYZ(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *histX, unsigned int *prevHistX, unsigned int *histY, unsigned int *prevHistY, unsigned int *curskip, unsigned int *framesskip)
 {
 // x,y in image plane!! image plane is rotated 90 degrees with respect to body frame: x_body = y_image, y_body =  -x_image
 // in this function, the flow Tx,Ty,Tz is in percent, so Tx = 100*flow;  
@@ -70,9 +70,9 @@ unsigned int calcFlowXYZ(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *hi
     for(Tz=0;Tz<=0;Tz++)
     {
     	// for Ty = 
-	for(Ty=prevTy-1200;Ty<=prevTy+1200;Ty+=100)
+	for(Ty=0-1200;Ty<=0+1200;Ty+=100)
     	{
-    		for(Tx=prevTx-1200;Tx<=prevTx+1200;Tx+=100)
+    		for(Tx=0-1200;Tx<=0+1200;Tx+=100)
     		{
 				// set histTempX to zero
 				start = -1;
@@ -139,7 +139,7 @@ unsigned int calcFlowXYZ(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *hi
     }
     
     // skip?
-    if(*Tz_min==0 && (*skip)++<9) // skip=0 is tested, the normal 60 FPS is reached.
+    if(*Tz_min==0 && (*curskip)++<*framesskip) // skip=0 is tested, the normal 60 FPS is reached.
     {
     	*Tx_min = prevTx;
     	*Ty_min = prevTy;
@@ -152,10 +152,15 @@ unsigned int calcFlowXYZ(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *hi
 		prevTx = *Tx_min;
 		prevTy = *Ty_min;
 		prevTz = *Tz_min;
-		*skip=0;
+		*curskip=0;
 		memcpy(prevHistX,histX,320*sizeof(unsigned int));
 		memcpy(prevHistY,histY,240*sizeof(unsigned int));
+		
+
+		
     }
+    
+    
 
     
     return min;	

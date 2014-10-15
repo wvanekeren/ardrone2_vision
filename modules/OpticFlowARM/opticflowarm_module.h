@@ -28,9 +28,18 @@
 #ifndef VIEW_VIDEO_H
 #define VIEW_VIDEO_H
 
-// Settings
+// Also needed in calcFlowXYZ.c
+#define FLOWFACT 	100
+#define WIDTH		320
+#define HEIGHT  	240
+#define HALFWIDTH	160
+#define HALFHEIGHT	120
+
+// Settings variables
 extern unsigned int pGainHover;
 extern unsigned int iGainHover;
+extern unsigned int dGainHover;
+extern unsigned int window;
 
 
 // Module functions

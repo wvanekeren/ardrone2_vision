@@ -8,6 +8,8 @@
 #include <string.h>
 
 #include "calcFlowXYZ.h"
+#include "opticflowarm_module.h"
+
 
 
 unsigned int histTempX[320];
@@ -31,10 +33,10 @@ unsigned int errorHists(unsigned int *hist1, unsigned int *hist2, unsigned int s
 	return erreur/(end-start);
 }
 
-unsigned int calcFlowXYZ(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *histX, unsigned int *prevHistX, unsigned int *histY, unsigned int *prevHistY, unsigned int *curskip, unsigned int *framesskip)
+unsigned int calcFlowXYZ(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *histX, unsigned int *prevHistX, unsigned int *histY, unsigned int *prevHistY, unsigned int *curskip, unsigned int *framesskip, unsigned int *window)
 {
 // x,y in image plane!! image plane is rotated 90 degrees with respect to body frame: x_body = y_image, y_body =  -x_image
-// in this function, the flow Tx,Ty,Tz is in percent, so Tx = 100*flow;  
+// in this function, the flow Tx,Ty,Tz is in percent, so Tx [px percent] = 100*flow[px];  
   
     int Tx=0,Ty=0,Tz=0;
     //int Tz_inf,Tz_sup; // unused
@@ -45,99 +47,12 @@ unsigned int calcFlowXYZ(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *hi
     short first=1;
     int idx_shifted;
     short i;
+        
+    int wdw_pct = *window*FLOWFACT;
     
-    int width = 320;
-    int halfwidth = width/2;
-    int height = 240;
-    int halfheight = height/2;
     
-    //short X,Y; // unused
-	#define FACT	100
-	/*
-	Tz_inf = prevTz-10;
-	if(Tz_inf<-30)
-	{
-		Tz_inf = -30;
-	}
-	Tz_sup = prevTz+10;
-	if(Tz_sup>30)
-	{
-		Tz_sup = 30;
-	}*/
 	
 
-    // try for all possible Tx,Ty,Tz around Tz=0,Tx=prevTx,Ty=prevTy
-    for(Tz=0;Tz<=0;Tz++)
-    {
-    	// for Ty = 
-	for(Ty=0-1200;Ty<=0+1200;Ty+=100)
-    	{
-    		for(Tx=0-1200;Tx<=0+1200;Tx+=100)
-    		{
-				// set histTempX to zero
-				start = -1;
-				memset(histTempX,0,320*sizeof(unsigned int));
-				for(i=-halfwidth;i<halfwidth;i++)
-				{
-					//idxGros = i*(100+Tz)-Tx;				  
-					//idx = idxGros/100 + halfwidth;
-					idx_shifted = halfwidth+i*(1+Tz/100)-Tx/100;
-					if(idx_shifted>=0 && idx_shifted<320)
-					{
-						if(start==-1)
-							start = idx_shifted;
-						end = idx_shifted;
-						
-						// on Temporary Hist X, fill it with the correct values of previous Hist X on the correct locations (x-shift in px)
-						histTempX[halfwidth+i] = prevHistX[idx_shifted];
-					}
-				}
-				
-				// Calculate, with the given Tx,Ty,Tz, the error with the current Hist
-				erreurX = errorHists(histTempX,histX,start,end+1);
-
-    			if(TyPrev != Ty)
-    			{
-					start = -1;
-					memset(histTempY,0,240*sizeof(unsigned int));
-					for(i=-halfheight;i<halfheight;i++)
-					{
-						//idxGros = i*(100+Tz)-Ty;
-						//idx = idxGros/100 + 120;
-						idx_shifted = halfheight+i*(1+Tz/100)-Ty/100;
-						if(idx_shifted>=0 && idx_shifted<height)
-						{
-							if(start==-1)
-								start = idx_shifted;
-							end = idx_shifted;
-							histTempY[halfheight+i] = prevHistY[idx_shifted];
-						}
-					}
-					erreurY = errorHists(histTempY,histY,start,end+1);
-					TyPrev = Ty;
-    			}
-
-				erreur = erreurX + erreurY;
-
-				if(first)
-				{
-					min = erreur;
-					*Tx_min = Tx;
-					*Ty_min = Ty;
-					*Tz_min = Tz;
-					first = 0;
-				}
-				else if(erreur<min)
-				{
-					min = erreur;
-					*Tx_min = Tx;
-					*Ty_min = Ty;
-					*Tz_min = Tz;
-				}
-    		}
-    	}
-    }
-    
     // skip?
     if(*Tz_min==0 && (*curskip)++<*framesskip) // skip=0 is tested, the normal 60 FPS is reached.
     {
@@ -145,24 +60,90 @@ unsigned int calcFlowXYZ(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *hi
     	*Ty_min = prevTy;
     	*Tz_min = prevTz;
     }
-    
     // or use calculated values
     else
     {
-		prevTx = *Tx_min;
-		prevTy = *Ty_min;
-		prevTz = *Tz_min;
-		*curskip=0;
-		memcpy(prevHistX,histX,320*sizeof(unsigned int));
-		memcpy(prevHistY,histY,240*sizeof(unsigned int));
-		
+      // try for all possible Tx,Ty,Tz around Tz=0,Tx=prevTx,Ty=prevTy with a window defined by *window in [px]
+      for(Tz=0;Tz<=0;Tz++)
+      {
+	
+	  for(Ty=prevTy-wdw_pct;Ty<=prevTy+wdw_pct;Ty+=FLOWFACT)
+	  {
+	    
+		  for(Tx=prevTx-wdw_pct;Tx<=prevTx+wdw_pct;Tx+=FLOWFACT)
+		  {
+				  // set histTempX to zero
+				  start = -1;
+				  memset(histTempX,0,WIDTH*sizeof(unsigned int));
+				  for(i=-HALFWIDTH;i<HALFWIDTH;i++)
+				  {
+					  //idxGros = i*(FLOWFACT+Tz)-Tx;				  
+					  //idx = idxGros/FLOWFACT + HALFWIDTH;
+					  idx_shifted = HALFWIDTH+i*(1+Tz/FLOWFACT)-Tx/FLOWFACT;
+					  if(idx_shifted>=0 && idx_shifted<WIDTH)
+					  {
+						  if(start==-1)
+							  start = idx_shifted;
+						  end = idx_shifted;
+						  
+						  // on Temporary Hist X, fill it with the correct values of previous Hist X on the correct locations (x-shift in px)
+						  histTempX[HALFWIDTH+i] = prevHistX[idx_shifted];
+					  }
+				  }
+				  
+				  // Calculate, with the given Tx,Ty,Tz, the error with the current Hist
+				  erreurX = errorHists(histTempX,histX,start,end+1);
 
-		
+			  if(TyPrev != Ty)
+			  {
+					  start = -1;
+					  memset(histTempY,0,HEIGHT*sizeof(unsigned int));
+					  for(i=-HALFHEIGHT;i<HALFHEIGHT;i++)
+					  {
+						  //idxGros = i*(100+Tz)-Ty;
+						  //idx = idxGros/100 + 120;
+						  idx_shifted = HALFHEIGHT+i*(1+Tz/FLOWFACT)-Ty/FLOWFACT;
+						  if(idx_shifted>=0 && idx_shifted<HEIGHT)
+						  {
+							  if(start==-1)
+								  start = idx_shifted;
+							  end = idx_shifted;
+							  histTempY[HALFHEIGHT+i] = prevHistY[idx_shifted];
+						  }
+					  }
+					  erreurY = errorHists(histTempY,histY,start,end+1);
+					  TyPrev = Ty;
+			  }
+
+				  erreur = erreurX + erreurY;
+
+				  if(first)
+				  {
+					  min = erreur;
+					  *Tx_min = Tx;
+					  *Ty_min = Ty;
+					  *Tz_min = Tz;
+					  first = 0;
+				  }
+				  else if(erreur<min)
+				  {
+					  min = erreur;
+					  *Tx_min = Tx;
+					  *Ty_min = Ty;
+					  *Tz_min = Tz;
+				  }
+		  }
+	    }
+	}      
+	
+	prevTx = *Tx_min;
+	prevTy = *Ty_min;
+	prevTz = *Tz_min;
+	*curskip=0; // set curskip to zero if you have just calculated new flow
+	memcpy(prevHistX,histX,WIDTH*sizeof(unsigned int));
+	memcpy(prevHistY,histY,HEIGHT*sizeof(unsigned int));	
     }
-    
-    
 
-    
     return min;	
 }
 

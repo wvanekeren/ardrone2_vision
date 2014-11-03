@@ -54,7 +54,6 @@
 #include "firmwares/rotorcraft/guidance/guidance_h.h"
 #include "firmwares/rotorcraft/stabilization.h"
 
-
 //Values from optitrack system
 #include "subsystems/gps.h"
 // Video
@@ -67,6 +66,8 @@
 // Own definitions
 #define VIDEO_IN_W	320
 #define VIDEO_IN_H	240
+#define Fx		343.1211 // Camera focal length (px/rad)
+#define Fy		348.5053 // Camera focal length (px/rad)
 
 // Standard headers
 #include <stdio.h>
@@ -77,6 +78,7 @@
 // Optical flow code
 #include "opticflow_sobelfilter.h"
 #include "calcflow.h"
+#include "opticflow_kalmanfilt.h"
 
 // Downlink
 //#ifndef DOWNLINK_DEVICE
@@ -97,7 +99,7 @@ float OFYInt = 0;
 uint32_t pGainHover = 500;
 uint32_t iGainHover = 5;
 uint32_t dGainHover = 300;
-unsigned int window = 12;
+
 
 #define SAT	1500 // as int32 angle, so angle in rad = 1500/(1<<INT32_ANGLE_FRAC) = 1500/(2^12) = 0.36 rad (21 deg)
 unsigned char saturateX = 0, saturateY = 0;
@@ -105,6 +107,10 @@ unsigned char first = 1;
 int32_t cmd_phi0 	= 0;
 int32_t cmd_theta0 	= 0;
 int32_t cmd_psi0 	= 0;
+
+float rc_phi = 0.0;
+float rc_theta = 0.0;
+float rc_psi = 0.0;
 
 volatile struct Int32Eulers cmd_euler;
 volatile uint8_t computervision_thread_has_results = 0;
@@ -145,15 +151,28 @@ float Vx_corr_angle=0.0, 	Vy_corr_angle=0.0;
 float Vx_filt_corr_rate=0.0, 	Vy_filt_corr_rate=0.0;
 float Vx_filt_corr_angle=0.0, Vy_filt_corr_angle=0.0;
 
+// take image from flight plan
+int save_image_set = 0;
+int img_allow = 0;
+
 
 // body velocity
 struct FloatVect3 V_body;
 void UpdateAutopilotBodyVel(void);
 
+void initflowdata(FILE *fp);
+void saveflowdata(FILE *fp,int msg_id,int Txp,int Typ,unsigned int *profileX,unsigned int *prevProfileX,unsigned int *profileY,unsigned int *prevProfileY,float *errormapx,float *errormapy,unsigned int window);
+void saveHistXY(FILE *fp,int Txp,int Typ,unsigned int *histx, unsigned int *histy, int counter);
+void saveThisImage(unsigned char *frame_buf, int width, int height, int counter);
+void saveSingleImageDataFile(unsigned char *frame_buf, int width, int height, char filename[100]);
 
 void opticflow_module_run(void) {
   
-  UpdateAccel(); // update acceleration measurements for derivative control
+//   rc_phi = get_rc_roll_f();
+//   rc_theta = get_rc_pitch_f();
+//   rc_psi = get_rc_yaw_f();
+  
+//   printf("phi, theta, psi: %.2f, %.2f, %.2f\n",rc_phi,rc_theta,rc_psi);
   
 	if(autopilot_mode == AP_MODE_OPTIC_FLOW) {
 	  opticflow_control_hover_run();
@@ -170,7 +189,7 @@ void opticflow_control_hover_run(void) {
   if(first)
   {
 	  
-	  // last known setpoints are the trim setpoints:
+	  // last known setpoints (from RC/NAV mode) are the trim setpoints:
 	  cmd_phi0 	= stab_att_sp_euler.phi;
 	  cmd_theta0 	= stab_att_sp_euler.theta;
 	  cmd_psi0  	= stab_att_sp_euler.psi;
@@ -307,8 +326,8 @@ void UpdateAccel(void) {
     Ahy = alpha_a*Ahy_m + (1-alpha_a)*Ahy;
 }
 
-void ComplementaryFilter_run(float *dt);
-void ComplementaryFilter_run(float *dt) {
+void ComplementaryFilter_run(float dt);
+void ComplementaryFilter_run(float dt) {
     
     if (first_compl) {
       first_compl = 0;
@@ -322,27 +341,27 @@ void ComplementaryFilter_run(float *dt) {
     Vx_err_m = Vx_compl_m - Vx_filt_corr_angle;
     Vy_err_m = Vy_compl_m - Vx_filt_corr_angle;
 
-    Vx_err_int_m += iGainCompl*Vx_err_m*(*dt);
-    Vy_err_int_m += iGainCompl*Vy_err_m*(*dt);
+    Vx_err_int_m += iGainCompl*Vx_err_m*(dt);
+    Vy_err_int_m += iGainCompl*Vy_err_m*(dt);
 
     Ahx_bias_m = pGainCompl*Vx_err_m + Vx_err_int_m;
     Ahy_bias_m = pGainCompl*Vy_err_m + Vy_err_int_m;  
   
-    Vx_compl_m = Vx_compl_m + (Ahx_m-Ahx_bias_m)*(*dt);
-    Vy_compl_m = Vy_compl_m + (Ahx_m-Ahy_bias_m)*(*dt); 
+    Vx_compl_m = Vx_compl_m + (Ahx_m-Ahx_bias_m)*(dt);
+    Vy_compl_m = Vy_compl_m + (Ahx_m-Ahy_bias_m)*(dt); 
     
     // filtered accelerometer
     Vx_err_f = Vx_compl_f - Vx_filt_corr_angle;
     Vy_err_f = Vy_compl_f - Vx_filt_corr_angle;
 
-    Vx_err_int_f += iGainCompl*Vx_err_f*(*dt);
-    Vy_err_int_f += iGainCompl*Vy_err_f*(*dt);
+    Vx_err_int_f += iGainCompl*Vx_err_f*(dt);
+    Vy_err_int_f += iGainCompl*Vy_err_f*(dt);
 
     Ahx_bias_f = pGainCompl*Vx_err_f + Vx_err_int_f;
     Ahy_bias_f = pGainCompl*Vy_err_f + Vy_err_int_f;      
     
-    Vx_compl_f = Vx_compl_f + (Ahx  -Ahx_bias_f)*(*dt);
-    Vx_compl_f = Vy_compl_f + (Ahx  -Ahy_bias_f)*(*dt);
+    Vx_compl_f = Vx_compl_f + (Ahx  -Ahx_bias_f)*(dt);
+    Vx_compl_f = Vy_compl_f + (Ahx  -Ahy_bias_f)*(dt);
 }
 
 
@@ -370,9 +389,7 @@ void UpdateAutopilotBodyVel(void) {
      FLOAT_RMAT_VECT3_MUL(V_body, Rmat_Ned2Body, vect_ned);  
 }
 
-//Camera parameters
-#define Fx		343.1211
-#define Fy		348.5053
+
 
 
 void *computervision_thread_main(void* data)
@@ -396,13 +413,16 @@ void *computervision_thread_main(void* data)
   struct img_struct* img_new = video_create_image(&vid);
 
   // declare and initialise parameters for calcflow
-  unsigned int profileX[320] = {}; 	// feature histograms
-  unsigned int prevProfileX[320] = {};
-  unsigned int profileY[240] = {};
-  unsigned int prevProfileY[240] = {};
+  unsigned int profileX[WIDTH] = {}; 	// feature histograms
+  unsigned int prevProfileX[WIDTH] = {};
+  unsigned int profileY[HEIGHT] = {};
+  unsigned int prevProfileY[HEIGHT] = {};
   
+  unsigned int window = 12;
+  float errormapx[2*window+1];
+  float errormapy[2*window+1];
 
-  
+ 
   unsigned int threshold = 1000; 	// initial feature detection threshold
   
   unsigned int curskip = 0;
@@ -421,18 +441,18 @@ void *computervision_thread_main(void* data)
   struct FloatRates* body_rate;
   struct FloatEulers* body_angle;
   
-  float phi_corr = 0.0;
-  float phi_temp = 0.0;
-  float phi_temp_prev = 0.0;
-  float theta_corr = 0.0;
-  float theta_temp = 0.0;
+  float phi_corr 	= 0.0;
+  float phi_temp 	= 0.0;
+  float phi_temp_prev 	= 0.0;
+  float theta_corr 	= 0.0;
+  float theta_temp 	= 0.0;
   float theta_temp_prev = 0.0;
   
-  float dt=0.0;
+  float dt	=0.0;
   float dt_total=0.0;
-  long diffTime;
-  float p_temp=0.0,	q_temp=0.0;		// originially, these variables were defined outside computer_vision_thread
-  float p_corr=0.0, 	q_corr=0.0;
+  long 	diffTime;
+  float p_temp	=0.0,	q_temp=0.0;		// originially, these variables were defined outside computer_vision_thread
+  float p_corr	=0.0, 	q_corr=0.0;
   
   
   float Vx=0.0,    Vy=0.0,    Vz=0.0; 	// velocity in body frame
@@ -450,14 +470,14 @@ void *computervision_thread_main(void* data)
   float alpha_v = 0.16;
   
   // sonar height
-  float h_sonar_prev = 0.0;
-  float h_sonar = 0.0;
-  float h_sonar_m = 0.0;
-  float h_sonar_raw = 0.0;
-  float h_gps_corr = 0.0;
-  float h = 0.0;
-  float sonar_scaling = 0.68; // rough estimate of the scaling 
-  float alpha_h = 0.5;
+  float h_sonar_prev 	= 0.0;
+  float h_sonar 	= 0.0;
+  float h_sonar_m 	= 0.0;
+  float h_sonar_raw 	= 0.0;
+  float h_gps_corr 	= 0.0;
+  float h 		= 0.0;
+  float sonar_scaling 	= 0.68; // rough estimate of the scaling 
+  float alpha_h 	= 0.5;
   
   // sending Hist Data
   uint8_t msg_id = 0;
@@ -465,48 +485,76 @@ void *computervision_thread_main(void* data)
   uint8_t profileYpart2[120] = {};
   uint8_t part_id = 0;
   int img_counter = 0;
+  int img_counter2 = 0;
+  int hist_counter = 0;
+  
+  // kalman filter
+  int first_kalman = 1;
+  float opticflow_noise = 0.01;	   // 0.01 = low, 10 = high
+  float opticflow_uncertainty = 0; // 0 = min, 1=max
+  float Vx_kalman 	= 0.0;
+  float Vy_kalman 	= 0.0;  
+  float Vxm_kalman 	= 0.0;
+  float Vym_kalman 	= 0.0;
+  float Axm_kalman 	= 0.0;
+  float Aym_kalman 	= 0.0;  
+  // downlink kalman filter
+  float P00 = 0.0;
+  float P11 = 0.0;
+  float P22 = 0.0;
+  float P33 = 0.0;
+  float Q00 = 0.0;
+  float Q11 = 0.0;
+  float R00 = 0.0;
+  float R11 = 0.0;
 
-  // Autopilot state
-  float state_phi = 0.0;
-  float state_theta = 0.0;
-  float state_psi = 0.0;
   
-  float state_vx = 0.0;
-  float state_vy = 0.0;
-  float state_vz = 0.0;
+  // filenames for saving data
+  FILE *fp1;
+  char filename[100];
+  sprintf(filename, "%shist.csv","/data/video/"); 
+  fp1=fopen(filename, "w");  
   
-  float state_p = 0.0;
-  float state_q = 0.0;
-  float state_r = 0.0;  
+  FILE *fp2;
+  char filename2[100];
+  sprintf(filename2, "%sflowdata.csv","/data/video/"); 
+  fp2=fopen(filename2, "w");  
+  initflowdata(fp2);
+   
+  int img_counter_first = 1;
+  int img_cnt_max = 300;
   
-  float state_rpm1 = 0.0;
-  float state_rpm2 = 0.0;
-  float state_rpm3 = 0.0;
-  float state_rpm4 = 0.0;
-  
-  
+  img_allow=1;
   
   while (computer_vision_thread_command > 0)
   {
     
+    
+     printf("cv thread loop\n");
+     //
+     msg_id++;
     
      // Grab image from camera
      video_grab_image(&vid, img_new);
      
       
      
-     img_counter++;
-     if (img_counter==30) {
-       printf("starting image writing\n");
-       //send_this_image(img_new);
-       img_counter=0;
-       printf("image written\n");
-     }
+//      if (img_counter==60) {
+// 	img_counter2++;
+// 	save_image_set==0;
+// 	printf("starting image writing\n");
+// 	saveThisImage(img_new->buf,WIDTH,HEIGHT,img_counter2);
+// 	img_counter=0;
+// 	printf("image written\n");
+//      }
+//      img_counter++;
+  
+       
      
-    // --------------
-    // CALCULATE FLOW
-    // --------------
-    // Txp/Typ/Tzp are integers of 0.01 px
+     ////////////////////////////////
+     // CALCULATE FLOW
+     ////////////////////////////////
+     // Txp/Typ/Tzp are integers of 0.01 px
      
     // skip?
     curskip++;
@@ -519,23 +567,32 @@ void *computervision_thread_main(void* data)
     // or use calculated values
     else {
       // calculate feature histograms
-      percentDetected = ApplySobelFilter2(img_new, profileX, profileY, &threshold);
-      //percentDetected = ApplySobelFilter2(img_new, profile3X, profile3Y, &threshold);
+//       percentDetected = ApplySobelFilter2(img_new, profileX, profileY, &threshold); // OLD METHOD
+//        percentDetected = ApplySobelFilter4(img_new, profileX, profileY, &threshold);
+// 			ApplySobelFilter5(img_new, profileX, profileY);
+			ApplySobelFilter6(img_new, profileX, profileY);
       
       // calculate flow from current and previous histograms
-      erreur = calcFlow(&Txp,&Typ,&Tzp,profileX,prevProfileX,profileY,prevProfileY,&curskip,&framesskip,&window);
-      
-      
+      erreur = calcFlow2(&Txp,&Typ,&Tzp,profileX,prevProfileX,profileY,prevProfileY,&curskip,&framesskip,&window,errormapx,errormapy);
+
       prevTxp = Txp;
       prevTyp = Typ;
       prevTzp = Tzp;
-        
+      
+      
+      hist_counter=0;
+      printf("writing flow data...");
+      saveflowdata(fp2,msg_id,Txp,Typ,profileX,prevProfileX,profileY,prevProfileY,errormapx,errormapy,window);
+      printf("flow data written.");
+   
+      hist_counter++;
       
       curskip=0; // set curskip to zero if you have just calculated new flow
+ 
       memcpy(prevProfileX,profileX,WIDTH*sizeof(unsigned int));
-      memcpy(prevProfileY,profileY,HEIGHT*sizeof(unsigned int));	  
+      memcpy(prevProfileY,profileY,HEIGHT*sizeof(unsigned int));	      
     }     
-     
+
      
      // Convert from [percent px] to [px] (this is also a cast from int to float)
      // watch out!! from image axes to body axes conversion!!
@@ -548,7 +605,7 @@ void *computervision_thread_main(void* data)
      Tx_slow = alpha_T*(float)Txp/FLOWFACT + (1-alpha_T)*Tx_slow; // divide by 100 because of the per-cent scaling of the flow
      Ty_slow = alpha_T*(float)Typ/FLOWFACT + (1-alpha_T)*Ty_slow;
      Tn_slow = sqrt(Tx_slow*Tx_slow+Ty_slow*Ty_slow);
-
+     
      // delta t (for FPS and for micro-rotation)
      diffTime = end_timer();
      start_timer();
@@ -560,8 +617,11 @@ void *computervision_thread_main(void* data)
       FPS = ((float)framesskip+1)/dt_total; // literally frames-per-second
       dt_total=0;
      }
-          
+     
+    
+     ////////////////////////////////
      // MICRO ROTATION
+     ////////////////////////////////
      
      // method 1: calculate with body rates
      // current body rates
@@ -593,30 +653,11 @@ void *computervision_thread_main(void* data)
      Tx_corr_angle = (float)Tx - theta_corr*(float)Fy;
      Ty_corr_angle = (float)Ty + phi_corr*(float)Fx;     
       
-     
-     //send a LOT of hist data
-     if (msg_id > 99)
-       msg_id = 1;	
-     else
-       msg_id++;
-     
-     for (int i=0;i<240;i++) {
-       
-       if (i<120) {
-	 profileYpart1[i] = profileY[i];
-       }
-       else {
-	 profileYpart2[i-120] = profileY[i];
-       }
-     }
 
-     part_id=1;
-     DOWNLINK_SEND_OF_HIST(DefaultChannel,DefaultDevice,&msg_id,&part_id,&Tx, &Typ, &erreur, &framesskip, 120,profileYpart1);// warning from this line (truncation of integer in profileX)
-     part_id=2;
-     DOWNLINK_SEND_OF_HIST(DefaultChannel,DefaultDevice,&msg_id,&part_id,&Tx, &Typ, &erreur, &framesskip, 120,profileYpart2);// warning from this line (truncation of integer in profileX)
      
-     
-     // framesskip control
+     ////////////////////////////////
+     // FRAMESKIP CONTROL
+     ////////////////////////////////
      #define TMIN 	5
      #define TMIN_STEPS 20
      #define MAX_SKIP 	9
@@ -643,9 +684,13 @@ void *computervision_thread_main(void* data)
 	  
 	}
      }
-
      
-     // SONAR HEIGHT [m]
+     
+     ////////////////////////////////
+     // HEIGHT
+     ////////////////////////////////
+     
+     // SONAR HEIGHT
      h_sonar_prev = h_sonar;
      h_sonar_raw = (float)ins_impl.sonar_z/1000;//*sonar_scaling;// sonar_z is an integer with unit [mm]
      
@@ -658,12 +703,12 @@ void *computervision_thread_main(void* data)
      // corrected gps height
      h_gps_corr = stateGetPositionEnu_f()->z - 0.26; // 0.32 is the standard optitrack offset, but should be rechecked if used
      
-     // which height do you use?
+     // which height measurement do you use?
      h = h_sonar_raw;
 
-     // ------------------
+     ////////////////////////////////
      // CALCULATE VELOCITY
-     // ------------------
+     ////////////////////////////////
 
      // velocity calculation from optic flow
      // watch out: Fy,Fx are in image axes
@@ -679,8 +724,9 @@ void *computervision_thread_main(void* data)
      Vx_corr_angle = h*FPS*(float)Tx_corr_angle/(Fy);
      Vy_corr_angle = h*FPS*(float)Ty_corr_angle/(Fx);     
      
-     
+     ////////////////////////////////
      // FILTERED VELOCITY
+     ////////////////////////////////
      
      // filter strength
      if (threshold<300) {
@@ -703,36 +749,72 @@ void *computervision_thread_main(void* data)
      Vx_filt_corr_angle = alpha_v*Vx_corr_angle + (1-alpha_v)*Vx_filt_corr_angle;
      Vy_filt_corr_angle = alpha_v*Vy_corr_angle + (1-alpha_v)*Vy_filt_corr_angle;     
      
+     ////////////////////////////////
+     // ACCELERATION UPDATE
+     ////////////////////////////////
+     UpdateAccel(); 
+     
+     
+     ////////////////////////////////
+     // COMPLEMENTARY FILTER
+     ////////////////////////////////
+     ComplementaryFilter_run(dt);
+     
+     
+     ////////////////////////////////
+     // KALMAN FILTER
+     ////////////////////////////////
+     
+     if (first_kalman) {
+       first_kalman=0;
+       KalmanOpticFlow_reset();
+     }
+     
+     // with maximum uncertainty, set optic flow noise really high
+     if (opticflow_uncertainty==1) {
+       opticflow_noise = 10;
+       KalmanOpticFlow_set_R(opticflow_noise,opticflow_noise);
+     }
+     
+     // measurement
+     Vxm_kalman = Vx_corr_angle;
+     Vym_kalman = Vy_corr_angle;
+     Axm_kalman = Ahx;
+     Aym_kalman = Ahy;
+     
+     // update kalman filter
+     UpdateKalman(Vxm_kalman, Vym_kalman, Axm_kalman, Aym_kalman, dt);
+     
+     // new velocity
+     Vx_kalman = Vkalmanx;
+     Vy_kalman = Vkalmany;
+     
+     
      // Which velocity do you use for the control?
      Vx_ctrl = Vx_filt_corr_angle;
-     Vy_ctrl = Vy_filt_corr_angle;
- 
-     // Complementary filter with accelerometer
-     ComplementaryFilter_run(&dt);
+     Vy_ctrl = Vy_filt_corr_angle;     
      
-     
+     ////////////////////////////////
      // AUTOPILOT BODY VELOCITY
+     ////////////////////////////////
      UpdateAutopilotBodyVel();
 
-     // Autopilot state
-     
-     state_phi = stateGetNedToBodyEulers_f()->phi;
-     state_theta = stateGetNedToBodyEulers_f()->theta;
-     state_psi = stateGetNedToBodyEulers_f()->psi;
-     
-     state_vx = V_body.x;
-     state_vy = V_body.y;
-     state_vz = -V_body.z;
-     
-     state_p = stateGetBodyRates_f()->p;
-     state_q = stateGetBodyRates_f()->q;
-     state_r = stateGetBodyRates_f()->r;
-     
+     ////////////////////////////////
      // DOWNLINK
-     DOWNLINK_SEND_OF_VELOCITIES(DefaultChannel,DefaultDevice,&Vx,&Vy,&Vz,&(V_body.x),&(V_body.y),&(V_body.z),&Vx_corr_rate,&Vy_corr_rate,&Vx_corr_angle,&Vy_corr_angle,&Vx_compl_m,&Vx_compl_m,&Vx_compl_f,&Vx_compl_f);
-     DOWNLINK_SEND_OF_DEBUG(DefaultChannel,DefaultDevice,&Tx,&Ty,&Tz, &Vx, &Vy, &Vz, &Vx_ctrl, &Vy_ctrl, &Vz_ctrl, &p_corr, &q_corr, &percentDetected, &threshold, &erreur, &FPS, &h_sonar, &h_sonar_raw, &h, &msg_id, &framesskip, &window, &autopilot_mode, &Ahx_m, &Ahy_m);
+     ////////////////////////////////
      
+     P00 = P[0];
+     P11 = P[5];
+     P22 = P[10];
+     P33 = P[15];
+     Q00 = Q[0];
+     Q11 = Q[3];
+     R00 = R[0];
+     R11 = R[3];
      
+     DOWNLINK_SEND_OF_VELOCITIES(DefaultChannel,DefaultDevice,&Vx,&Vy,&Vz,&(V_body.x),&(V_body.y),&(V_body.z),&Vx_corr_rate,&Vy_corr_rate,&Vx_corr_angle,&Vy_corr_angle,&Vx_compl_m,&Vx_compl_m,&Vx_compl_f,&Vx_compl_f,&Vx_kalman,&Vy_kalman);
+     DOWNLINK_SEND_OF_DEBUG(DefaultChannel,DefaultDevice,&Tx,&Ty,&Tz, &Vx, &Vy, &Vz, &Vx_ctrl, &Vy_ctrl, &Vz_ctrl, &p_corr, &q_corr, &percentDetected, &threshold, &erreur, &FPS, &h_sonar, &h_sonar_raw, &h, &msg_id, &framesskip, &window, &autopilot_mode, &Ahx_m, &Ahy_m,&Vx_kalman,&Vy_kalman,&Biasx,&Biasy,&Vkalmanx_pred,&Vkalmany_pred,&Vxm_kalman,&Vym_kalman,&Axm_kalman,&Aym_kalman,&dt,&P00,&P11,&P22,&P33,&Q00,&Q11,&R00,&R11);
+
      // report new results
      computervision_thread_has_results++;
      
@@ -743,8 +825,7 @@ void *computervision_thread_main(void* data)
   return 0;    
   }
 
-void opticflow_module_start(void)
-{
+void opticflow_module_start(void){
   
   computer_vision_thread_command = 1;
   int rc = pthread_create(&computervision_thread, NULL, computervision_thread_main, NULL);
@@ -758,8 +839,16 @@ void opticflow_module_stop(void)
   computer_vision_thread_command = 0;
 }
 
-void send_this_image(struct img_struct* img_new);
-void send_this_image(struct img_struct* img_new) {
+int takeImage(void) {
+  
+  img_allow = 1;
+  save_image_set = 1;
+  
+  return 0;
+}
+
+void sendThisImage(struct img_struct* img_new);
+void sendThisImage(struct img_struct* img_new) {
 
     // Video Compression
     uint8_t* jpegbuf = (uint8_t*)malloc(img_new->h*img_new->w*2);
@@ -793,6 +882,114 @@ void send_this_image(struct img_struct* img_new) {
      );
     
 }
+
+void saveThisImage(unsigned char *frame_buf, int width, int height, int counter) {
+
+
+  
+  // Check for available files
+  char filename[100];
+  sprintf(filename, "%s%05d.csv","/data/video/usb/", counter); 
+  printf("%s\n",filename);
+  
+  int i;
+  int j;
+  
+  FILE *fp;
+
+  fp=fopen(filename, "w");
+
+  for(i=0; i<height; i++)
+  {
+      for(j=0; j<width*2; j++) 
+      {
+	      fprintf(fp, "%u;",frame_buf[i * width * 2 + j]); 
+      }
+      fprintf(fp,"\n");
+  }
+  fclose(fp);
+  
+  
+}
+
+void saveHistXY(FILE *fp,int Txp,int Typ,unsigned int *histx, unsigned int *histy, int counter) {
+	int j;
+	
+	fprintf(fp, "%d;",counter);
+	fprintf(fp, "%d;",Txp);
+	fprintf(fp, "%d;",Typ);
+	// hist x
+	for(j=0; j<320; j++) 
+	{
+	  fprintf(fp, "%d;",histx[j]); 
+	}
+
+	
+	// hist y
+	for(j=0; j<240; j++) 
+	{
+	  fprintf(fp, "%d;",histy[j]); 
+	}
+	fprintf(fp,"\n");
+
+}
+
+void initflowdata(FILE *fp) {
+
+	fprintf(fp,"%s;","msg_id","Txp","Typ","profileX","prevProfileX","profileY","prevProfileY","errormapX","errormapY");
+	
+}
+	
+void saveflowdata(FILE *fp,int msg_id, int Txp,int Typ,unsigned int *profileX,unsigned int *prevProfileX,unsigned int *profileY,unsigned int *prevProfileY,float *errormapx,float *errormapy, unsigned int window) {
+	int j;
+	
+	// msg id
+	fprintf(fp, "%d;",msg_id);
+	
+	// flow results
+	fprintf(fp, "%d;",Txp);
+	fprintf(fp, "%d;",Typ);
+	
+	// hist x
+	for(j=0; j<WIDTH; j++) 
+	{
+	  fprintf(fp, "%d;",profileX[j]); 
+	}
+	
+	// prev hist x
+	for(j=0; j<WIDTH; j++) 
+	{
+	  fprintf(fp, "%d;",prevProfileX[j]); 
+	}
+
+	
+	// hist y
+	for(j=0; j<HEIGHT; j++) 
+	{
+	  fprintf(fp, "%d;",profileY[j]); 
+	}
+	
+	// prev hist y
+	for(j=0; j<HEIGHT; j++) 
+	{
+	  fprintf(fp, "%d;",prevProfileY[j]); 
+	}
+	
+	
+	// error map x
+	for(j=0; j<(2*(window)+1); j++) 
+	{
+	  fprintf(fp, "%f;",errormapx[j]); 
+	}
+	
+	// error map y
+	for(j=0; j<(2*(window)+1); j++) 
+	{
+	  fprintf(fp, "%f;",errormapy[j]); 
+	}
+	fprintf(fp,"\n");		
+}
+
 
   
   

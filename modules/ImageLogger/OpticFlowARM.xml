@@ -6,22 +6,19 @@
   </doc>
 
   <header>
-    <file name="opticflow_module.h"/>
+    <file name="image_logger.h"/>
   </header>
 
-  <periodic fun="opticflow_module_run()" freq="60" start="opticflow_module_start()" stop="opticflow_module_stop()" autorun="TRUE"/>
+  <periodic fun="image_logger_run()" freq="60" start="image_logger_start()" stop="image_logger_stop()" autorun="TRUE"/>
   <makefile>
       <raw>
 
 include $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/Makefile.paths
-          
-VISION_MODULE_FOLDER = $(DIR_MODULES)/OpticFlowARM
 
-$(TARGET).srcs += $(VISION_MODULE_FOLDER)/opticflow_module.c
-$(TARGET).srcs += $(VISION_MODULE_FOLDER)/opticflow_sobelfilter.c
-$(TARGET).srcs += $(VISION_MODULE_FOLDER)/calcflow.c
-$(TARGET).srcs += $(VISION_MODULE_FOLDER)/opticflow_kalmanfilt.c
-$(TARGET).srcs += $(VISION_MODULE_FOLDER)/matrixcalc.c
+VISION_MODULE_FOLDER = $(DIR_MODULES)/ImageLogger
+
+$(TARGET).srcs += $(VISION_MODULE_FOLDER)/image_logger.c
+
 $(TARGET).srcs += $(DIR_CV)/encoding/jpeg.c
 $(TARGET).srcs += $(DIR_CV)/encoding/rtp.c
 $(TARGET).srcs += $(DIR_LIB)/udp/socket.c

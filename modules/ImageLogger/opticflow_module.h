@@ -35,35 +35,17 @@
 #define HALFWIDTH	160
 #define HALFHEIGHT	120
 
-// Settings variables
-extern unsigned int pGainHover;
-extern unsigned int iGainHover;
-extern unsigned int dGainHover;
-extern float pGainCompl;
-extern float iGainCompl;
 
 
 // Module functions
-extern void opticflow_module_run(void);
-extern void opticflow_module_start(void);
-extern void opticflow_module_stop(void);
+extern void image_logger_run(void);
+extern void image_logger_start(void);
+extern void image_logger_stop(void);
 
-// added to change ap_mode in flight plan (must have return type int)
-extern int opticflow_ap_set_mode(uint8_t new_autopilot_mode);
-  
 void *computervision_thread_main(void* data);
-
-void opticflow_control_hover_run(void);
-void opticflow_control_hover_stop(void);
 
 
 void start_timer(void);
 long end_timer(void);
-void start_timer_rates(void);
-long end_timer_rates(void);
-
-// flight plan function
-int takeImage(void);
-
 
 #endif /* VIEW_VIDEO_H */

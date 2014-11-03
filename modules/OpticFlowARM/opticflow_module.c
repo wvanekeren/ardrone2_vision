@@ -53,6 +53,9 @@
 #include "firmwares/rotorcraft/navigation.h"
 #include "firmwares/rotorcraft/guidance/guidance_h.h"
 #include "firmwares/rotorcraft/stabilization.h"
+#include "firmwares/rotorcraft/stabilization/stabilization_attitude.h"
+#include "firmwares/rotorcraft/stabilization/stabilization_attitude_rc_setpoint.h"
+
 
 //Values from optitrack system
 #include "subsystems/gps.h"
@@ -150,11 +153,6 @@ float Vx_corr_rate=0.0, 	Vy_corr_rate=0.0;
 float Vx_corr_angle=0.0, 	Vy_corr_angle=0.0;
 float Vx_filt_corr_rate=0.0, 	Vy_filt_corr_rate=0.0;
 float Vx_filt_corr_angle=0.0, Vy_filt_corr_angle=0.0;
-
-// take image from flight plan
-int save_image_set = 0;
-int img_allow = 0;
-
 
 // body velocity
 struct FloatVect3 V_body;
@@ -386,7 +384,7 @@ void UpdateAutopilotBodyVel(void) {
      vect_ned.z = V_ned->z;
 
      // multiply
-     FLOAT_RMAT_VECT3_MUL(V_body, Rmat_Ned2Body, vect_ned);  
+     FLOAT_RMAT_VMULT(V_body, Rmat_Ned2Body, vect_ned);  
 }
 
 
@@ -537,20 +535,6 @@ void *computervision_thread_main(void* data)
      // Grab image from camera
      video_grab_image(&vid, img_new);
      
-      
-     
-//      if (img_counter==60) {
-// 	img_counter2++;
-// 	save_image_set==0;
-// 	printf("starting image writing\n");
-// 	saveThisImage(img_new->buf,WIDTH,HEIGHT,img_counter2);
-// 	img_counter=0;
-// 	printf("image written\n");
-//      }
-//      img_counter++;
-  
-       
-     
      ////////////////////////////////
      // CALCULATE FLOW
      ////////////////////////////////
@@ -566,11 +550,7 @@ void *computervision_thread_main(void* data)
     }
     // or use calculated values
     else {
-      // calculate feature histograms
-//       percentDetected = ApplySobelFilter2(img_new, profileX, profileY, &threshold); // OLD METHOD
-//        percentDetected = ApplySobelFilter4(img_new, profileX, profileY, &threshold);
-// 			ApplySobelFilter5(img_new, profileX, profileY);
-			ApplySobelFilter6(img_new, profileX, profileY);
+      ApplySobelFilter(img_new, profileX, profileY);
       
       // calculate flow from current and previous histograms
       erreur = calcFlow2(&Txp,&Typ,&Tzp,profileX,prevProfileX,profileY,prevProfileY,&curskip,&framesskip,&window,errormapx,errormapy);

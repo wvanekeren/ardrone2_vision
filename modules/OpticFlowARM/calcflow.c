@@ -148,7 +148,7 @@ unsigned int calcFlow(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *histX
 
 
 unsigned int calcFlow2(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *histX, unsigned int *prevHistX, unsigned int *histY, unsigned int *prevHistY, unsigned int *curskip, unsigned int *framesskip, unsigned int *window, float *errormapx, float *errormapy) {
-  
+  // uses calcFlow_single to compute flow
 
   unsigned int errorX = calcFlow_single( Tx_min, histX, prevHistX, window, WIDTH, errormapx);
   unsigned int errorY = calcFlow_single( Ty_min, histY, prevHistY, window, HEIGHT, errormapy);

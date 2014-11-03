@@ -148,11 +148,10 @@ float pGainCompl = 40;
 float iGainCompl = 6.28;
 
 // optic flow
+float Vx=0.0,    Vy=0.0,    	Vz=0.0; 	// velocity in body frame
 float Vx_filt = 0.0, 		Vy_filt=0.0, 		Vz_filt=0.0;
-float Vx_corr_rate=0.0, 	Vy_corr_rate=0.0;
 float Vx_corr_angle=0.0, 	Vy_corr_angle=0.0;
-float Vx_filt_corr_rate=0.0, 	Vy_filt_corr_rate=0.0;
-float Vx_filt_corr_angle=0.0, Vy_filt_corr_angle=0.0;
+float Vx_filt_corr_angle=0.0, 	Vy_filt_corr_angle=0.0;  
 
 // body velocity
 struct FloatVect3 V_body;
@@ -282,19 +281,6 @@ long end_timer() {
 	return time_elapsed(&start_time, &end_time);
 }
 
-struct timeval start_time_rates;
-struct timeval end_time_rates;
-
-void start_timer_rates(void) {
-	gettimeofday(&start_time_rates, NULL);
-}
-long end_timer_rates(void) {
-	gettimeofday(&end_time_rates, NULL);
-	return time_elapsed(&start_time_rates, &end_time_rates);
-}
-
-
-
 pthread_t computervision_thread;
 volatile uint8_t computervision_thread_status = 0;
 volatile uint8_t computer_vision_thread_command = 1;
@@ -393,6 +379,9 @@ void UpdateAutopilotBodyVel(void) {
 void *computervision_thread_main(void* data)
 {
   
+  // identification for checking calculations
+  uint8_t msg_id = 0;
+  
   printf("computervision_thread_main started\n");
   
   // Video Input
@@ -417,12 +406,11 @@ void *computervision_thread_main(void* data)
   unsigned int prevhistY[HEIGHT] = {};
   
   unsigned int window = 12;
+  unsigned int error;  
   float errormapx[2*window+1];
   float errormapy[2*window+1];
 
  
-  unsigned int threshold = 1000; 	// initial feature detection threshold
-  
   unsigned int curskip = 0;
   unsigned int framesskip = 5;
   unsigned int lowflow_counter = 0;
@@ -430,13 +418,7 @@ void *computervision_thread_main(void* data)
   int 	prevTxp=0, prevTyp=0, prevTzp=0;
   float Tx=0.0,	   Ty=0.0,    Tz=0.0;			// optical flow in px
   
-  
-  unsigned int erreur;
-  unsigned int percentDetected;
-  
   float FPS;
-  
-  struct FloatRates* body_rate;
   struct FloatEulers* body_angle;
   
   float phi_corr 	= 0.0;
@@ -449,21 +431,12 @@ void *computervision_thread_main(void* data)
   float dt	=0.0;
   float dt_total=0.0;
   long 	diffTime;
-  float p_temp	=0.0,	q_temp=0.0;		// originially, these variables were defined outside computer_vision_thread
-  float p_corr	=0.0, 	q_corr=0.0;
-  
-  
-  float Vx=0.0,    Vy=0.0,    Vz=0.0; 	// velocity in body frame
-  
   
   float Tx_slow=0.0;
   float Ty_slow=0.0;
   float Tn_slow=0.0;
-  float Tx_corr_rate = 0.0, 	Ty_corr_rate=0.0;
   float Tx_corr_angle = 0.0, 	Ty_corr_angle=0.0;
 
-  
-  
   // flow velocity filter
   float alpha_v = 0.16;
   
@@ -471,17 +444,6 @@ void *computervision_thread_main(void* data)
   float h_sonar 	= 0.0;
   float h_ap 		= 0.0;
   float h 		= 0.0;
-  float sonar_scaling 	= 0.68; // rough estimate of the scaling 
-  float alpha_h 	= 0.5;
-  
-  // sending hist Data
-  uint8_t msg_id = 0;
-  uint8_t histYpart1[120] = {}; // for downlink
-  uint8_t histYpart2[120] = {};
-  uint8_t part_id = 0;
-  int img_counter = 0;
-  int img_counter2 = 0;
-  int hist_counter = 0;
   
   // kalman filter
   int first_kalman = 1;
@@ -493,6 +455,7 @@ void *computervision_thread_main(void* data)
   float Vym_kalman 	= 0.0;
   float Axm_kalman 	= 0.0;
   float Aym_kalman 	= 0.0;  
+  
   // downlink kalman filter
   float P00 = 0.0;
   float P11 = 0.0;
@@ -502,7 +465,12 @@ void *computervision_thread_main(void* data)
   float Q11 = 0.0;
   float R00 = 0.0;
   float R11 = 0.0;
-
+  
+  // old variables (not deleted because they're downlinked)
+  unsigned int threshold = 1000; 	// initial feature detection threshold
+  unsigned int percentDetected;
+  float p_corr;
+  float q_corr;
   
   // filenames for saving data
   FILE *fp_flowdata;
@@ -540,16 +508,14 @@ void *computervision_thread_main(void* data)
       ApplySobelFilter(img_new, histX, histY);
       
       // calculate flow from current and previous histograms
-      erreur = calcFlow2(&Txp,&Typ,&Tzp,histX,prevhistX,histY,prevhistY,&curskip,&framesskip,&window,errormapx,errormapy);
+      error = calcFlow2(&Txp,&Typ,&Tzp,histX,prevhistX,histY,prevhistY,&curskip,&framesskip,&window,errormapx,errormapy);
 
       prevTxp = Txp;
       prevTyp = Typ;
       prevTzp = Tzp;
       
       // write flowdata to file
-      hist_counter=0;
       saveflowdata(fp_flowdata,msg_id,Txp,Typ,histX,prevhistX,histY,prevhistY,errormapx,errormapy,window);
-      hist_counter++;
       
       curskip=0; // set curskip to zero if you have just calculated new flow
       
@@ -588,14 +554,7 @@ void *computervision_thread_main(void* data)
      // MICRO ROTATION
      ////////////////////////////////
      
-     // method 1: calculate with body rates
-     // current body rates
-     body_rate = stateGetBodyRates_f();
-     
-     p_corr = (body_rate->p)*dt;
-     q_corr = (body_rate->q)*dt;
-
-     // method 2: calculate microroation with body angle difference
+     // calculate microroation with body angle difference
      if (curskip==0) {
        body_angle 	= stateGetNedToBodyEulers_f();
        phi_temp 	= body_angle->phi;
@@ -608,18 +567,13 @@ void *computervision_thread_main(void* data)
        theta_temp_prev 	= theta_temp;
      }
 
-
      // calculate corrected flow with current roll/pitch movements (in px)
      // watch out: Fy,Fx are in image axes!
      
-     // flow correction for microrotatino
-     Tx_corr_rate = (float)Tx - q_corr*(float)Fy;
-     Ty_corr_rate = (float)Ty + p_corr*(float)Fx;
+     // flow correction for microrotation
      Tx_corr_angle = (float)Tx - theta_corr*(float)Fy;
      Ty_corr_angle = (float)Ty + phi_corr*(float)Fx;     
       
-
-     
      ////////////////////////////////
      // FRAMESKIP CONTROL
      ////////////////////////////////
@@ -650,7 +604,6 @@ void *computervision_thread_main(void* data)
 	}
      }
      
-     
      ////////////////////////////////
      // HEIGHT
      ////////////////////////////////
@@ -677,8 +630,6 @@ void *computervision_thread_main(void* data)
      Vz = h*FPS*(float)Tz; 
      
      // V corrected for microrotation
-     Vx_corr_rate = h*FPS*(float)Tx_corr_rate/(Fy);
-     Vy_corr_rate = h*FPS*(float)Ty_corr_rate/(Fx);
      Vx_corr_angle = h*FPS*(float)Tx_corr_angle/(Fy);
      Vy_corr_angle = h*FPS*(float)Ty_corr_angle/(Fx);     
      
@@ -686,24 +637,13 @@ void *computervision_thread_main(void* data)
      // FILTERED VELOCITY
      ////////////////////////////////
      
-     // filter strength
-     if (threshold<300) {
-       alpha_v = 0.08;
-     }
-     else if (threshold<600) {
-       alpha_v = 0.12;
-     }
-     else {
-       alpha_v = 0.16;
-     }
+     alpha_v = 0.16;
      
      // uncorrected, filtered velocity
      Vx_filt = alpha_v*Vx + (1-alpha_v)*Vx_filt;
      Vy_filt = alpha_v*Vy + (1-alpha_v)*Vy_filt;
      
      // corrected, filtered velocity
-     Vx_filt_corr_rate = alpha_v*Vx_corr_rate + (1-alpha_v)*Vx_filt_corr_rate;
-     Vy_filt_corr_rate = alpha_v*Vy_corr_rate + (1-alpha_v)*Vy_filt_corr_rate;
      Vx_filt_corr_angle = alpha_v*Vx_corr_angle + (1-alpha_v)*Vx_filt_corr_angle;
      Vy_filt_corr_angle = alpha_v*Vy_corr_angle + (1-alpha_v)*Vy_filt_corr_angle;     
      
@@ -712,12 +652,10 @@ void *computervision_thread_main(void* data)
      ////////////////////////////////
      UpdateAccel(); 
      
-     
      ////////////////////////////////
      // COMPLEMENTARY FILTER
      ////////////////////////////////
      ComplementaryFilter_run(dt);
-     
      
      ////////////////////////////////
      // KALMAN FILTER
@@ -747,7 +685,6 @@ void *computervision_thread_main(void* data)
      Vx_kalman = Vkalmanx;
      Vy_kalman = Vkalmany;
      
-     
      // Which velocity do you use for the control?
      Vx_ctrl = Vx_filt_corr_angle;
      Vy_ctrl = Vy_filt_corr_angle;     
@@ -770,8 +707,8 @@ void *computervision_thread_main(void* data)
      R00 = R[0];
      R11 = R[3];
      
-     DOWNLINK_SEND_OF_VELOCITIES(DefaultChannel,DefaultDevice,&Vx,&Vy,&Vz,&(V_body.x),&(V_body.y),&(V_body.z),&Vx_corr_rate,&Vy_corr_rate,&Vx_corr_angle,&Vy_corr_angle,&Vx_compl_m,&Vx_compl_m,&Vx_compl_f,&Vx_compl_f,&Vx_kalman,&Vy_kalman);
-     DOWNLINK_SEND_OF_DEBUG(DefaultChannel,DefaultDevice,&Tx,&Ty,&Tz, &Vx, &Vy, &Vz, &Vx_ctrl, &Vy_ctrl, &Vz_ctrl, &p_corr, &q_corr, &percentDetected, &threshold, &erreur, &FPS, &h, &msg_id, &framesskip, &window, &autopilot_mode, &Ahx_m, &Ahy_m,&Vx_kalman,&Vy_kalman,&Biasx,&Biasy,&Vkalmanx_pred,&Vkalmany_pred,&Vxm_kalman,&Vym_kalman,&Axm_kalman,&Aym_kalman,&dt,&P00,&P11,&P22,&P33,&Q00,&Q11,&R00,&R11);
+     DOWNLINK_SEND_OF_VELOCITIES(DefaultChannel,DefaultDevice,&Vx,&Vy,&Vz,&(V_body.x),&(V_body.y),&(V_body.z),&Vx_corr_angle,&Vy_corr_angle,&Vx_corr_angle,&Vy_corr_angle,&Vx_compl_m,&Vx_compl_m,&Vx_compl_f,&Vx_compl_f,&Vx_kalman,&Vy_kalman);
+     DOWNLINK_SEND_OF_DEBUG(DefaultChannel,DefaultDevice,&Tx,&Ty,&Tz, &Vx, &Vy, &Vz, &Vx_ctrl, &Vy_ctrl, &Vz_ctrl, &p_corr, &q_corr, &percentDetected, &threshold, &error, &FPS, &h, &msg_id, &framesskip, &window, &autopilot_mode, &Ahx_m, &Ahy_m,&Vx_kalman,&Vy_kalman,&Biasx,&Biasy,&Vkalmanx_pred,&Vkalmany_pred,&Vxm_kalman,&Vym_kalman,&Axm_kalman,&Aym_kalman,&dt,&P00,&P11,&P22,&P33,&Q00,&Q11,&R00,&R11);
 
      // report new results
      computervision_thread_has_results++;
@@ -797,12 +734,8 @@ void opticflow_module_stop(void)
   computer_vision_thread_command = 0;
 }
 
-
-
 void initflowdata(FILE *fp) {
-
-	fprintf(fp,"%s;","msg_id","Txp","Typ","histX","prevhistX","histY","prevhistY","errormapX","errormapY");
-	
+	fprintf(fp,"%s;%s;%s;%s;%s;%s;%s;%s;%s;","msg_id","Txp","Typ","histX","prevhistX","histY","prevhistY","errormapX","errormapY");
 }
 	
 void saveflowdata(FILE *fp,int msg_id, int Txp,int Typ,unsigned int *histX,unsigned int *prevhistX,unsigned int *histY,unsigned int *prevhistY,float *errormapx,float *errormapy, unsigned int window) {

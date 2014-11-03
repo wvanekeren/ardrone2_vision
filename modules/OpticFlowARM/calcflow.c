@@ -21,28 +21,28 @@ int prevTx = 0;
 int prevTy = 0;
 int prevTz = 0;
 
-float errorHists(unsigned int *hist1, unsigned int *hist2, unsigned int start, unsigned int end)
+float errorhists(unsigned int *hist1, unsigned int *hist2, unsigned int start, unsigned int end)
 {
 	int j;
-	float erreur = 0;
+	float error = 0;
 
 	
 	
 	for(j=start;j<end;j++)
 	{
-		erreur += (hist1[j]-hist2[j])*(hist1[j]-hist2[j]);
+		error += (hist1[j]-hist2[j])*(hist1[j]-hist2[j]);
 
 	}
-	//erreur *= 512; // multiply with 512.. why?
+	//error *= 512; // multiply with 512.. why?
 	
 	// finally, divide error by number of columns that are tested
-	erreur = erreur/(end-start);
+	error = error/(end-start);
 	
 	
-	return erreur; 
+	return error; 
 }
 
-unsigned int calcFlow(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *histX, unsigned int *prevHistX, unsigned int *histY, unsigned int *prevHistY, unsigned int *curskip, unsigned int *framesskip, unsigned int *window)
+unsigned int calcFlow(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *histX, unsigned int *prevhistX, unsigned int *histY, unsigned int *prevhistY, unsigned int *curskip, unsigned int *framesskip, unsigned int *window)
 {
 // x,y in image plane!! image plane is rotated 90 degrees with respect to body frame: x_body = y_image, y_body =  -x_image
 // in this function, the flow Tx,Ty,Tz is in percent, so Tx [px percent] = 100*flow[px];  
@@ -51,10 +51,10 @@ unsigned int calcFlow(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *histX
     //int Tz_inf,Tz_sup; // unused
     int TyPrev=-255;
     short start=-1,end=0;
-    float erreur=0,erreurX=0,erreurY=0;
+    float error=0,errorX=0,errorY=0;
     unsigned int shorterror;
-    float erreurvec[25];
-    memset(erreurvec,999,25*sizeof(unsigned long));
+    float errorvec[25];
+    memset(errorvec,999,25*sizeof(unsigned long));
     
     float min=99999999999; // 99 miljard
     short first=1;
@@ -87,13 +87,13 @@ unsigned int calcFlow(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *histX
 							  start = idx_shifted;
 						  end = idx_shifted;
 						  
-						  // on Temporary Hist X, fill it with the correct values of previous Hist X on the correct locations (x-shift in px)
-						  histTempX[HALFWIDTH+i] = prevHistX[idx_shifted];
+						  // on Temporary hist X, fill it with the correct values of previous hist X on the correct locations (x-shift in px)
+						  histTempX[HALFWIDTH+i] = prevhistX[idx_shifted];
 					  }
 				  }
 				  
-				  // Calculate, with the given Tx,Ty,Tz, the error with the current Hist
-				  erreurX = errorHists(histTempX,histX,start,end+1);
+				  // Calculate, with the given Tx,Ty,Tz, the error with the current hist
+				  errorX = errorhists(histTempX,histX,start,end+1);
 
 			  if(TyPrev != Ty)
 			  {
@@ -109,29 +109,29 @@ unsigned int calcFlow(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *histX
 							  if(start==-1)
 								  start = idx_shifted;
 							  end = idx_shifted;
-							  histTempY[HALFHEIGHT+i] = prevHistY[idx_shifted];
+							  histTempY[HALFHEIGHT+i] = prevhistY[idx_shifted];
 						  }
 					  }
-					  erreurY = errorHists(histTempY,histY,start,end+1);
+					  errorY = errorhists(histTempY,histY,start,end+1);
 					  TyPrev = Ty;
 			  }
 
- 				  erreur = erreurX + erreurY;
-// 				  erreurvec[25*k+j] = erreur;
+ 				  error = errorX + errorY;
+// 				  errorvec[25*k+j] = error;
 			  
 				  if(first)
 				  {
-					  min = erreur;
+					  min = error;
 					  *Tx_min = Tx;
 					  *Ty_min = Ty;
 					  *Tz_min = Tz;
 					  first = 0;
 				  }
-				  else if(erreur<min)
+				  else if(error<min)
 				  {
 					  
 
-					  min = erreur;
+					  min = error;
 					  *Tx_min = Tx;
 					  *Ty_min = Ty;
 					  *Tz_min = Tz;
@@ -147,18 +147,18 @@ unsigned int calcFlow(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *histX
 }
 
 
-unsigned int calcFlow2(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *histX, unsigned int *prevHistX, unsigned int *histY, unsigned int *prevHistY, unsigned int *curskip, unsigned int *framesskip, unsigned int *window, float *errormapx, float *errormapy) {
+unsigned int calcFlow2(int *Tx_min, int *Ty_min, int *Tz_min, unsigned int *histX, unsigned int *prevhistX, unsigned int *histY, unsigned int *prevhistY, unsigned int *curskip, unsigned int *framesskip, unsigned int *window, float *errormapx, float *errormapy) {
   // uses calcFlow_single to compute flow
 
-  unsigned int errorX = calcFlow_single( Tx_min, histX, prevHistX, window, WIDTH, errormapx);
-  unsigned int errorY = calcFlow_single( Ty_min, histY, prevHistY, window, HEIGHT, errormapy);
+  unsigned int errorX = calcFlow_single( Tx_min, histX, prevhistX, window, WIDTH, errormapx);
+  unsigned int errorY = calcFlow_single( Ty_min, histY, prevhistY, window, HEIGHT, errormapy);
   unsigned int shorterror= errorX + errorY;
   
   return shorterror;
 }
 
 
-unsigned int calcFlow_single(int *T_min, unsigned int *histX, unsigned int *prevHistX, unsigned int *window, unsigned int width, float *errormap)
+unsigned int calcFlow_single(int *T_min, unsigned int *histX, unsigned int *prevhistX, unsigned int *window, unsigned int width, float *errormap)
 {
 // calculate flow x and y independently
   
@@ -204,14 +204,14 @@ unsigned int calcFlow_single(int *T_min, unsigned int *histX, unsigned int *prev
 				  start = idx_shifted;	
 			  end = idx_shifted;
 			  
-			  // on Temporary Hist X, fill it with the correct values of previous Hist X on the correct locations (x-shift in px)
-			  histTemp[halfwidth+i] = prevHistX[idx_shifted];
+			  // on Temporary hist X, fill it with the correct values of previous hist X on the correct locations (x-shift in px)
+			  histTemp[halfwidth+i] = prevhistX[idx_shifted];
 		  }
 	  }
 
-	  // Calculate, with the given Tx,Ty,Tz, the error with the current Hist
+	  // Calculate, with the given Tx,Ty,Tz, the error with the current hist
 	  
-	  error = errorHists(histTemp,histX,start,end+1);
+	  error = errorhists(histTemp,histX,start,end+1);
 	  errormap[j] = error;
 	  j++;
 	  	  

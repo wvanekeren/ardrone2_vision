@@ -35,6 +35,7 @@ void AddMat(float C[],float A[],float B[],int m,int n) {
   }
 
 }
+
 void PrintMat(const char *name, float A[], int rows,int cols);
 void CpyMat(float B[],float A[],int m,int n);
 void InvMat22(float invA[],float A[]);

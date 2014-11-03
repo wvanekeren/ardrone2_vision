@@ -159,8 +159,8 @@ struct FloatVect3 V_body;
 void UpdateAutopilotBodyVel(void);
 
 void initflowdata(FILE *fp);
-void saveflowdata(FILE *fp,int msg_id,int Txp,int Typ,unsigned int *profileX,unsigned int *prevProfileX,unsigned int *profileY,unsigned int *prevProfileY,float *errormapx,float *errormapy,unsigned int window);
-void saveHistXY(FILE *fp,int Txp,int Typ,unsigned int *histx, unsigned int *histy, int counter);
+void saveflowdata(FILE *fp,int msg_id,int Txp,int Typ,unsigned int *histX,unsigned int *prevhistX,unsigned int *histY,unsigned int *prevhistY,float *errormapx,float *errormapy,unsigned int window);
+void savehistXY(FILE *fp,int Txp,int Typ,unsigned int *histx, unsigned int *histy, int counter);
 void saveThisImage(unsigned char *frame_buf, int width, int height, int counter);
 void saveSingleImageDataFile(unsigned char *frame_buf, int width, int height, char filename[100]);
 
@@ -411,10 +411,10 @@ void *computervision_thread_main(void* data)
   struct img_struct* img_new = video_create_image(&vid);
 
   // declare and initialise parameters for calcflow
-  unsigned int profileX[WIDTH] = {}; 	// feature histograms
-  unsigned int prevProfileX[WIDTH] = {};
-  unsigned int profileY[HEIGHT] = {};
-  unsigned int prevProfileY[HEIGHT] = {};
+  unsigned int histX[WIDTH] = {}; 	// feature histograms
+  unsigned int prevhistX[WIDTH] = {};
+  unsigned int histY[HEIGHT] = {};
+  unsigned int prevhistY[HEIGHT] = {};
   
   unsigned int window = 12;
   float errormapx[2*window+1];
@@ -468,19 +468,16 @@ void *computervision_thread_main(void* data)
   float alpha_v = 0.16;
   
   // sonar height
-  float h_sonar_prev 	= 0.0;
   float h_sonar 	= 0.0;
-  float h_sonar_m 	= 0.0;
-  float h_sonar_raw 	= 0.0;
-  float h_gps_corr 	= 0.0;
+  float h_ap 		= 0.0;
   float h 		= 0.0;
   float sonar_scaling 	= 0.68; // rough estimate of the scaling 
   float alpha_h 	= 0.5;
   
-  // sending Hist Data
+  // sending hist Data
   uint8_t msg_id = 0;
-  uint8_t profileYpart1[120] = {}; // for downlink
-  uint8_t profileYpart2[120] = {};
+  uint8_t histYpart1[120] = {}; // for downlink
+  uint8_t histYpart2[120] = {};
   uint8_t part_id = 0;
   int img_counter = 0;
   int img_counter2 = 0;
@@ -508,21 +505,11 @@ void *computervision_thread_main(void* data)
 
   
   // filenames for saving data
-  FILE *fp1;
-  char filename[100];
-  sprintf(filename, "%shist.csv","/data/video/"); 
-  fp1=fopen(filename, "w");  
-  
-  FILE *fp2;
+  FILE *fp_flowdata;
   char filename2[100];
   sprintf(filename2, "%sflowdata.csv","/data/video/"); 
-  fp2=fopen(filename2, "w");  
-  initflowdata(fp2);
-   
-  int img_counter_first = 1;
-  int img_cnt_max = 300;
-  
-  img_allow=1;
+  fp_flowdata=fopen(filename2, "w");  
+  initflowdata(fp_flowdata);
   
   while (computer_vision_thread_command > 0)
   {
@@ -550,27 +537,25 @@ void *computervision_thread_main(void* data)
     }
     // or use calculated values
     else {
-      ApplySobelFilter(img_new, profileX, profileY);
+      ApplySobelFilter(img_new, histX, histY);
       
       // calculate flow from current and previous histograms
-      erreur = calcFlow2(&Txp,&Typ,&Tzp,profileX,prevProfileX,profileY,prevProfileY,&curskip,&framesskip,&window,errormapx,errormapy);
+      erreur = calcFlow2(&Txp,&Typ,&Tzp,histX,prevhistX,histY,prevhistY,&curskip,&framesskip,&window,errormapx,errormapy);
 
       prevTxp = Txp;
       prevTyp = Typ;
       prevTzp = Tzp;
       
-      
+      // write flowdata to file
       hist_counter=0;
-      printf("writing flow data...");
-      saveflowdata(fp2,msg_id,Txp,Typ,profileX,prevProfileX,profileY,prevProfileY,errormapx,errormapy,window);
-      printf("flow data written.");
-   
+      saveflowdata(fp_flowdata,msg_id,Txp,Typ,histX,prevhistX,histY,prevhistY,errormapx,errormapy,window);
       hist_counter++;
       
       curskip=0; // set curskip to zero if you have just calculated new flow
- 
-      memcpy(prevProfileX,profileX,WIDTH*sizeof(unsigned int));
-      memcpy(prevProfileY,profileY,HEIGHT*sizeof(unsigned int));	      
+      
+      // prevhist = hist
+      memcpy(prevhistX,histX,WIDTH*sizeof(unsigned int));
+      memcpy(prevhistY,histY,HEIGHT*sizeof(unsigned int));	      
     }     
 
      
@@ -671,20 +656,13 @@ void *computervision_thread_main(void* data)
      ////////////////////////////////
      
      // SONAR HEIGHT
-     h_sonar_prev = h_sonar;
-     h_sonar_raw = (float)ins_impl.sonar_z/1000;//*sonar_scaling;// sonar_z is an integer with unit [mm]
+     h_sonar = (float)ins_impl.sonar_z/1000;//*sonar_scaling;// sonar_z is an integer with unit [mm]
      
-     // delete outliers
-     if (abs(h_sonar-h_sonar_prev)>3)
-       h_sonar = h_sonar_prev;
-     else
-       h_sonar = h_sonar_raw;
-     
-     // corrected gps height
-     h_gps_corr = stateGetPositionEnu_f()->z - 0.26; // 0.32 is the standard optitrack offset, but should be rechecked if used
+     // autopilot (gps?) height
+     h_ap = stateGetPositionEnu_f()->z;
      
      // which height measurement do you use?
-     h = h_sonar_raw;
+     h = h_sonar;
 
      ////////////////////////////////
      // CALCULATE VELOCITY
@@ -793,7 +771,7 @@ void *computervision_thread_main(void* data)
      R11 = R[3];
      
      DOWNLINK_SEND_OF_VELOCITIES(DefaultChannel,DefaultDevice,&Vx,&Vy,&Vz,&(V_body.x),&(V_body.y),&(V_body.z),&Vx_corr_rate,&Vy_corr_rate,&Vx_corr_angle,&Vy_corr_angle,&Vx_compl_m,&Vx_compl_m,&Vx_compl_f,&Vx_compl_f,&Vx_kalman,&Vy_kalman);
-     DOWNLINK_SEND_OF_DEBUG(DefaultChannel,DefaultDevice,&Tx,&Ty,&Tz, &Vx, &Vy, &Vz, &Vx_ctrl, &Vy_ctrl, &Vz_ctrl, &p_corr, &q_corr, &percentDetected, &threshold, &erreur, &FPS, &h_sonar, &h_sonar_raw, &h, &msg_id, &framesskip, &window, &autopilot_mode, &Ahx_m, &Ahy_m,&Vx_kalman,&Vy_kalman,&Biasx,&Biasy,&Vkalmanx_pred,&Vkalmany_pred,&Vxm_kalman,&Vym_kalman,&Axm_kalman,&Aym_kalman,&dt,&P00,&P11,&P22,&P33,&Q00,&Q11,&R00,&R11);
+     DOWNLINK_SEND_OF_DEBUG(DefaultChannel,DefaultDevice,&Tx,&Ty,&Tz, &Vx, &Vy, &Vz, &Vx_ctrl, &Vy_ctrl, &Vz_ctrl, &p_corr, &q_corr, &percentDetected, &threshold, &erreur, &FPS, &h, &msg_id, &framesskip, &window, &autopilot_mode, &Ahx_m, &Ahy_m,&Vx_kalman,&Vy_kalman,&Biasx,&Biasy,&Vkalmanx_pred,&Vkalmany_pred,&Vxm_kalman,&Vym_kalman,&Axm_kalman,&Aym_kalman,&dt,&P00,&P11,&P22,&P33,&Q00,&Q11,&R00,&R11);
 
      // report new results
      computervision_thread_has_results++;
@@ -819,108 +797,15 @@ void opticflow_module_stop(void)
   computer_vision_thread_command = 0;
 }
 
-int takeImage(void) {
-  
-  img_allow = 1;
-  save_image_set = 1;
-  
-  return 0;
-}
 
-void sendThisImage(struct img_struct* img_new);
-void sendThisImage(struct img_struct* img_new) {
-
-    // Video Compression
-    uint8_t* jpegbuf = (uint8_t*)malloc(img_new->h*img_new->w*2);
-
-    // Network Transmit
-    struct UdpSocket* vsock;
-    vsock = udp_socket("192.168.1.255", 5000, 5001, FMS_BROADCAST);  
-  
-    // Video Resizing
-    #define DOWNSIZE_FACTOR   1
-    uint8_t quality_factor  = 99; // From 0 to 99 (99=high)
-    uint8_t dri_jpeg_header = 0;
-  
-    
-    
-    // JPEG encode the image:
-    uint32_t image_format = FOUR_TWO_TWO;  // format (in jpeg.h)
-    uint8_t* end = encode_image (img_new->buf, jpegbuf, quality_factor, image_format, img_new->w, img_new->h, dri_jpeg_header);
-    uint32_t size = end-(jpegbuf);
-
-    printf("Sending an image ...%u\n",size);
-    
-        send_rtp_frame(
-        vsock,            // UDP
-        jpegbuf,size,     // JPEG
-        img_new->w, img_new->h, // Img Size
-        0,                // Format 422
-        quality_factor,               // Jpeg-Quality
-        dri_jpeg_header,                // DRI Header
-        0              // 90kHz time increment
-     );
-    
-}
-
-void saveThisImage(unsigned char *frame_buf, int width, int height, int counter) {
-
-
-  
-  // Check for available files
-  char filename[100];
-  sprintf(filename, "%s%05d.csv","/data/video/usb/", counter); 
-  printf("%s\n",filename);
-  
-  int i;
-  int j;
-  
-  FILE *fp;
-
-  fp=fopen(filename, "w");
-
-  for(i=0; i<height; i++)
-  {
-      for(j=0; j<width*2; j++) 
-      {
-	      fprintf(fp, "%u;",frame_buf[i * width * 2 + j]); 
-      }
-      fprintf(fp,"\n");
-  }
-  fclose(fp);
-  
-  
-}
-
-void saveHistXY(FILE *fp,int Txp,int Typ,unsigned int *histx, unsigned int *histy, int counter) {
-	int j;
-	
-	fprintf(fp, "%d;",counter);
-	fprintf(fp, "%d;",Txp);
-	fprintf(fp, "%d;",Typ);
-	// hist x
-	for(j=0; j<320; j++) 
-	{
-	  fprintf(fp, "%d;",histx[j]); 
-	}
-
-	
-	// hist y
-	for(j=0; j<240; j++) 
-	{
-	  fprintf(fp, "%d;",histy[j]); 
-	}
-	fprintf(fp,"\n");
-
-}
 
 void initflowdata(FILE *fp) {
 
-	fprintf(fp,"%s;","msg_id","Txp","Typ","profileX","prevProfileX","profileY","prevProfileY","errormapX","errormapY");
+	fprintf(fp,"%s;","msg_id","Txp","Typ","histX","prevhistX","histY","prevhistY","errormapX","errormapY");
 	
 }
 	
-void saveflowdata(FILE *fp,int msg_id, int Txp,int Typ,unsigned int *profileX,unsigned int *prevProfileX,unsigned int *profileY,unsigned int *prevProfileY,float *errormapx,float *errormapy, unsigned int window) {
+void saveflowdata(FILE *fp,int msg_id, int Txp,int Typ,unsigned int *histX,unsigned int *prevhistX,unsigned int *histY,unsigned int *prevhistY,float *errormapx,float *errormapy, unsigned int window) {
 	int j;
 	
 	// msg id
@@ -933,26 +818,26 @@ void saveflowdata(FILE *fp,int msg_id, int Txp,int Typ,unsigned int *profileX,un
 	// hist x
 	for(j=0; j<WIDTH; j++) 
 	{
-	  fprintf(fp, "%d;",profileX[j]); 
+	  fprintf(fp, "%d;",histX[j]); 
 	}
 	
 	// prev hist x
 	for(j=0; j<WIDTH; j++) 
 	{
-	  fprintf(fp, "%d;",prevProfileX[j]); 
+	  fprintf(fp, "%d;",prevhistX[j]); 
 	}
 
 	
 	// hist y
 	for(j=0; j<HEIGHT; j++) 
 	{
-	  fprintf(fp, "%d;",profileY[j]); 
+	  fprintf(fp, "%d;",histY[j]); 
 	}
 	
 	// prev hist y
 	for(j=0; j<HEIGHT; j++) 
 	{
-	  fprintf(fp, "%d;",prevProfileY[j]); 
+	  fprintf(fp, "%d;",prevhistY[j]); 
 	}
 	
 	

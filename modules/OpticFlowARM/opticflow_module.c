@@ -235,8 +235,8 @@ void opticflow_horizontal_run(void) {
   rc_psi = get_rc_yaw_f();
   
   // calculate velocity setpoints
-  Vx_sp = rc_theta*(4096/((float)pGainHover));
-  Vy_sp = rc_phi*(4096/((float)pGainHover));
+  Vx_sp = -rc_theta*10;
+  Vy_sp = rc_phi*10;
   
   printf("Vx_sp, Vy_sp: %f,%f\n",Vx_sp,Vy_sp);
   

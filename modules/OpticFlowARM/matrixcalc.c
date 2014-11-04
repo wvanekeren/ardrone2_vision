@@ -1,3 +1,10 @@
+#include <stdlib.h>
+#include <stdio.h>
+#include <math.h>
+#include <string.h>
+
+#include "matrixcalc.h"
+
 void MultMat(float C[],float A[],float B[],int ma,int na,int mb,int nb) {
 // C=A*B
   
@@ -36,11 +43,7 @@ void AddMat(float C[],float A[],float B[],int m,int n) {
 
 }
 
-void PrintMat(const char *name, float A[], int rows,int cols);
-void CpyMat(float B[],float A[],int m,int n);
-void InvMat22(float invA[],float A[]);
-void TranspMat(float A_T[],float A[],int m, int n);
-void SubtMat(float C[],float A[],float B[],int m,int n);
+
 void SubtMat(float C[],float A[],float B[],int m,int n) {
 // C(m x n) = A(m x n) + B(m x n)
   
@@ -54,10 +57,7 @@ void SubtMat(float C[],float A[],float B[],int m,int n) {
 
 }
 
-void PrintMat(const char *name, float A[], int rows,int cols);
-void CpyMat(float B[],float A[],int m,int n);
-void InvMat22(float invA[],float A[]);
-void TranspMat(float A_T[],float A[],int m, int n);
+
 void TranspMat(float A_T[],float A[],int m, int n) {
 
   

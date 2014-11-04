@@ -53,6 +53,7 @@
 #include "firmwares/rotorcraft/navigation.h"
 #include "firmwares/rotorcraft/guidance/guidance_h.h"
 #include "firmwares/rotorcraft/stabilization.h"
+#include "subsystems/radio_control.h"
 #include "firmwares/rotorcraft/stabilization/stabilization_attitude.h"
 #include "firmwares/rotorcraft/stabilization/stabilization_attitude_rc_setpoint.h"
 
@@ -90,10 +91,28 @@
 #include "messages.h"
 #include "subsystems/datalink/downlink.h"
 
-// Variables
-// filtered optic_flow_velocity
+// defines
+#ifndef STABILIZATION_ATTITUDE_DEADBAND_A
+#define STABILIZATION_ATTITUDE_DEADBAND_A 0
+#endif
 
+#ifndef STABILIZATION_ATTITUDE_DEADBAND_E
+#define STABILIZATION_ATTITUDE_DEADBAND_E 0
+#endif
+
+#ifndef OPTICFLOW_HOVER
+#define OPTICFLOW_HOVER 	0
+#endif
+
+#ifndef OPTICFLOW_HORIZONTAL
+#define OPTICFLOW_HORIZONTAL 	1
+#endif
+
+// optic flow control
+uint8_t opticflow_control_mode = OPTICFLOW_HORIZONTAL;
 float Vx_ctrl = 0.0, Vy_ctrl=0.0, Vz_ctrl=0.0;
+float Vx_sp = 0.0, Vy_sp = 0.0, Vz_sp = 0.0;
+float Vx_ctrl_err = 0.0, Vy_ctrl_err = 0.0, Vz_ctrl_err = 0.0;
 
 float OFXInt = 0;
 float OFYInt = 0;
@@ -163,23 +182,70 @@ void savehistXY(FILE *fp,int Txp,int Typ,unsigned int *histx, unsigned int *hist
 void saveThisImage(unsigned char *frame_buf, int width, int height, int counter);
 void saveSingleImageDataFile(unsigned char *frame_buf, int width, int height, char filename[100]);
 
+static float get_rc_roll_f(void);
+static float get_rc_pitch_f(void);
+static float get_rc_yaw_f(void);
+
+
+
 void opticflow_module_run(void) {
   
-//   rc_phi = get_rc_roll_f();
-//   rc_theta = get_rc_pitch_f();
-//   rc_psi = get_rc_yaw_f();
-  
-//   printf("phi, theta, psi: %.2f, %.2f, %.2f\n",rc_phi,rc_theta,rc_psi);
+ 
+  printf("phi, theta, psi: %.2f, %.2f, %.2f\n",rc_phi,rc_theta,rc_psi);
   
 	if(autopilot_mode == AP_MODE_OPTIC_FLOW) {
-	  opticflow_control_hover_run();
+	  
+	  switch (opticflow_control_mode) {
+	    case OPTICFLOW_HOVER:
+	      opticflow_hover_run();
+	      break;
+	    case OPTICFLOW_HORIZONTAL:
+	      opticflow_horizontal_run();
+	      break;
+	    default:
+	      opticflow_hover_run();
+	      break;
+	  }
+	  
 	}
 	else {
-	  opticflow_control_hover_stop();
-	}
+	  opticflow_h_control_stop();
+	}  
 }
 
-void opticflow_control_hover_run(void) {
+
+ 
+
+
+
+void opticflow_hover_run(void) {
+  
+  Vx_sp = 0;
+  Vy_sp = 0;
+  
+  // run control loop with zero setpoints
+  opticflow_h_control_run();
+}
+
+void opticflow_horizontal_run(void) {
+  
+  // read pilot inputs (in radians)
+  rc_phi = get_rc_roll_f();
+  rc_theta = get_rc_pitch_f();
+  rc_psi = get_rc_yaw_f();
+  
+  // calculate velocity setpoints
+  Vx_sp = rc_theta*(4096/((float)pGainHover));
+  Vy_sp = rc_phi*(4096/((float)pGainHover));
+  
+  printf("Vx_sp, Vy_sp: %f,%f\n",Vx_sp,Vy_sp);
+  
+  // run control loop with setpoints
+  opticflow_h_control_run(); 
+  
+}
+
+void opticflow_h_control_run(void) {
   
   
 
@@ -198,21 +264,23 @@ void opticflow_control_hover_run(void) {
   // Read Latest Vision Module Results
   if (computervision_thread_has_results)
   {
-	  
+    
+	  Vx_ctrl_err = Vx_ctrl - Vx_sp;
+	  Vy_ctrl_err = Vy_ctrl - Vy_sp;	  
 	    
 	  computervision_thread_has_results = 0;
 
 	  if(saturateX==0)
 	  {
-		  OFYInt -= iGainHover*Vy_ctrl; // minus sign: positive Y velocity = negative phi command
+		  OFYInt -= iGainHover*Vy_ctrl_err; // minus sign: positive Y velocity = negative phi command
 	  }
 	  if(saturateY==0)
 	  {
-		  OFXInt += iGainHover*Vx_ctrl;
+		  OFXInt += iGainHover*Vx_ctrl_err;
 	  }
 
-	  cmd_euler.phi 	= cmd_phi0   + (pGainHover*-Vy_ctrl + OFYInt + dGainHover*-Ahy); // minus sign: positive Y velocity = negative phi command
-	  cmd_euler.theta 	= cmd_theta0 + (pGainHover* Vx_ctrl + OFXInt + dGainHover*Ahx);
+	  cmd_euler.phi 	= cmd_phi0   + (pGainHover*-Vy_ctrl_err + OFYInt + dGainHover*-Ahy); // minus sign: positive Y velocity = negative phi command
+	  cmd_euler.theta 	= cmd_theta0 + (pGainHover* Vx_ctrl_err + OFXInt + dGainHover*Ahx);
 	  cmd_euler.psi 	= cmd_psi0;
 	  
 	  saturateX = 0; saturateY = 0;
@@ -246,7 +314,7 @@ void opticflow_control_hover_run(void) {
   DOWNLINK_SEND_OF_CTRL(DefaultChannel, DefaultDevice, &dl_cmd_phi, &dl_cmd_theta, &dl_cmd_psi, &cmd_phi0, &cmd_theta0, &cmd_psi0, &pGainHover, &iGainHover, &dGainHover);
 }
 
-void opticflow_control_hover_stop(void) {
+void opticflow_h_control_stop(void) {
   // when optic flow inactive, reset integrator
   first=1;
   OFXInt = 0;
@@ -514,8 +582,9 @@ void *computervision_thread_main(void* data)
       prevTyp = Typ;
       prevTzp = Tzp;
       
-      // write flowdata to file
-      saveflowdata(fp_flowdata,msg_id,Txp,Typ,histX,prevhistX,histY,prevhistY,errormapx,errormapy,window);
+      // write flowdata to file (only if motors are on)
+      if (autopilot_motors_on) 
+	saveflowdata(fp_flowdata,msg_id,Txp,Typ,histX,prevhistX,histY,prevhistY,errormapx,errormapy,window);
       
       curskip=0; // set curskip to zero if you have just calculated new flow
       
@@ -735,7 +804,7 @@ void opticflow_module_stop(void)
 }
 
 void initflowdata(FILE *fp) {
-	fprintf(fp,"%s;%s;%s;%s;%s;%s;%s;%s;%s;","msg_id","Txp","Typ","histX","prevhistX","histY","prevhistY","errormapX","errormapY");
+	fprintf(fp,"%s;%s;%s;%s;%s;%s;%s;%s;%s;\n","msg_id","Txp","Typ","histX","prevhistX","histY","prevhistY","errormapX","errormapY");
 }
 	
 void saveflowdata(FILE *fp,int msg_id, int Txp,int Typ,unsigned int *histX,unsigned int *prevhistX,unsigned int *histY,unsigned int *prevhistY,float *errormapx,float *errormapy, unsigned int window) {
@@ -789,7 +858,31 @@ void saveflowdata(FILE *fp,int msg_id, int Txp,int Typ,unsigned int *histX,unsig
 }
 
 
-  
+static float get_rc_roll_f(void) {
+  int32_t roll = radio_control.values[RADIO_ROLL];
+#if STABILIZATION_ATTITUDE_DEADBAND_A
+  DeadBand(roll, STABILIZATION_ATTITUDE_DEADBAND_A);
+  return roll * STABILIZATION_ATTITUDE_SP_MAX_PHI / (MAX_PPRZ - STABILIZATION_ATTITUDE_DEADBAND_A);
+#else
+  return roll * STABILIZATION_ATTITUDE_SP_MAX_PHI / MAX_PPRZ;
+#endif
+}
+
+static float get_rc_pitch_f(void) {
+  int32_t pitch = radio_control.values[RADIO_PITCH];
+#if STABILIZATION_ATTITUDE_DEADBAND_E
+  DeadBand(pitch, STABILIZATION_ATTITUDE_DEADBAND_E);
+  return pitch * STABILIZATION_ATTITUDE_SP_MAX_THETA / (MAX_PPRZ - STABILIZATION_ATTITUDE_DEADBAND_E);
+#else
+  return pitch * STABILIZATION_ATTITUDE_SP_MAX_THETA / MAX_PPRZ;
+#endif
+}
+
+static inline float get_rc_yaw_f(void) {
+  int32_t yaw = radio_control.values[RADIO_YAW];
+  DeadBand(yaw, STABILIZATION_ATTITUDE_DEADBAND_R);
+  return yaw * STABILIZATION_ATTITUDE_SP_MAX_R / (MAX_PPRZ - STABILIZATION_ATTITUDE_DEADBAND_R);
+}  
   
 
 

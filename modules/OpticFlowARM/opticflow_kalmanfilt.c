@@ -48,11 +48,7 @@ void UpdateKalman(float Vmeasx, float Vmeasy, float Ameasx, float Ameasy, float 
       y_meas[0] = Vmeasx;
       y_meas[1] = Vmeasy;
 
-      // measurement inputs
-      float u[2];
-      u[0] = Ameasx;
-      u[1] = Ameasy;
-
+      
       // current optimal state estimation
       float x_opt[4];
       x_opt[0] = Vkalmanx;

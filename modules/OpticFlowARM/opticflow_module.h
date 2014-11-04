@@ -53,8 +53,10 @@ extern int opticflow_ap_set_mode(uint8_t new_autopilot_mode);
   
 void *computervision_thread_main(void* data);
 
-void opticflow_control_hover_run(void);
-void opticflow_control_hover_stop(void);
+void opticflow_hover_run(void);
+void opticflow_horizontal_run(void);
+void opticflow_h_control_run(void);
+void opticflow_h_control_stop(void);
 
 
 void start_timer(void);

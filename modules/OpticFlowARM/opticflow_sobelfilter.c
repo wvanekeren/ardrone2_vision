@@ -18,7 +18,7 @@
 // imgIn is in U-Y-V-Y format (exactly that order)
 // http://en.wikipedia.org/wiki/YUV
 
-void ApplySobelFilter(struct img_struct* imgIn, unsigned int *profileX, unsigned int *profileY)
+void ApplySobelFilter(struct img_struct* imgIn, unsigned int *histX, unsigned int *histY)
 // http://en.wikipedia.org/wiki/Sobel_operator
 // - Gtot = sqrt(Gx^2 and Gy^2) instead of Gtot = Gx^2 + Gy^2
 // - furthermore: only return Gtot if it is above the NOISE threshold (set as define GNOISE)
@@ -43,16 +43,16 @@ void ApplySobelFilter(struct img_struct* imgIn, unsigned int *profileX, unsigned
 	unsigned char *inPrevLine = img; 		// previous line of the image
 	unsigned char *inNextLine = (img + 2*widthStep);// next line of the image
 
-	unsigned int *histSobelX = profileX+1; // initialise the position of the histogram X and Y
-	unsigned int *histSobelY = profileY+1;
+	unsigned int *histSobelX = histX+1; // initialise the position of the histogram X and Y
+	unsigned int *histSobelY = histY+1;
 	
-	memset(profileX,0,WIDTH*sizeof(unsigned int)); // initialise profileX with 0
-	memset(profileY,0,HEIGHT*sizeof(unsigned int));
+	memset(histX,0,WIDTH*sizeof(unsigned int)); // initialise histX with 0
+	memset(histY,0,HEIGHT*sizeof(unsigned int));
 
 	// for all lines in the image (start with 1)
 	for(j=1;j<HEIGHT-1;j++) //for(j=1;j<height-1;j++) 
 	{
-		histSobelX = profileX+1; // initialise the position of the histogram X
+		histSobelX = histX+1; // initialise the position of the histogram X
 		
 		// over the entire width of the image
 		for(i=1;i<WIDTH-1;i++)

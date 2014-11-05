@@ -265,22 +265,22 @@ void opticflow_h_control_run(void) {
   if (computervision_thread_has_results)
   {
     
-	  Vx_ctrl_err = Vx_ctrl - Vx_sp;
-	  Vy_ctrl_err = Vy_ctrl - Vy_sp;	  
+	  Vx_ctrl_err = Vx_sp - Vx_ctrl;
+	  Vy_ctrl_err = Vy_sp - Vy_ctrl;	  
 	    
 	  computervision_thread_has_results = 0;
 
 	  if(saturateX==0)
 	  {
-		  OFYInt -= iGainHover*Vy_ctrl_err; // minus sign: positive Y velocity = negative phi command
+		  OFYInt += iGainHover*Vy_ctrl_err; // minus sign: positive Y velocity = negative phi command
 	  }
 	  if(saturateY==0)
 	  {
 		  OFXInt += iGainHover*Vx_ctrl_err;
 	  }
 
-	  cmd_euler.phi 	= cmd_phi0   + (pGainHover*-Vy_ctrl_err + OFYInt + dGainHover*-Ahy); // minus sign: positive Y velocity = negative phi command
-	  cmd_euler.theta 	= cmd_theta0 + (pGainHover* Vx_ctrl_err + OFXInt + dGainHover*Ahx);
+	  cmd_euler.phi 	= cmd_phi0   + (pGainHover* Vy_ctrl_err + OFYInt + dGainHover*-Ahy); // minus sign: positive Y velocity = negative phi command
+	  cmd_euler.theta 	= cmd_theta0 + (pGainHover*-Vx_ctrl_err - OFXInt + dGainHover*Ahx);
 	  cmd_euler.psi 	= cmd_psi0;
 	  
 	  saturateX = 0; saturateY = 0;
@@ -569,7 +569,6 @@ void *computervision_thread_main(void* data)
       Txp = prevTxp;
       Typ = prevTyp;
       Tzp = prevTzp;
-          
     }
     // or use calculated values
     else {
@@ -583,19 +582,25 @@ void *computervision_thread_main(void* data)
       prevTzp = Tzp;
       
       // write flowdata to file (only if motors are on)
-      if (autopilot_motors_on) 
+      if (autopilot_in_flight) 
 	saveflowdata(fp_flowdata,msg_id,Txp,Typ,histX,prevhistX,histY,prevhistY,errormapx,errormapy,window);
       
       curskip=0; // set curskip to zero if you have just calculated new flow
       
       // prevhist = hist
       memcpy(prevhistX,histX,WIDTH*sizeof(unsigned int));
-      memcpy(prevhistY,histY,HEIGHT*sizeof(unsigned int));	      
+      memcpy(prevhistY,histY,HEIGHT*sizeof(unsigned int));	
+
+
+
+      
     }     
 
      
      // Convert from [percent px] to [px] (this is also a cast from int to float)
      // watch out!! from image axes to body axes conversion!!
+     // x_body =  y_image
+     // y_body = -x_image
      Tx = (float)Typ/FLOWFACT/(framesskip+1); 
      Ty = -(float)Txp/FLOWFACT/(framesskip+1);
      
@@ -677,15 +682,15 @@ void *computervision_thread_main(void* data)
      // HEIGHT
      ////////////////////////////////
      
+     
+#ifdef USE_SONAR     
      // SONAR HEIGHT
-     h_sonar = (float)ins_impl.sonar_z/1000;//*sonar_scaling;// sonar_z is an integer with unit [mm]
+     h = (float)ins_impl.sonar_z/1000;// sonar_z is an integer with unit [mm]
+#else
+     // Autopilot state
+     h = stateGetPositionEnu_f()->z;
+#endif
      
-     // autopilot (gps?) height
-     h_ap = stateGetPositionEnu_f()->z;
-     
-     // which height measurement do you use?
-     h = h_sonar;
-
      ////////////////////////////////
      // CALCULATE VELOCITY
      ////////////////////////////////

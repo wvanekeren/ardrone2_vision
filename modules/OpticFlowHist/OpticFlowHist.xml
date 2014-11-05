@@ -1,8 +1,8 @@
 <!DOCTYPE module SYSTEM "../module.dtd">
 
-<module name="OpticFlowARM">
+<module name="OpticFlowHist">
   <doc>
-    <description>Video ARDone 2</description>
+    <description>Stabilise and control the drone using an optic flow algorithm based on Histograms of a Sobel Filter</description>
   </doc>
 
   <header>
@@ -15,7 +15,7 @@
 
 include $(PAPARAZZI_HOME)/sw/ext/ardrone2_vision/Makefile.paths
           
-VISION_MODULE_FOLDER = $(DIR_MODULES)/OpticFlowARM
+VISION_MODULE_FOLDER = $(DIR_MODULES)/OpticFlowHist
 
 $(TARGET).srcs += $(VISION_MODULE_FOLDER)/opticflow_module.c
 $(TARGET).srcs += $(VISION_MODULE_FOLDER)/opticflow_sobelfilter.c
